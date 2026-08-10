@@ -7,7 +7,7 @@ export const SHARED_TOP_N = 8;
  * Bump when PR / 總合力 formula or baseline ranking rules change.
  * Invalidates bundled JSON, localStorage, and Supabase cache keys.
  */
-export const PR_BASELINE_ALGO_VERSION = 2;
+export const PR_BASELINE_ALGO_VERSION = 3;
 
 export type PrTeamCacheEntry = {
   leaderIndex: number;
@@ -39,8 +39,10 @@ const bundled = cacheFile as unknown as PrCostumeCacheFile & {
 };
 const LOCAL_STORAGE_KEY = "holodream-pr-baselines";
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+const viteEnv =
+  typeof import.meta !== "undefined" && import.meta.env ? import.meta.env : undefined;
+const SUPABASE_URL = viteEnv?.VITE_SUPABASE_URL as string | undefined;
+const SUPABASE_ANON_KEY = viteEnv?.VITE_SUPABASE_ANON_KEY as string | undefined;
 
 /** ★5 + event cards in the optimizer pool (must match cardsForOptimizer). */
 export function countOptimizerPoolCards(
@@ -275,6 +277,14 @@ function parseTeamEntry(raw: unknown): PrTeamCacheEntry | null {
       row.power_rating != null || row.powerRating != null
         ? Number(row.power_rating ?? row.powerRating)
         : undefined,
+    combatPower:
+      row.combat_power != null || row.combatPower != null
+        ? Number(row.combat_power ?? row.combatPower)
+        : undefined,
+    scoreBonusPct:
+      row.score_bonus_pct != null || row.scoreBonusPct != null
+        ? Number(row.score_bonus_pct ?? row.scoreBonusPct)
+        : undefined,
   };
 }
 
@@ -340,6 +350,8 @@ export async function persistSharedPrBaseline(
     coverage: t.coverage,
     avg_score_up: t.avgScoreUp,
     power_rating: t.powerRating ?? null,
+    combat_power: t.combatPower ?? null,
+    score_bonus_pct: t.scoreBonusPct ?? null,
   }));
 
   const body = {

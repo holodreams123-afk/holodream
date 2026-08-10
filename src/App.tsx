@@ -6,6 +6,8 @@ import { CardArt, cardArtUrl } from "./components/CardArt";
 import { SkillTimelineChart } from "./components/SkillTimelineChart";
 import { CardFilterToolbar, CardGroupBrowser } from "./components/CardBrowser";
 import { FeedbackPanel } from "./components/FeedbackPanel";
+import { SiteNoticeDialog } from "./components/SiteNoticeDialog";
+import { UpdateNotesDialog } from "./components/UpdateNotesDialog";
 import type { FeedbackKind } from "./lib/feedbackStore";
 import { MemberName } from "./components/MemberName";
 import { Portrait } from "./components/Portrait";
@@ -18,7 +20,7 @@ import {
   formatMemberList,
 } from "./lib/explain";
 import { formatUncoveredGaps, calcScoreUpCoverage, findBestCooldownReductions, buildMemberActiveWindows } from "./lib/coverage";
-import { buildActiveWindows } from "./lib/activeWindows";
+import { buildActiveWindows, isActiveBonusMet, isActiveBonusRuntimeCondition } from "./lib/activeWindows";
 import {
   COOLDOWN_REDUCTION_OPTIONS,
   defaultTimelineSettings,
@@ -40,7 +42,7 @@ import {
 import { displayName, listName, matchesQuery } from "./lib/names";
 import { buildCostumeLookup, captainCostumesForMember } from "./lib/costumes";
 import { formatBuffedStatDisplay } from "./lib/stats";
-import { optimizeTeamFast, buildOptimizeResultFromCache, hydratePrCostumeTop8 } from "./lib/optimizer";
+import { optimizeTeamFastAsync, buildOptimizeResultFromCache, hydratePrCostumeTop8, loadPrBaselineFromCache, type OptimizeProgress } from "./lib/optimizer";
 import {
   countOptimizerPoolCards,
   getPrCostumeTop8,
@@ -56,12 +58,15 @@ import {
   displaySpecialSkill,
 } from "./lib/catalogDisplay";
 import { formatUnitBadge } from "./lib/groups";
+import { dismissSiteNotice, isSiteNoticeDismissed } from "./lib/siteNoticeStore";
 import type { Attr, Card, Costume, GameData, TeamEvaluation } from "./types";
 
 const data = gameData as GameData;
 const costumeLookup = buildCostumeLookup(data.costumes);
 const STORAGE_LOCKED = "holodream-wanted-members";
 const STORAGE_PREF_CARDS = "holodream-preferred-cards";
+const STORAGE_ROSTER_LOCKED = "holodream-roster-wanted-members";
+const STORAGE_ROSTER_PREF = "holodream-roster-preferred-cards";
 const STORAGE_ROSTER = "holodream-owned-roster";
 const STORAGE_ROSTER_CARDS = "holodream-roster-preferred-cards";
 
@@ -199,11 +204,17 @@ function loadJson<T>(key: string, fallback: T): T {
 export default function App() {
   const { locale, setLocale, t, attrLabel } = useI18n();
   const [theme, setTheme] = useState<AppTheme>("gallery");
-  const [wantedMembers, setWantedMembers] = useState<string[]>(() =>
+  const [optimizeWantedMembers, setOptimizeWantedMembers] = useState<string[]>(() =>
     loadJson<string[]>(STORAGE_LOCKED, []).slice(0, 5),
   );
-  const [preferredCards, setPreferredCards] = useState<Record<string, string>>(() =>
-    loadJson(STORAGE_PREF_CARDS, {}),
+  const [optimizePreferredCards, setOptimizePreferredCards] = useState<Record<string, string>>(
+    () => loadJson(STORAGE_PREF_CARDS, {}),
+  );
+  const [rosterWantedMembers, setRosterWantedMembers] = useState<string[]>(() =>
+    loadJson<string[]>(STORAGE_ROSTER_LOCKED, []).slice(0, 5),
+  );
+  const [rosterPreferredCards, setRosterPreferredCards] = useState<Record<string, string>>(() =>
+    loadJson(STORAGE_ROSTER_PREF, {}),
   );
   const [typeFilters, setTypeFilters] = useState<Attr[]>([]);
   const [rarityFilters, setRarityFilters] = useState<number[]>([]);
@@ -216,9 +227,15 @@ export default function App() {
   const [resultTrack, setResultTrack] = useState<ResultTrack>("overall");
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [viewingPrBaseline, setViewingPrBaseline] = useState(false);
+  const [cachedPrBaseline, setCachedPrBaseline] = useState<TeamEvaluation | null>(null);
+  const [cachedPrTop8, setCachedPrTop8] = useState<TeamEvaluation[]>([]);
+  const [prBaselineCacheLoading, setPrBaselineCacheLoading] = useState(false);
   const [calcRulesOpen, setCalcRulesOpen] = useState(false);
+  const [siteNoticeOpen, setSiteNoticeOpen] = useState(() => !isSiteNoticeDismissed());
+  const [updateNotesOpen, setUpdateNotesOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [busyEstimateSec, setBusyEstimateSec] = useState<number | null>(null);
+  const [optimizeProgress, setOptimizeProgress] = useState<OptimizeProgress | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
   const [cardsCompact, setCardsCompact] = useState(false);
   const [rosterWantedOpen, setRosterWantedOpen] = useState(false);
@@ -236,6 +253,9 @@ export default function App() {
   const [rosterOwnedCards, setRosterOwnedCards] = useState<Record<string, string[]>>(() =>
     loadRosterOwnedCards(),
   );
+
+  const wantedMembers = theme === "roster" ? rosterWantedMembers : optimizeWantedMembers;
+  const preferredCards = theme === "roster" ? rosterPreferredCards : optimizePreferredCards;
 
   const wantedSet = useMemo(() => new Set(wantedMembers), [wantedMembers]);
   const rosterSet = useMemo(() => new Set(ownedRosterMembers), [ownedRosterMembers]);
@@ -462,13 +482,13 @@ export default function App() {
         return nextPrefs;
       });
       if (removing) {
-        setWantedMembers((wm) => {
+        setRosterWantedMembers((wm) => {
           if (!wm.includes(member)) return wm;
           const nextWanted = wm.filter((m) => m !== member);
-          setPreferredCards((prefs) => {
+          setRosterPreferredCards((prefs) => {
             const nextPrefs = { ...prefs };
             delete nextPrefs[member];
-            persistWanted(nextWanted, nextPrefs);
+            persistWanted(nextWanted, nextPrefs, "roster");
             return nextPrefs;
           });
           return nextWanted;
@@ -504,60 +524,75 @@ export default function App() {
     setResult(null);
   }
 
-  function persistWanted(members: string[], prefs: Record<string, string>) {
-    localStorage.setItem(STORAGE_LOCKED, JSON.stringify(members));
-    localStorage.setItem(STORAGE_PREF_CARDS, JSON.stringify(prefs));
+  function persistWanted(
+    members: string[],
+    prefs: Record<string, string>,
+    mode: "optimize" | "roster",
+  ) {
+    if (mode === "roster") {
+      localStorage.setItem(STORAGE_ROSTER_LOCKED, JSON.stringify(members));
+      localStorage.setItem(STORAGE_ROSTER_PREF, JSON.stringify(prefs));
+    } else {
+      localStorage.setItem(STORAGE_LOCKED, JSON.stringify(members));
+      localStorage.setItem(STORAGE_PREF_CARDS, JSON.stringify(prefs));
+    }
+  }
+
+  function applyWantedChange(
+    mode: "optimize" | "roster",
+    members: string[],
+    prefs: Record<string, string>,
+  ) {
+    persistWanted(members, prefs, mode);
+    if (mode === "roster") {
+      setRosterWantedMembers(members);
+      setRosterPreferredCards(prefs);
+    } else {
+      setOptimizeWantedMembers(members);
+      setOptimizePreferredCards(prefs);
+    }
+    setResult(null);
   }
 
   function toggleWantedCard(card: Card) {
     if (theme === "roster" && !rosterSet.has(card.member)) return;
-    setWantedMembers((prev) => {
-      const isWanted = prev.includes(card.member);
-      let next: string[];
-      let nextPrefs = { ...preferredCards };
+    const mode: "optimize" | "roster" = theme === "roster" ? "roster" : "optimize";
+    const prev = mode === "roster" ? rosterWantedMembers : optimizeWantedMembers;
+    const prevPrefs = mode === "roster" ? rosterPreferredCards : optimizePreferredCards;
+    const isWanted = prev.includes(card.member);
+    let next: string[];
+    let nextPrefs = { ...prevPrefs };
 
-      if (isWanted && preferredCards[card.member] === card.id) {
-        // Deselect this member
-        next = prev.filter((m) => m !== card.member);
-        delete nextPrefs[card.member];
-      } else if (isWanted) {
-        // Switch preferred card for same member
-        next = prev;
-        nextPrefs[card.member] = card.id;
-      } else {
-        if (prev.length >= 5) {
-          alert(t.alertWantedMax);
-          return prev;
-        }
-        // If leader already set and adding would exceed with leader constraint later — still allow; optimize validates
-        next = [...prev, card.member];
-        nextPrefs[card.member] = card.id;
+    if (isWanted && prevPrefs[card.member] === card.id) {
+      next = prev.filter((m) => m !== card.member);
+      delete nextPrefs[card.member];
+    } else if (isWanted) {
+      next = prev;
+      nextPrefs[card.member] = card.id;
+    } else {
+      if (prev.length >= 5) {
+        alert(t.alertWantedMax);
+        return;
       }
+      next = [...prev, card.member];
+      nextPrefs[card.member] = card.id;
+    }
 
-      setPreferredCards(nextPrefs);
-      persistWanted(next, nextPrefs);
-      setResult(null);
-      return next;
-    });
+    applyWantedChange(mode, next, nextPrefs);
   }
 
   function removeWanted(member: string) {
-    setWantedMembers((prev) => {
-      const next = prev.filter((m) => m !== member);
-      const nextPrefs = { ...preferredCards };
-      delete nextPrefs[member];
-      setPreferredCards(nextPrefs);
-      persistWanted(next, nextPrefs);
-      setResult(null);
-      return next;
-    });
+    const mode: "optimize" | "roster" = theme === "roster" ? "roster" : "optimize";
+    const prev = mode === "roster" ? rosterWantedMembers : optimizeWantedMembers;
+    const prevPrefs = mode === "roster" ? rosterPreferredCards : optimizePreferredCards;
+    const next = prev.filter((m) => m !== member);
+    const nextPrefs = { ...prevPrefs };
+    delete nextPrefs[member];
+    applyWantedChange(mode, next, nextPrefs);
   }
 
   function clearWanted() {
-    setWantedMembers([]);
-    setPreferredCards({});
-    persistWanted([], {});
-    setResult(null);
+    applyWantedChange(theme === "roster" ? "roster" : "optimize", [], {});
   }
 
   function pickLeader(member: string) {
@@ -583,19 +618,55 @@ export default function App() {
     [],
   );
 
+  function refreshPrCacheState(costumeId: string) {
+    setCachedPrBaseline(
+      loadPrBaselineFromCache(data, costumeId, SONG_LENGTH, fullPoolCardCount),
+    );
+    const entries = getPrCostumeTop8(costumeId, SONG_LENGTH, fullPoolCardCount);
+    setCachedPrTop8(
+      entries?.length
+        ? hydratePrCostumeTop8(data, entries, costumeId, SONG_LENGTH)
+        : [],
+    );
+  }
+
+  useEffect(() => {
+    if (!leaderCostumeId) {
+      setCachedPrBaseline(null);
+      setCachedPrTop8([]);
+      setPrBaselineCacheLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setPrBaselineCacheLoading(true);
+    void (async () => {
+      await syncSharedPrBaseline(leaderCostumeId, SONG_LENGTH, fullPoolCardCount);
+      if (cancelled) return;
+      refreshPrCacheState(leaderCostumeId);
+      setPrBaselineCacheLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [leaderCostumeId, fullPoolCardCount]);
+
   function estimateOptimizeSeconds(
-    options: Omit<Parameters<typeof optimizeTeamFast>[1], "ownedCardIds">,
+    options: Omit<Parameters<typeof optimizeTeamFastAsync>[1], "ownedCardIds">,
     sharePr9999Baseline: boolean,
     prFullyCached: boolean,
   ): number {
     const wanted = (options.fixedMembers ?? []).filter(Boolean).length;
     const pool = options.memberPool?.length ?? 0;
     if (sharePr9999Baseline && prFullyCached && wanted === 0 && pool === 0) return 8;
+    if (options.fixedCostumeId && wanted === 0 && pool === 0) return prFullyCached ? 30 : 180;
+    if (options.fixedCostumeId && pool >= 5) return 120;
+    if (options.fixedCostumeId && wanted >= 4) return 90;
+    if (options.fixedCostumeId && wanted > 0) return 120;
     if (pool >= 5) return 50;
     if (wanted >= 4) return 25;
     if (wanted > 0) return 40;
-    if (sharePr9999Baseline && !prFullyCached) return 150;
-    return 90;
+    if (sharePr9999Baseline && !prFullyCached) return 180;
+    return 120;
   }
 
   function startBusy(seconds: number) {
@@ -606,6 +677,7 @@ export default function App() {
   function stopBusy() {
     setBusy(false);
     setBusyEstimateSec(null);
+    setOptimizeProgress(null);
   }
 
   function extendBusyDeadline(seconds: number) {
@@ -617,7 +689,7 @@ export default function App() {
 
   async function prepareAndRunOptimize(
     ownedCardIds: Set<string>,
-    options: Omit<Parameters<typeof optimizeTeamFast>[1], "ownedCardIds">,
+    options: Omit<Parameters<typeof optimizeTeamFastAsync>[1], "ownedCardIds">,
     sharePr9999Baseline = false,
   ) {
     const costumeId = options.fixedCostumeId;
@@ -634,12 +706,15 @@ export default function App() {
     }
 
     const estimateSec = estimateOptimizeSeconds(options, sharePr9999Baseline, prFullyCached);
+    setOptimizeProgress(null);
     extendBusyDeadline(estimateSec);
 
-    const finish = (out: ReturnType<typeof optimizeTeamFast>) => {
+    const finish = (out: Awaited<ReturnType<typeof optimizeTeamFastAsync>>) => {
       setResult(out);
       setResultTrack("overall");
       setSelectedIdx(0);
+      setViewingPrBaseline(false);
+      if (costumeId) refreshPrCacheState(costumeId);
       stopBusy();
       requestAnimationFrame(() => {
         document.getElementById("optimize-results")?.scrollIntoView({
@@ -665,28 +740,32 @@ export default function App() {
       }
     }
 
+    setOptimizeProgress(null);
     await new Promise<void>((resolve) => {
       setTimeout(() => {
-        const out = optimizeTeamFast(data, {
-          ...options,
-          ownedCardIds,
-        });
-        if (
-          sharePr9999Baseline &&
-          unconstrainedRun &&
-          !prFullyCached &&
-          out.byOverall.length &&
-          costumeId
-        ) {
-          void persistSharedPrBaseline(
-            out.byOverall,
-            costumeId,
-            SONG_LENGTH,
-            fullPoolCardCount,
-          );
-        }
-        finish(out);
-        resolve();
+        void (async () => {
+          const out = await optimizeTeamFastAsync(data, {
+            ...options,
+            ownedCardIds,
+            onProgress: (p) => setOptimizeProgress(p),
+          });
+          if (
+            sharePr9999Baseline &&
+            unconstrainedRun &&
+            !prFullyCached &&
+            out.byOverall.length &&
+            costumeId
+          ) {
+            void persistSharedPrBaseline(
+              out.byOverall,
+              costumeId,
+              SONG_LENGTH,
+              fullPoolCardCount,
+            );
+          }
+          finish(out);
+          resolve();
+        })();
       }, 30);
     });
   }
@@ -696,11 +775,12 @@ export default function App() {
       alert(t.alertNeedLeader);
       return;
     }
-    if (wantedMembers.length > 5) {
+    if (optimizeWantedMembers.length > 5) {
       alert(t.alertWantedMax);
       return;
     }
 
+    setOptimizeProgress(null);
     startBusy(90);
     void prepareAndRunOptimize(
       allCardIds,
@@ -709,8 +789,8 @@ export default function App() {
         songLength: SONG_LENGTH,
         fixedLeader: leaderMember,
         fixedCostumeId: leaderCostumeId || null,
-        fixedMembers: wantedMembers,
-        preferredCardByMember: preferredCards,
+        fixedMembers: optimizeWantedMembers,
+        preferredCardByMember: optimizePreferredCards,
         maxResults: 8,
         allowDuplicateSkills,
       },
@@ -733,12 +813,13 @@ export default function App() {
       alert(t.alertNeedLeader);
       return;
     }
-    const rosterWanted = wantedMembers.filter((m) => rosterSet.has(m));
+    const rosterWanted = rosterWantedMembers.filter((m) => rosterSet.has(m));
     if (rosterWanted.length > 5) {
       alert(t.alertWantedMax);
       return;
     }
 
+    setOptimizeProgress(null);
     startBusy(90);
     void prepareAndRunOptimize(
       rosterOwnedCardIdsForOptimize(),
@@ -748,7 +829,7 @@ export default function App() {
         fixedLeader: leaderMember,
         fixedCostumeId: leaderCostumeId || null,
         fixedMembers: rosterWanted,
-        preferredCardByMember: preferredCards,
+        preferredCardByMember: rosterPreferredCards,
         memberPool: ownedRosterMembers,
         maxResults: 8,
         allowDuplicateSkills,
@@ -796,18 +877,34 @@ export default function App() {
     return result.byAvgScoreUp;
   }, [result, resultTrack]);
 
+  const displayTrackList = viewingPrBaseline ? cachedPrTop8 : trackList;
   const selected = trackList[selectedIdx] ?? null;
+  const displaySelected = displayTrackList[selectedIdx] ?? null;
 
   const prBaselineTeam = useMemo(() => {
+    if (cachedPrBaseline) return cachedPrBaseline;
+    if (cachedPrTop8.length) {
+      return cachedPrTop8.find((ev) => ev.powerRating === 9999) ?? cachedPrTop8[0];
+    }
     if (!result) return null;
     return (
       result.baselineTeam ??
       result.byOverall.find((ev) => ev.powerRating === 9999) ??
       null
     );
-  }, [result]);
+  }, [cachedPrBaseline, cachedPrTop8, result]);
 
-  const detailEv = viewingPrBaseline && prBaselineTeam ? prBaselineTeam : selected;
+  const prBaselineBtnTitle = !leaderCostumeId
+    ? t.prBaselineBtnNeedCostume
+    : prBaselineCacheLoading
+      ? t.prBaselineBtnLoading
+      : prBaselineTeam
+        ? t.prBaselineBtnTitle
+        : t.prBaselineBtnUnavailable;
+
+  const detailEv = viewingPrBaseline
+    ? (displaySelected ?? prBaselineTeam)
+    : selected;
   const detailProgress = detailEv
     ? conditionProgress(
         detailEv.costume.skill.condition,
@@ -848,7 +945,11 @@ export default function App() {
     );
     return detailEv.cards.map((card, i) => ({
       id: card.id,
-      label: `${listName(card.member, unitsOf(card.member), locale)}（★${card.rarity}）`,
+      label: `${i + 1}. ${listName(card.member, unitsOf(card.member), locale)}（★${card.rarity}）`,
+      freqLabel:
+        card.active.interval > 0 && card.active.duration > 0
+          ? t.activeIntervalMeta(card.active.interval, card.active.duration)
+          : undefined,
       windows: buildMemberActiveWindows(
         actives[i],
         timelineSettings.reductions[i] ?? 0,
@@ -856,9 +957,10 @@ export default function App() {
       ),
       scoreUp: actives[i].scoreUp,
     }));
-  }, [detailEv, timelineSettings.reductions, locale]);
+  }, [detailEv, timelineSettings.reductions, locale, t]);
 
-  const displayCoverage = liveCoverage ?? detailEv;
+  /** Team eval from optimizer (no CDR). Timeline + stat row use liveCoverage when CDR is set. */
+  const timelineCoverage = liveCoverage ?? detailEv;
 
   const reductionsOptimized =
     appliedBestReductions != null &&
@@ -901,20 +1003,56 @@ export default function App() {
     setViewingPrBaseline(false);
   }, [result]);
 
+  function closeSiteNotice(dontShowAgain: boolean) {
+    if (dontShowAgain) dismissSiteNotice();
+    setSiteNoticeOpen(false);
+  }
+
   useEffect(() => {
-    if (!calcRulesOpen) return;
+    if (!calcRulesOpen && !siteNoticeOpen && !updateNotesOpen) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setCalcRulesOpen(false);
+      if (e.key !== "Escape") return;
+      if (updateNotesOpen) setUpdateNotesOpen(false);
+      if (siteNoticeOpen) closeSiteNotice(false);
+      if (calcRulesOpen) setCalcRulesOpen(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [calcRulesOpen]);
+  }, [calcRulesOpen, siteNoticeOpen, updateNotesOpen]);
 
   const activeWantedMembers =
-    theme === "roster" ? wantedMembers.filter((m) => rosterSet.has(m)) : wantedMembers;
+    theme === "roster" ? rosterWantedMembers.filter((m) => rosterSet.has(m)) : optimizeWantedMembers;
+
+  function renderWantedCard(m: string, compact = false) {
+    const cardId = preferredCards[m];
+    const card = data.cards.find((c) => c.id === cardId);
+    return (
+      <div key={m} className={`wanted-card${compact ? " wanted-card--compact" : ""}`}>
+        <CardArt cardId={cardId} alt={card?.costumeName ?? m} className="wanted-card-art" />
+        <div className="wanted-card-body">
+          <MemberName member={m} units={unitsOf(m)} />
+          {!compact && card && (
+            <small>
+              ★{card.rarity} · {attrLabel(card.type)}
+              <br />
+              {card.costumeName}
+            </small>
+          )}
+        </div>
+        <button
+          type="button"
+          className="wanted-chip-x"
+          aria-label={t.removeWantedAria(m)}
+          onClick={() => removeWanted(m)}
+        >
+          ×
+        </button>
+      </div>
+    );
+  }
 
   function trackMetricLabel(ev: TeamEvaluation): string {
-    if (resultTrack === "overall") {
+    if (viewingPrBaseline || resultTrack === "overall") {
       return t.metricPr(ev.powerRating?.toFixed(0) ?? "—");
     }
     if (resultTrack === "stats") {
@@ -952,7 +1090,16 @@ export default function App() {
         </div>
         <div className="hero-main">
           <div className="hero-copy">
-            <p className="hero-kicker">{t.lastUpdated(formatSiteDate(LAST_UPDATED, locale))}</p>
+            <div className="hero-kicker-row">
+              <p className="hero-kicker">{t.lastUpdated(formatSiteDate(LAST_UPDATED, locale))}</p>
+              <button
+                type="button"
+                className="hero-update-notes-btn"
+                onClick={() => setUpdateNotesOpen(true)}
+              >
+                {t.updateNotesBtn}
+              </button>
+            </div>
             <h1 className="brand">
               <span className="brand-mark" aria-hidden />
               {t.brand}
@@ -995,6 +1142,13 @@ export default function App() {
             <div className="hero-feedback">
               <button
                 type="button"
+                className="hero-feedback-btn hero-feedback-btn--notice"
+                onClick={() => setSiteNoticeOpen(true)}
+              >
+                {t.siteNoticeBtn}
+              </button>
+              <button
+                type="button"
                 className="hero-feedback-btn"
                 onClick={() => setFeedbackView("report")}
               >
@@ -1015,6 +1169,10 @@ export default function App() {
       {feedbackView && (
         <FeedbackPanel kind={feedbackView} onClose={() => setFeedbackView(null)} />
       )}
+
+      <SiteNoticeDialog open={siteNoticeOpen} onClose={closeSiteNotice} />
+
+      <UpdateNotesDialog open={updateNotesOpen} onClose={() => setUpdateNotesOpen(false)} />
 
       {calcRulesOpen &&
         createPortal(
@@ -1050,6 +1208,7 @@ export default function App() {
                     [t.calcRulesCombatTitle, t.calcRulesCombatBody],
                     [t.calcRulesStrengthTitle, t.calcRulesStrengthBody],
                     [t.calcRulesBonusTitle, t.calcRulesBonusBody],
+                    [t.calcRulesPanelTitle, t.calcRulesPanelBody],
                   ] as const
                 ).map(([title, body]) => (
                   <li key={title}>
@@ -1390,18 +1549,7 @@ export default function App() {
 
           {theme === "roster" && !rosterWantedOpen && activeWantedMembers.length > 0 && (
             <div className="wanted-bar wanted-bar--collapsed">
-              {activeWantedMembers.map((m) => {
-                const cardId = preferredCards[m];
-                const card = data.cards.find((c) => c.id === cardId);
-                return (
-                  <div key={m} className="wanted-card wanted-card--compact">
-                    <CardArt cardId={cardId} alt={card?.costumeName ?? m} className="wanted-card-art" />
-                    <div className="wanted-card-body">
-                      <MemberName member={m} units={unitsOf(m)} />
-                    </div>
-                  </div>
-                );
-              })}
+              {activeWantedMembers.map((m) => renderWantedCard(m, true))}
             </div>
           )}
 
@@ -1450,33 +1598,7 @@ export default function App() {
 
           {activeWantedMembers.length > 0 && (
             <div className="wanted-bar">
-              {activeWantedMembers.map((m) => {
-                const cardId = preferredCards[m];
-                const card = data.cards.find((c) => c.id === cardId);
-                return (
-                  <div key={m} className="wanted-card">
-                    <CardArt cardId={cardId} alt={card?.costumeName ?? m} className="wanted-card-art" />
-                    <div className="wanted-card-body">
-                      <MemberName member={m} units={unitsOf(m)} />
-                      {card && (
-                        <small>
-                          ★{card.rarity} · {attrLabel(card.type)}
-                          <br />
-                          {card.costumeName}
-                        </small>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      className="wanted-chip-x"
-                      aria-label={t.removeWantedAria(m)}
-                      onClick={() => removeWanted(m)}
-                    >
-                      ×
-                    </button>
-                  </div>
-                );
-              })}
+              {activeWantedMembers.map((m) => renderWantedCard(m))}
             </div>
           )}
 
@@ -1519,6 +1641,7 @@ export default function App() {
             </div>
           ) : (
             <>
+              <p className="pr-baseline-note sub">{t.prBaselineNote}</p>
               <div className="browser-tabs" role="tablist" aria-label={t.trackAria}>
                 {(
                   [
@@ -1572,12 +1695,19 @@ export default function App() {
                     type="button"
                     role="tab"
                     className={`browser-tab browser-tab-pr ${viewingPrBaseline ? "active" : ""}`}
-                    disabled={!prBaselineTeam}
+                    disabled={!leaderCostumeId || prBaselineCacheLoading || !prBaselineTeam}
                     aria-selected={viewingPrBaseline}
-                    title={
-                      prBaselineTeam ? t.prBaselineBtnTitle : t.prBaselineBtnUnavailable
-                    }
-                    onClick={() => setViewingPrBaseline((on) => !on)}
+                    title={prBaselineBtnTitle}
+                    onClick={() => {
+                      setViewingPrBaseline((on) => {
+                        const next = !on;
+                        if (next && leaderCostumeId) {
+                          refreshPrCacheState(leaderCostumeId);
+                          setSelectedIdx(0);
+                        }
+                        return next;
+                      });
+                    }}
                   >
                     <span className="browser-tab-icon" aria-hidden>
                       PR
@@ -1590,18 +1720,17 @@ export default function App() {
               <div className="result-split">
                 <aside className="result-rank-col">
                   <div className="track-picks track-picks-vertical">
-                    {trackList.length === 0 ? (
-                      <div className="empty">{t.noTrackTeams}</div>
+                    {displayTrackList.length === 0 ? (
+                      <div className="empty">
+                        {viewingPrBaseline ? t.prBaselineBtnUnavailable : t.noTrackTeams}
+                      </div>
                     ) : (
-                      trackList.map((ev, idx) => (
+                      displayTrackList.map((ev, idx) => (
                         <button
-                          key={`${resultTrack}-${ev.costume.id}-${ev.cards.map((c) => c.id).join("-")}`}
+                          key={`${viewingPrBaseline ? "pr" : resultTrack}-${ev.costume.id}-${ev.cards.map((c) => c.id).join("-")}`}
                           type="button"
                           className={`track-pick ${idx === selectedIdx ? "active" : ""}`}
-                          onClick={() => {
-                            setSelectedIdx(idx);
-                            setViewingPrBaseline(false);
-                          }}
+                          onClick={() => setSelectedIdx(idx)}
                         >
                           <span className={`track-pick-rank ${rankClass(idx)}`}>
                             {idx + 1}
@@ -1636,7 +1765,7 @@ export default function App() {
                             <span className="track-pick-flags">
                               {ev.allPassivesSatisfied ? t.flagPassiveAll : t.flagPassiveMiss}
                             </span>
-                            {resultTrack === "overall" ? (
+                            {viewingPrBaseline || resultTrack === "overall" ? (
                               <>
                                 <span className="track-pick-flags">
                                   {t.flagStats(
@@ -1660,7 +1789,7 @@ export default function App() {
                 <div className="empty">{t.pickTeamDetail}</div>
               ) : (
                 <>
-              {viewingPrBaseline && prBaselineTeam ? (
+              {viewingPrBaseline && detailEv?.powerRating === 9999 ? (
                 <p className="pr-baseline-banner">{t.prBaselineViewBanner}</p>
               ) : null}
               <div className="stats-row stats-row-5">
@@ -1712,9 +1841,7 @@ export default function App() {
                       </li>
                     </ul>
                   ) : (
-                    <div className="stat-foot sub">
-                      {t.coveragePct((detailEv.coverage * 100).toFixed(0))}
-                    </div>
+                    <div className="stat-foot sub">{t.scoreBonusNote}</div>
                   )}
                 </div>
                 <div className="stat stat-rich stat-span-3">
@@ -1744,6 +1871,12 @@ export default function App() {
                           {detailEv.totalStrengthBreakdown.passiveSkill.toLocaleString()}
                         </span>
                       </li>
+                      {detailEv.totalStrengthBreakdown.passiveSkill === 0 &&
+                      (detailEv.scoreBonus?.passiveScoreSupportPct ?? 0) > 0 ? (
+                        <li className="stat-breakdown-note">
+                          <span>{t.strengthPassiveScoreOnly}</span>
+                        </li>
+                      ) : null}
                     </ul>
                   ) : (
                     <div className="stat-foot sub">
@@ -1752,14 +1885,14 @@ export default function App() {
                   )}
                 </div>
                 <div className="stat stat-metrics stat-span-2">
-                  {displayCoverage ? (
+                  {timelineCoverage ? (
                     <>
                       <div className="stat-metric">
                         <div className="label">{t.activeSkillCoverage}</div>
                         <div
-                          className={`value ${displayCoverage.coverage >= 1 ? "ok" : ""}`}
+                          className={`value ${timelineCoverage.coverage >= 1 ? "ok" : ""}`}
                         >
-                          {(displayCoverage.coverage * 100).toFixed(1)}%
+                          {(timelineCoverage.coverage * 100).toFixed(1)}%
                         </div>
                       </div>
                       <div className="stat-metric-divider" aria-hidden />
@@ -1767,7 +1900,7 @@ export default function App() {
                         <div className="label">{t.activeSkillGap}</div>
                         <div className="value">
                           {t.activeCoverageGapTotal(
-                            displayCoverage.uncoveredSeconds.toFixed(1),
+                            timelineCoverage.uncoveredSeconds.toFixed(1),
                           )}
                         </div>
                       </div>
@@ -1779,6 +1912,7 @@ export default function App() {
                     </>
                   )}
                 </div>
+                <p className="stat-hint sub">{t.activeCoverageHint}</p>
               </div>
 
               {detailEv.combatPower != null && (
@@ -1842,6 +1976,14 @@ export default function App() {
                   const stats = detailEv.memberEffectiveStats[i];
                   const timelineRow = timelineMemberRows[i];
                   const usedScoreUp = timelineRow?.scoreUp ?? card.active.scoreUp ?? 0;
+                  const activeBonusOk = isActiveBonusMet(
+                    card.active,
+                    detailEv.typeCounts,
+                    detailEv.unitCounts,
+                  );
+                  const activeBonusRuntime = isActiveBonusRuntimeCondition(
+                    card.active.bonus?.condition,
+                  );
                   const artUrl = cardArtUrl(card.id);
                   return (
                     <article
@@ -1920,11 +2062,25 @@ export default function App() {
                             </span>
                             <p className="skill-text">{displaySpecialSkill(card, locale)}</p>
                           </div>
-                          <div className="skill-row">
+                          <div className={`skill-row ${card.active.bonus ? (activeBonusOk ? "is-ok" : "is-bad") : ""}`}>
                             <span className="skill-chip active" aria-hidden>
                               A
                             </span>
                             <p className="skill-text">
+                              {card.active.bonus ? (
+                                <>
+                                  <span
+                                    className={`skill-inline-status ${activeBonusOk ? "is-ok" : "is-bad"}`}
+                                  >
+                                    {activeBonusRuntime
+                                      ? t.activeBonusAssumed
+                                      : activeBonusOk
+                                        ? t.activeBonusOn
+                                        : t.activeBonusOff}
+                                  </span>
+                                  {" · "}
+                                </>
+                              ) : null}
                               <span className="skill-inline-meta">
                                 {t.activeLine(
                                   card.active.interval,
@@ -1977,7 +2133,13 @@ export default function App() {
                   {detailEv.cards.map((card, i) => (
                     <div key={card.id} className="timeline-control-row">
                       <span className="timeline-control-name">
-                        {listName(card.member, unitsOf(card.member), locale)}
+                        {i + 1}. {listName(card.member, unitsOf(card.member), locale)}
+                        {card.active.interval > 0 && card.active.duration > 0 ? (
+                          <span className="timeline-control-freq">
+                            {" "}
+                            {t.activeIntervalMeta(card.active.interval, card.active.duration)}
+                          </span>
+                        ) : null}
                       </span>
                       <label className="timeline-control-field">
                         <span>{t.cooldownReduction}</span>
@@ -1999,7 +2161,7 @@ export default function App() {
                 </div>
                 <SkillTimelineChart
                   songLength={SONG_LENGTH}
-                  gaps={displayCoverage?.uncoveredGaps ?? []}
+                  gaps={timelineCoverage?.uncoveredGaps ?? []}
                   members={timelineMemberRows}
                   labels={{
                     gapRow: t.timelineGapRow,
@@ -2010,8 +2172,8 @@ export default function App() {
                 <div className="gap-banner">
                   <strong>{t.activeSkillCoverage}</strong>
                   <span>
-                    {displayCoverage
-                      ? formatUncoveredGaps(displayCoverage.uncoveredGaps, {
+                    {timelineCoverage
+                      ? formatUncoveredGaps(timelineCoverage.uncoveredGaps, {
                           none: t.gapsNone,
                           range: t.gapRange,
                           join: t.gapsJoin,
@@ -2019,12 +2181,14 @@ export default function App() {
                       : ""}
                   </span>
                   <small>
-                    {displayCoverage
+                    {timelineCoverage
                       ? t.activeCoverageSummary(
-                          (displayCoverage.coverage * 100).toFixed(1),
-                          displayCoverage.uncoveredSeconds.toFixed(1),
+                          (timelineCoverage.coverage * 100).toFixed(1),
+                          timelineCoverage.uncoveredSeconds.toFixed(1),
                         )
                       : ""}
+                    {" · "}
+                    {t.timelineCoverageHint}
                   </small>
                 </div>
                 <div className="meta-line">
@@ -2097,6 +2261,11 @@ export default function App() {
           {busy ? (
             <>
               {t.fabBusy}
+              {optimizeProgress ? (
+                <span className="fab-optimize-progress" aria-live="polite">
+                  {t.fabBusyProgress(optimizeProgress.searched, optimizeProgress.phase)}
+                </span>
+              ) : null}
               {busyEstimateMin != null && (
                 <span className="fab-optimize-timer" aria-live="polite">
                   {t.fabBusyEstimate(busyEstimateMin)}
@@ -2111,9 +2280,11 @@ export default function App() {
         </span>
         <span className="fab-optimize-sub">
           {busy
-            ? leaderMember
-              ? displayName(leaderMember, unitsOf(leaderMember), locale)
-              : t.fabBusy
+            ? optimizeProgress
+              ? t.fabBusyProgress(optimizeProgress.searched, optimizeProgress.phase)
+              : leaderMember
+                ? displayName(leaderMember, unitsOf(leaderMember), locale)
+                : t.fabBusy
             : leaderMember
               ? displayName(leaderMember, unitsOf(leaderMember), locale)
               : theme === "roster" && ownedRosterMembers.length < 5

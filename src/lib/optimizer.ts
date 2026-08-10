@@ -1,5 +1,5 @@
 import { calcScoreUpCoverage } from "./coverage";
-import { resolveActiveScoreUp } from "./activeWindows";
+import { resolveActiveScoreUp, parseActiveBonusScoreUp } from "./activeWindows";
 import { attachCombatMetrics } from "./combatPower";
 import { countTypes, countUnits, isConditionMet, memberUnits } from "./conditions";
 import {
@@ -36,6 +36,37 @@ export interface OptimizeOptions {
    * Default true.
    */
   allowDuplicateSkills?: boolean;
+  /**
+   * Full C(n,5) enumeration under fixed costume (no pruning).
+   * Default true whenever fixedLeader + fixedCostumeId are set.
+   */
+  exhaustive?: boolean;
+  /** Called every progressInterval team evaluations (browser UI only). */
+  onProgress?: (progress: OptimizeProgress) => void;
+  /** Teams between progress callbacks (default 8000). */
+  progressInterval?: number;
+}
+
+export type OptimizeProgress = {
+  searched: number;
+  elapsedMs: number;
+  phase: "baseline" | "search";
+};
+
+const DEFAULT_PROGRESS_INTERVAL = 8000;
+
+async function reportSearchProgress(
+  searched: number,
+  started: number,
+  options: OptimizeOptions,
+  phase: OptimizeProgress["phase"],
+  cooperative: boolean,
+): Promise<void> {
+  const interval = options.progressInterval ?? DEFAULT_PROGRESS_INTERVAL;
+  if (!options.onProgress && !cooperative) return;
+  if (searched !== 0 && searched % interval !== 0) return;
+  options.onProgress?.({ searched, elapsedMs: performance.now() - started, phase });
+  if (cooperative) await new Promise<void>((resolve) => setTimeout(resolve, 0));
 }
 
 export interface OptimizeResult {
@@ -62,13 +93,36 @@ export interface OptimizeResult {
   elapsedMs: number;
 }
 
+/** Active score-up heuristic when team context is unknown (search filler pick). */
+function optimisticActiveScoreUp(card: Card): number {
+  const base = card.active.scoreUp ?? 0;
+  if (!card.active.bonus) return base;
+  let bonusVal: number | null = card.active.bonus.scoreUp ?? null;
+  if (bonusVal == null || bonusVal <= 0) {
+    bonusVal = parseActiveBonusScoreUp(card.active.raw);
+  }
+  if (bonusVal != null && bonusVal > 0) return Math.max(base, bonusVal);
+  return base;
+}
+
+/** Re-rank hydrated teams by combat power vs baseline (fresh PR after re-eval). */
+export function rerankTeamsByCombatPower(
+  teams: TeamEvaluation[],
+  max: number,
+  baselineTeam: TeamEvaluation | null,
+): TeamEvaluation[] {
+  return rankByPowerRating(teams, max, baselineTeam);
+}
+
 /** Build optimizer UI result from cached top-N teams (skips search). */
 export function buildOptimizeResultFromCache(byOverall: TeamEvaluation[]): OptimizeResult {
-  const top = byOverall.slice(0, 8);
+  const baselineRaw = byOverall.find((t) => t.powerRating === PR_MAX) ?? byOverall[0] ?? null;
+  const ranked = rerankTeamsByCombatPower(byOverall, byOverall.length, baselineRaw);
+  const top = ranked.slice(0, 8);
   const byStats = [...top].sort((a, b) => b.effectiveStatTotal - a.effectiveStatTotal);
   const byCoverage = [...top].sort((a, b) => b.coverage - a.coverage);
   const byAvgScoreUp = [...top].sort((a, b) => b.avgScoreUp - a.avgScoreUp);
-  const baselineTeam = top.find((t) => t.powerRating === 9999) ?? top[0] ?? null;
+  const baselineTeam = top.find((t) => t.powerRating === PR_MAX) ?? top[0] ?? null;
   return {
     best: top[0] ?? null,
     top,
@@ -187,7 +241,24 @@ function fullOptimizerCostumeIds(data: GameData): Set<string> {
   return new Set(data.costumes.map((c) => c.id));
 }
 
-function computePrBaselineTeam(data: GameData, options: OptimizeOptions): TeamEvaluation | null {
+/** Load PR 9999 baseline from bundled / localStorage cache (no search). */
+export function loadPrBaselineFromCache(
+  data: GameData,
+  costumeId: string,
+  songLength: number,
+  poolCardCount: number,
+): TeamEvaluation | null {
+  const entry = getPrBaselineEntry(costumeId, songLength, poolCardCount);
+  if (!entry) return null;
+  const ev = hydratePrBaseline(data, entry, songLength);
+  return ev ? { ...ev, powerRating: PR_MAX } : null;
+}
+
+async function computePrBaselineTeam(
+  data: GameData,
+  options: OptimizeOptions,
+  cooperative: boolean,
+): Promise<TeamEvaluation | null> {
   if (!options.fixedLeader || !options.fixedCostumeId) return null;
   const fullPoolCount = countOptimizerPoolCards(data.cards);
   const cached = hydratePrBaseline(
@@ -196,11 +267,20 @@ function computePrBaselineTeam(data: GameData, options: OptimizeOptions): TeamEv
     options.songLength,
   );
   if (cached) return { ...cached, powerRating: PR_MAX };
-  const free = optimizeTeam(data, {
-    ...baselineSearchOptions(options),
-    ownedCardIds: fullOptimizerPoolIds(data),
-    ownedCostumeIds: fullOptimizerCostumeIds(data),
-  });
+  const free = await runOptimizeTeam(
+    data,
+    {
+      ...baselineSearchOptions(options),
+      ownedCardIds: fullOptimizerPoolIds(data),
+      ownedCostumeIds: fullOptimizerCostumeIds(data),
+      exhaustive: true,
+      onProgress: options.onProgress
+        ? (p) => options.onProgress!({ ...p, phase: "baseline" })
+        : undefined,
+      progressInterval: options.progressInterval,
+    },
+    cooperative,
+  );
   const baseline = free.baselineTeam ?? pickBaselineTeam(free);
   return baseline ? { ...baseline, powerRating: PR_MAX } : null;
 }
@@ -239,20 +319,18 @@ export function hydratePrCostumeTop8(
   costumeId: string,
   songLength: number,
 ): TeamEvaluation[] {
-  const out: TeamEvaluation[] = [];
+  const hydrated: TeamEvaluation[] = [];
   for (const entry of entries) {
     const ev = hydratePrBaseline(
       data,
       { costumeId, leaderIndex: entry.leaderIndex, cardIds: entry.cardIds },
       songLength,
     );
-    if (!ev) continue;
-    out.push({
-      ...ev,
-      powerRating: entry.powerRating ?? ev.powerRating,
-    });
+    if (ev) hydrated.push(ev);
   }
-  return out;
+  if (!hydrated.length) return [];
+  const baseline = hydrated[0];
+  return rerankTeamsByCombatPower(hydrated, hydrated.length, baseline);
 }
 
 function isSameTeam(a: TeamEvaluation, b: TeamEvaluation): boolean {
@@ -481,8 +559,10 @@ function pickCardForMember(
     const ta = cardBaseTotal(a);
     const tb = cardBaseTotal(b);
     if (tb !== ta) return tb - ta;
-    const ca = (a.active.duration / Math.max(1, a.active.interval)) * a.active.scoreUp;
-    const cb = (b.active.duration / Math.max(1, b.active.interval)) * b.active.scoreUp;
+    const ca =
+      (a.active.duration / Math.max(1, a.active.interval)) * optimisticActiveScoreUp(a);
+    const cb =
+      (b.active.duration / Math.max(1, b.active.interval)) * optimisticActiveScoreUp(b);
     if (cb !== ca) return cb - ca;
     return b.passive.score - a.passive.score;
   })[0];
@@ -497,12 +577,17 @@ function compareEval(a: TeamEvaluation, b: TeamEvaluation): number {
   }
   if (a.passiveScore !== b.passiveScore) return a.passiveScore - b.passiveScore;
 
+  const combatA = a.combatPower ?? a.effectiveStatTotal;
+  const combatB = b.combatPower ?? b.effectiveStatTotal;
+  if (combatA !== combatB) return combatA - combatB;
+
   if (a.avgScoreUp !== b.avgScoreUp) return a.avgScoreUp - b.avgScoreUp;
   if (a.coverage !== b.coverage) return a.coverage - b.coverage;
 
-  if (a.scoreSupportWeighted !== b.scoreSupportWeighted) {
-    return a.scoreSupportWeighted - b.scoreSupportWeighted;
-  }
+  const bonusA = a.scoreBonusPct ?? a.avgScoreUp;
+  const bonusB = b.scoreBonusPct ?? b.avgScoreUp;
+  if (bonusA !== bonusB) return bonusA - bonusB;
+
   if (a.effectiveStatTotal !== b.effectiveStatTotal) {
     return a.effectiveStatTotal - b.effectiveStatTotal;
   }
@@ -669,7 +754,10 @@ function fillerPriority(
   const prefer = preferredParamFromEffects(costume.skill.effects);
   let score = cardBaseParam(card, prefer) + cardBaseTotal(card) * 0.15;
   score += card.passive.score * 80;
-  score += (card.active.duration / Math.max(1, card.active.interval)) * card.active.scoreUp * 40;
+  score +=
+    (card.active.duration / Math.max(1, card.active.interval)) *
+    optimisticActiveScoreUp(card) *
+    40;
 
   const cond = costume.skill.condition;
   const units = memberUnits(data.members[member], card);
@@ -697,131 +785,11 @@ function matchesFillerGroup(card: Card, group: string, data: GameData): boolean 
   return memberUnits(data.members[card.member], card).includes(group);
 }
 
-/** Max filler candidates when enumerating 5-member lineups (~C(28,5) ≈ 98k teams). */
-const FIXED_COSTUME_FILLER_POOL = 32;
-
-/**
- * Fast search with a fixed captain costume. Captain need not be in the 5-member lineup.
- * Prunes to top filler candidates instead of full C(n,5) enumeration.
- */
-export function optimizeTeamFixedCostume(data: GameData, options: OptimizeOptions): OptimizeResult {
-  const started = performance.now();
-  const maxResults = options.maxResults ?? 8;
-  const maxPerTrack = 8;
-  const prPoolSize = 96;
-  const songLength = options.songLength;
-  const preferred = options.preferredCardByMember ?? {};
-  const allowDup = options.allowDuplicateSkills !== false;
-  const wanted = (options.fixedMembers ?? []).filter((m) => m && m !== options.fixedLeader);
-
-  const costume = options.fixedCostumeId
-    ? data.costumes.find((c) => c.id === options.fixedCostumeId)
-    : null;
-  if (!costume) return emptyResult(started);
-
-  let baseline: TeamEvaluation | null = null;
-  if (options.fixedCostumeId && options.fixedLeader) {
-    if (wanted.length > 0 || (options.memberPool?.length ?? 0) > 0) {
-      baseline = computePrBaselineTeam(data, options);
-    }
-  }
-
-  const preferParam = preferredParamFromEffects(costume.skill.effects);
-  const ownedCards = cardsForOptimizer(data, options.ownedCardIds);
-  const byMember = new Map<string, Card[]>();
-  for (const c of ownedCards) {
-    const list = byMember.get(c.member) ?? [];
-    list.push(c);
-    byMember.set(c.member, list);
-  }
-  applyMemberPool(byMember, options.memberPool);
-
-  const required = new Set<string>(options.fixedMembers ?? []);
-  const memberSlots = buildMemberSlots(byMember, preferred, required);
-
-  if (required.size > 5) return emptyResult(started);
-  for (const m of required) {
-    if (!memberSlots.some((s) => s.member === m)) return emptyResult(started);
-  }
-
-  if (memberSlots.length < 5) return emptyResult(started);
-
-  const requiredList = memberSlots.filter((m) => required.has(m.member));
-  const need = 5 - requiredList.length;
-  let fillers = memberSlots
-    .filter((m) => !required.has(m.member))
-    .sort(
-      (a, b) =>
-        slotFillerPriority(b, costume, data, preferParam, preferred) -
-        slotFillerPriority(a, costume, data, preferParam, preferred),
-    );
-
-  if (fillers.length > FIXED_COSTUME_FILLER_POOL) {
-    fillers = fillers.slice(0, FIXED_COSTUME_FILLER_POOL);
-  }
-
-  const top: TeamEvaluation[] = [];
-  const byStats: TeamEvaluation[] = [];
-  const byCoverage: TeamEvaluation[] = [];
-  const byAvgScoreUp: TeamEvaluation[] = [];
-  const prPool: TeamEvaluation[] = [];
-  let searched = 0;
-
-  for (const fill of combinations(fillers, need)) {
-    const combo = [...requiredList, ...fill];
-    if (comboHasDuplicateMembers(combo)) continue;
-    for (const teamCards of enumerateCardTeams(combo)) {
-      if (hasDuplicateMembers(teamCards)) continue;
-      const captainOnTeam = options.fixedLeader
-        ? teamCards.findIndex((c) => c.member === options.fixedLeader)
-        : -1;
-      const leaderIndex = captainOnTeam >= 0 ? captainOnTeam : -1;
-      const ev = evaluateTeam(teamCards, leaderIndex, costume, data, songLength);
-      searched += 1;
-      recordCandidate(
-        ev,
-        top,
-        byStats,
-        byCoverage,
-        byAvgScoreUp,
-        prPool,
-        maxResults,
-        maxPerTrack,
-        prPoolSize,
-        allowDup,
-      );
-    }
-  }
-
-  const result = finishResult(
-    byStats,
-    byCoverage,
-    byAvgScoreUp,
-    prPool,
-    searched,
-    started,
-    maxPerTrack,
-    baseline,
-  );
-
-  if (!baseline && wanted.length === 0 && !options.memberPool?.length && options.fixedCostumeId && options.fixedLeader) {
-    const base = pickBaselineTeam(result);
-    return finishResult(
-      byStats,
-      byCoverage,
-      byAvgScoreUp,
-      prPool,
-      searched,
-      started,
-      maxPerTrack,
-      base,
-    );
-  }
-
-  return result;
-}
-
-export function optimizeTeam(data: GameData, options: OptimizeOptions): OptimizeResult {
+async function runOptimizeTeam(
+  data: GameData,
+  options: OptimizeOptions,
+  cooperative: boolean,
+): Promise<OptimizeResult> {
   const started = performance.now();
   const maxResults = options.maxResults ?? 8;
   const songLength = options.songLength;
@@ -829,11 +797,13 @@ export function optimizeTeam(data: GameData, options: OptimizeOptions): Optimize
   const allowDup = options.allowDuplicateSkills !== false;
   const wanted = (options.fixedMembers ?? []).filter((m) => m && m !== options.fixedLeader);
 
-  // PR baseline: full-pool strongest under this costume (same as 最強編隊).
+  // PR baseline: full-pool exhaustive search (cached when possible).
   let baseline: TeamEvaluation | null = null;
   if (options.fixedLeader && options.fixedCostumeId) {
-    if (wanted.length > 0 || (options.memberPool?.length ?? 0) > 0) {
-      baseline = computePrBaselineTeam(data, options);
+    const unconstrainedExhaustive =
+      options.exhaustive && wanted.length === 0 && !(options.memberPool?.length ?? 0);
+    if (!unconstrainedExhaustive) {
+      baseline = await computePrBaselineTeam(data, options, cooperative);
     }
   }
 
@@ -908,6 +878,8 @@ export function optimizeTeam(data: GameData, options: OptimizeOptions): Optimize
 
   const need = 5 - requiredList.length;
 
+  await reportSearchProgress(0, started, options, "search", cooperative);
+
   for (const fill of combinations(fillers, need)) {
     const combo = [...requiredList, ...fill];
     if (comboHasDuplicateMembers(combo)) continue;
@@ -920,6 +892,7 @@ export function optimizeTeam(data: GameData, options: OptimizeOptions): Optimize
         const leaderIndex = captainOnTeam >= 0 ? captainOnTeam : -1;
         const ev = evaluateTeam(teamCards, leaderIndex, costumePrefer, data, songLength);
         searched += 1;
+        await reportSearchProgress(searched, started, options, "search", cooperative);
         recordCandidate(
           ev,
           top,
@@ -951,6 +924,7 @@ export function optimizeTeam(data: GameData, options: OptimizeOptions): Optimize
         for (const costume of sortedCostumes) {
           const ev = evaluateTeam(teamCards, leaderIndex, costume, data, songLength);
           searched += 1;
+          await reportSearchProgress(searched, started, options, "search", cooperative);
           recordCandidate(
             ev,
             top,
@@ -997,17 +971,36 @@ export function optimizeTeam(data: GameData, options: OptimizeOptions): Optimize
   return result;
 }
 
+/** Full team search. Set cooperative=false for offline scripts (no UI yields). */
+export async function optimizeTeamAsync(
+  data: GameData,
+  options: OptimizeOptions,
+  cooperative = true,
+): Promise<OptimizeResult> {
+  return runOptimizeTeam(data, options, cooperative);
+}
+
+/** @deprecated Use optimizeTeamAsync — kept for scripts. */
+export function optimizeTeam(_data: GameData, _options: OptimizeOptions): OptimizeResult {
+  throw new Error("optimizeTeam is async — use await optimizeTeamAsync(data, options, false) in scripts");
+}
+
 /** Heuristic for large boxes: seed from strong owned costumes, then fill. */
-export function optimizeTeamFast(data: GameData, options: OptimizeOptions): OptimizeResult {
+export async function optimizeTeamFastAsync(
+  data: GameData,
+  options: OptimizeOptions,
+): Promise<OptimizeResult> {
   const ownedCount = new Set(
     data.cards.filter((c) => options.ownedCardIds.has(c.id)).map((c) => c.member),
   ).size;
 
   const required = new Set<string>(options.fixedMembers ?? []);
 
-  // Fixed captain costume: full enumeration (captain may be off-team).
-  if (options.fixedLeader && options.fixedCostumeId) return optimizeTeam(data, options);
-  if (ownedCount <= 28 || required.size >= 2) return optimizeTeam(data, options);
+  // Fixed captain costume: full C(n,5) enumeration (captain may be off-team).
+  if (options.fixedLeader && options.fixedCostumeId) {
+    return optimizeTeamAsync(data, { ...options, exhaustive: true }, true);
+  }
+  if (ownedCount <= 28 || required.size >= 2) return optimizeTeamAsync(data, options, true);
 
   const started = performance.now();
   const maxResults = options.maxResults ?? 8;
@@ -1045,6 +1038,8 @@ export function optimizeTeamFast(data: GameData, options: OptimizeOptions): Opti
   let searched = 0;
   const members = [...byMember.keys()];
 
+  await reportSearchProgress(0, started, options, "search", true);
+
   for (const costume of ownedCostumes.slice(0, 40)) {
     if (required.size && !required.has(costume.member) && options.fixedLeader) continue;
     const leaderCard = pick(costume.member, costume);
@@ -1073,6 +1068,7 @@ export function optimizeTeamFast(data: GameData, options: OptimizeOptions): Opti
       if (hasDuplicateMembers(teamCards)) continue;
       const ev = evaluateTeam(teamCards, 0, costume, data, options.songLength);
       searched += 1;
+      await reportSearchProgress(searched, started, options, "search", true);
       recordCandidate(
         ev,
         top,
@@ -1089,7 +1085,12 @@ export function optimizeTeamFast(data: GameData, options: OptimizeOptions): Opti
   }
 
   if (!byStats.length && !byCoverage.length && !byAvgScoreUp.length) {
-    return optimizeTeam(data, options);
+    return optimizeTeamAsync(data, options, true);
+  }
+
+  let fastBaseline: TeamEvaluation | null = null;
+  if (options.fixedLeader && options.fixedCostumeId) {
+    fastBaseline = await computePrBaselineTeam(data, options, true);
   }
 
   return finishResult(
@@ -1100,6 +1101,11 @@ export function optimizeTeamFast(data: GameData, options: OptimizeOptions): Opti
     searched,
     started,
     maxPerTrack,
-    null,
+    fastBaseline,
   );
+}
+
+/** @deprecated Use optimizeTeamFastAsync */
+export function optimizeTeamFast(_data: GameData, _options: OptimizeOptions): OptimizeResult {
+  throw new Error("optimizeTeamFast is async — use optimizeTeamFastAsync");
 }

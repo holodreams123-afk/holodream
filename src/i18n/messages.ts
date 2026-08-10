@@ -14,6 +14,10 @@ export type Messages = {
   brandSub: string;
   heroMascotSub: string;
   lastUpdated: (date: string) => string;
+  updateNotesBtn: string;
+  updateNotesTitle: string;
+  updateNotesClose: string;
+  updateNotesItems: string[];
   footer: string;
   langAria: string;
   themeAria: string;
@@ -75,6 +79,8 @@ export type Messages = {
   prBaselineBtn: string;
   prBaselineBtnTitle: string;
   prBaselineBtnUnavailable: string;
+  prBaselineBtnNeedCostume: string;
+  prBaselineBtnLoading: string;
   prBaselineViewBanner: string;
   calcRulesBtn: string;
   calcRulesTitle: string;
@@ -89,6 +95,12 @@ export type Messages = {
   calcRulesBonusBody: string;
   calcRulesPanelTitle: string;
   calcRulesPanelBody: string;
+  siteNoticeBtn: string;
+  siteNoticeTitle: string;
+  siteNoticeLead: string;
+  siteNoticeSections: Array<{ title: string; body: string }>;
+  siteNoticeDontShow: string;
+  siteNoticeConfirm: string;
   allowDupSkills: string;
   allowDupSkillsHint: string;
   skillDupWarn: string;
@@ -104,6 +116,9 @@ export type Messages = {
   costumeSkill: string;
   activated: string;
   notActivated: string;
+  activeBonusOn: string;
+  activeBonusOff: string;
+  activeBonusAssumed: string;
   allPassives: string;
   satisfied: string;
   notAllSatisfied: string;
@@ -116,6 +131,7 @@ export type Messages = {
   strengthCostume: string;
   strengthHoloPanel: string;
   strengthPassive: string;
+  strengthPassiveScoreOnly: string;
   panelEffect: string;
   panelLine: (unit: string, roster: number, value: number) => string;
   scoreBonus: string;
@@ -128,6 +144,8 @@ export type Messages = {
   activeSkillCoverage: string;
   activeSkillGap: string;
   activeCoverageHint: string;
+  timelineCoverageHint: string;
+  activeIntervalMeta: (interval: number, duration: number) => string;
   activeCoverageGapTotal: (sec: string) => string;
   activeCoverageSummary: (pct: string, sec: string) => string;
   timelineMemberSettings: string;
@@ -157,6 +175,7 @@ export type Messages = {
   fabTitleReady: string;
   fabBusy: string;
   fabBusyEstimate: (min: number) => string;
+  fabBusyProgress: (searched: number, phase: "baseline" | "search") => string;
   fabRun: string;
   fabPickLeader: string;
   alertWantedMax: string;
@@ -262,6 +281,18 @@ const zh: Messages = {
   brandSub: "製作者 108_虎太郎 · ホロドリ便利ツール",
   heroMascotSub: "小惡魔",
   lastUpdated: (date) => `最近更新 ${date}`,
+  updateNotesBtn: "更新說明",
+  updateNotesTitle: "2026年8月10日 更新內容",
+  updateNotesClose: "知道了",
+  updateNotesItems: [
+    "編隊改為全窮舉（全池約 600 萬組），移除 32 人快速路徑",
+    "PR 9999 基準必須窮舉；有快取直接使用，不再重算",
+    "最強編隊／現有編隊皆可從快取查看 PR 9999 基準",
+    "計算中顯示已試幾組，避免以為當掉",
+    "新增進站使用須知公告（使用須知可再開）",
+    "修正第 5 位成員技能頻率無法顯示",
+    "PR 算法 v3：戰力公式、文案與快取一致性修正",
+  ],
   footer: "製作者 108_虎太郎 · 資料對照 Game8 / AppMedia / Gamerch",
   langAria: "介面語言",
   themeAria: "功能主題",
@@ -289,7 +320,7 @@ const zh: Messages = {
     "隊長僅決定衣裝技能，編成五員不必包含隊長。指定隊員固定入隊，其餘由系統補齊。",
   priority1: "隊長衣裝技能",
   priority2: "被動全部滿足",
-  priority3: (sec) => `有效 Score UP / 覆蓋率（${sec}s）`,
+  priority3: (sec) => `戰力 / PR 優先（輔：平均 Score UP、覆蓋率 · ${sec}s 曲）`,
   priority4: "加成後三圍總和",
   captainTitle: "① 選擇隊長",
   labelGen: "期數 / 分組",
@@ -327,10 +358,12 @@ const zh: Messages = {
   trackOverallDesc:
     "衣裝＋被動前提下，總合力×分數加成（戰力）相對「同衣裝無指定隊員最強隊」PR 前 8",
   prBaselineNote:
-    "PR＝戰力相對基準（9999）。總合力＝成員能力＋服裝技能＋被動技能（不含 Holo 成員面板、回憶卡、成員強化）；分數加成含主動＋被動＋SP（不含 Holo 分數面板）。",
+    "PR＝戰力相對基準（9999）。總合力＝成員能力＋服裝技能＋被動（三圍 buff）；分數加成＝主動＋被動分數加成＋SP。皆不含 Holo 面板、回憶卡、成員強化。",
   prBaselineBtn: "PR 9999",
   prBaselineBtnTitle: "查看同衣裝、無指定隊員時的最強編隊（PR 基準）",
-  prBaselineBtnUnavailable: "需先選定隊長衣裝並計算編隊",
+  prBaselineBtnUnavailable: "此衣裝尚無 PR 基準快取",
+  prBaselineBtnNeedCostume: "請先選定隊長衣裝",
+  prBaselineBtnLoading: "載入 PR 基準快取…",
   prBaselineViewBanner: "PR 9999 基準編隊 — 同衣裝、無指定隊員、全池 ★5＋活動最強",
   calcRulesBtn: "計算規則",
   calcRulesTitle: "PR 與戰力怎麼算？",
@@ -342,12 +375,44 @@ const zh: Messages = {
   calcRulesCombatBody: "戰力 ＝ 總合力 ×（1 ＋ 分數加成% ÷ 100）",
   calcRulesStrengthTitle: "總合力",
   calcRulesStrengthBody:
-    "與遊戲「隊伍分數詳情」相近，取三項相加：\n①成員能力\n②服裝技能\n③被動技能（三圍 buff）\n不含 Holo 成員面板、回憶卡效果、成員強化加成。",
+    "與遊戲「隊伍分數詳情」相近，取三項相加：\n①成員能力\n②服裝技能\n③被動（三圍 buff）\n不含 Holo 成員面板、回憶卡、成員強化。被動「分數加成」算在右欄分數加成，不計入此處。",
   calcRulesBonusTitle: "分數加成",
   calcRulesBonusBody:
-    "主動 Score UP ＋ 被動分數加成 ＋ SP 技能。不含 Holo 的分數面板。",
+    "主動平均 Score UP（計算必發、不計機率；體力／連擊加碼假定達成）＋被動分數加成＋ SP。短縮率僅影響下方時間軸，不影響 PR。不含 Holo 分數面板。",
   calcRulesPanelTitle: "Holo 總合力面板",
   calcRulesPanelBody: "依期別在隊人數：5 人期每人 +1500、4 人期 +1200、3 人期 +1350。",
+  siteNoticeBtn: "使用須知",
+  siteNoticeTitle: "使用須知（請先讀）",
+  siteNoticeLead:
+    "本工具供編隊參考；下列事項已多次說明，使用前請務必閱讀，以免重複詢問。",
+  siteNoticeSections: [
+    {
+      title: "使用初衷",
+      body: "在指定隊長衣裝下窮舉搜尋高 PR 編隊。PR 9999 為同衣裝、無指定隊員、全池 ★5＋活動的最強基準（每衣裝一組）。",
+    },
+    {
+      title: "隊員順序 ≠ 推薦擺位",
+      body: "每首歌得分點不同，本工具不計算場上先後順序。結果 1～5 僅供辨識成員，不是遊戲內推薦站位，請依該曲得分點自行調整。",
+    },
+    {
+      title: "未納入 PR 計算",
+      body: "Holo 成員藍色面板（預設視為全員點滿且加成相同）、回憶卡、成員強化。欄位放誰對三圍專精向編隊影響較大，請自行斟酌。",
+    },
+    {
+      title: "PR 與時間軸",
+      body: "戰力＝總合力×分數加成。CDR（技能短縮）只影響下方時間軸，不影響 PR。",
+    },
+    {
+      title: "「X 期 2 名以上」類技能",
+      body: "以該隊符合條件、該能力數值最高的前 2 名計加成；即使超過 2 人符合，仍是數值高者受益。",
+    },
+    {
+      title: "計算為何較久",
+      body: "全池窮舉約 600 萬組編隊，在瀏覽器本機運算，速度受 CPU 影響；手機或舊電腦可能更慢。按鈕會顯示已試幾組，有 PR 快取會快很多。計算中請保持分頁在前景。",
+    },
+  ],
+  siteNoticeDontShow: "不再顯示此公告",
+  siteNoticeConfirm: "我已閱讀",
   allowDupSkills: "允許主動技能重複",
   allowDupSkillsHint: "關閉後排除主動 Score UP 時程／倍率相同的編成",
   skillDupWarn: "主動技能重複",
@@ -356,13 +421,16 @@ const zh: Messages = {
   trackStatsDesc: "衣裝＋被動優先，加成後三圍前 8",
   trackCoverage: "技能覆蓋率",
   trackCoverageDesc: "衣裝＋被動優先，覆蓋率前 8",
-  trackScore: "平均分數加成",
-  trackScoreDesc: "衣裝＋被動優先，平均 UP% 前 8",
+  trackScore: "平均 Score UP",
+  trackScoreDesc: "衣裝＋被動優先，主動平均 UP% 前 8（不含被動分數加成）",
   noTrackTeams: "此導向沒有可用編成。",
   pickTeamDetail: "請選擇左側其中一組編成查看詳情。",
   costumeSkill: "衣裝技能",
   activated: "發動",
   notActivated: "未發動",
+  activeBonusOn: "加碼：發動",
+  activeBonusOff: "加碼：未發動",
+  activeBonusAssumed: "加碼：假定達成（體力／連擊）",
   allPassives: "被動全部",
   satisfied: "滿足",
   notAllSatisfied: "未全滿",
@@ -370,11 +438,12 @@ const zh: Messages = {
   coveragePct: (n) => `覆蓋 ${n}%`,
   buffedStats: "加成後三圍",
   totalStrength: "總合力",
-  totalStrengthNote: "不含回憶卡效果、成員強化加成",
+  totalStrengthNote: "不含 Holo 成員面板、回憶卡、成員強化",
   strengthMember: "成員能力",
   strengthCostume: "服裝技能",
   strengthHoloPanel: "Holo 成員面板",
-  strengthPassive: "被動技能",
+  strengthPassive: "被動（三圍）",
+  strengthPassiveScoreOnly: "此隊被動皆為分數加成 → 見「分數加成・被動」",
   panelEffect: "Holo 面板",
   panelLine: (unit, roster, value) => `${unit}（${roster}人）+${value}`,
   scoreBonus: "分數加成",
@@ -386,7 +455,9 @@ const zh: Messages = {
   baseStats: (n) => `基礎 ${n}`,
   activeSkillCoverage: "主動技能覆蓋率",
   activeSkillGap: "技能空窗期",
-  activeCoverageHint: "越高越好 · 含短縮率 · 僅主動 A · 必定觸發",
+  activeCoverageHint: "越高越好 · 不含短縮率 · 與 PR 一致 · 主動 A 必發",
+  timelineCoverageHint: "含短縮率 · 不影響 PR",
+  activeIntervalMeta: (interval, duration) => `每${interval}秒 · ${duration}秒`,
   activeCoverageGapTotal: (sec) => `${sec} 秒`,
   timelineMemberSettings: "時間軸設定",
   cooldownReduction: "短縮",
@@ -418,6 +489,8 @@ const zh: Messages = {
   fabTitleReady: "計算最佳配對",
   fabBusy: "計算中…",
   fabBusyEstimate: (min) => `預估約 ${min} 分鐘`,
+  fabBusyProgress: (searched, phase) =>
+    `${phase === "baseline" ? "PR 基準" : "編隊"}：已試 ${searched.toLocaleString()} 組`,
   fabRun: "計算編隊",
   fabPickLeader: "先選隊長",
   alertWantedMax: "想要的隊員最多 5 位",
@@ -525,6 +598,18 @@ const en: Messages = {
   brandSub: "by 108_虎太郎 · Holodori utility",
   heroMascotSub: "Devil Princess",
   lastUpdated: (date) => `Last updated ${date}`,
+  updateNotesBtn: "What's new",
+  updateNotesTitle: "Aug 10, 2026 update",
+  updateNotesClose: "Got it",
+  updateNotesItems: [
+    "Team search is fully exhaustive (~6M combos full pool); fast path removed",
+    "PR 9999 baseline is always exhaustive; uses cache when available",
+    "PR 9999 baseline readable from cache in both optimize & roster modes",
+    "Progress counter while calculating (teams tried)",
+    "First-visit usage notice (reopen via Notice button)",
+    "Fixed skill frequency display for 5th member on timeline",
+    "PR algo v3: combat power formula, copy & cache consistency fixes",
+  ],
   footer: "Created by 108_虎太郎 · Data cross-checked with Game8 / AppMedia / Gamerch",
   langAria: "Interface language",
   themeAria: "Features",
@@ -552,7 +637,7 @@ const en: Messages = {
     "Pick a captain for the costume skill. The 5 lineup members need not include the captain—lock up to 5 wanted picks; the rest are filled automatically.",
   priority1: "Captain costume skill",
   priority2: "All passives met",
-  priority3: (sec) => `Effective Score UP / coverage (${sec}s)`,
+  priority3: (sec) => `Combat power / PR first (tie: avg Score UP, coverage · ${sec}s)`,
   priority4: "Buffed total stats",
   captainTitle: "① Choose captain",
   labelGen: "Generation / group",
@@ -592,10 +677,12 @@ const en: Messages = {
   trackOverallDesc:
     "Costume + all passives; PR top 8 by combat power (strength × score bonus) vs unconstrained baseline",
   prBaselineNote:
-    "PR = combat power vs baseline (9999). Total strength = member ability + costume + passive (excl. Holo member panel, memory & enhancement); score bonus = active + passive + SP (excl. Holo score panel).",
+    "PR = combat power vs baseline (9999). Total strength = member + costume + passive stat buffs; score bonus = active + passive score support + SP. Excl. Holo panels, memory cards, enhancement.",
   prBaselineBtn: "PR 9999",
   prBaselineBtnTitle: "View the unconstrained strongest team for this costume (PR baseline)",
-  prBaselineBtnUnavailable: "Choose captain costume and run optimization first",
+  prBaselineBtnUnavailable: "No PR baseline cache for this costume",
+  prBaselineBtnNeedCostume: "Choose captain costume first",
+  prBaselineBtnLoading: "Loading PR baseline cache…",
   prBaselineViewBanner:
     "PR 9999 baseline — strongest team for this costume with no locked members (full ★5 + event pool)",
   calcRulesBtn: "How PR works",
@@ -608,12 +695,44 @@ const en: Messages = {
   calcRulesCombatBody: "Combat power = total strength × (1 + score bonus% ÷ 100)",
   calcRulesStrengthTitle: "Total strength",
   calcRulesStrengthBody:
-    "Close to in-game team score details — three parts:\n① member ability\n② costume skill\n③ passive skill (stat buffs)\nExcludes Holo member panel, memory cards, and member enhancement.",
+    "Close to in-game team score details:\n① member ability\n② costume skill\n③ passive (stat buffs only)\nExcl. Holo member panel, memory, enhancement. Passive score support counts under Score bonus, not here.",
   calcRulesBonusTitle: "Score bonus",
   calcRulesBonusBody:
-    "Active Score UP + passive score support + SP skills. Excludes Holo score panel.",
+    "Avg active Score UP (always proc, no probability; life/combo bonus assumed) + passive score support + SP. CDR affects timeline only, not PR. Excl. Holo score panel.",
   calcRulesPanelTitle: "Holo strength panel",
   calcRulesPanelBody: "Per member on team by generation size: 5-member +1500, 4-member +1200, 3-member +1350.",
+  siteNoticeBtn: "Notice",
+  siteNoticeTitle: "Please read first",
+  siteNoticeLead:
+    "Team-building reference only. These points are documented here — please read before asking.",
+  siteNoticeSections: [
+    {
+      title: "Purpose",
+      body: "Exhaustive search for high-PR teams under a captain costume. PR 9999 = strongest baseline per costume (full ★5 + event pool, no locked members).",
+    },
+    {
+      title: "Member order ≠ recommended slots",
+      body: "Score beats differ per song. We do not compute in-game slot order. List numbers 1–5 are labels only — arrange slots yourself per song.",
+    },
+    {
+      title: "Excluded from PR",
+      body: "Holo member blue panels (assumed maxed, equal bonus), memory cards, member enhancement. Slot placement matters for stat-focused teams — use your judgment.",
+    },
+    {
+      title: "PR vs timeline",
+      body: "Combat power = total strength × score bonus. CDR affects the timeline only, not PR.",
+    },
+    {
+      title: "“2+ from generation” skills",
+      body: "Bonus applies to the top 2 qualifying members by that stat; extra qualifying members do not stack beyond the best two.",
+    },
+    {
+      title: "Why calculation takes time",
+      body: "Full-pool exhaustive search tries ~6 million team combos in your browser. Speed depends on CPU; phones and older PCs may be slower. The button shows progress; PR cache helps a lot. Keep the tab in foreground while calculating.",
+    },
+  ],
+  siteNoticeDontShow: "Don't show again",
+  siteNoticeConfirm: "I've read this",
   allowDupSkills: "Allow duplicate active skills",
   allowDupSkillsHint: "Off excludes teams whose active Score UP timing/potency match",
   skillDupWarn: "Duplicate active skills",
@@ -624,12 +743,15 @@ const en: Messages = {
   trackCoverage: "Skill coverage",
   trackCoverageDesc: "Costume + passives first, then coverage — top 8",
   trackScore: "Avg Score UP",
-  trackScoreDesc: "Costume + passives first, then average UP% — top 8",
+  trackScoreDesc: "Costume + passives first, active avg UP% top 8 (excl. passive score support)",
   noTrackTeams: "No teams for this ranking focus.",
   pickTeamDetail: "Select a team on the left to see details.",
   costumeSkill: "Costume skill",
   activated: "On",
   notActivated: "Off",
+  activeBonusOn: "Bonus: on",
+  activeBonusOff: "Bonus: off",
+  activeBonusAssumed: "Bonus: assumed (life/combo)",
   allPassives: "All passives",
   satisfied: "Met",
   notAllSatisfied: "Incomplete",
@@ -637,11 +759,12 @@ const en: Messages = {
   coveragePct: (n) => `Coverage ${n}%`,
   buffedStats: "Buffed stats",
   totalStrength: "Total strength",
-  totalStrengthNote: "Excl. memory cards & member enhancement",
+  totalStrengthNote: "Excl. Holo member panel, memory cards, enhancement",
   strengthMember: "Member ability",
   strengthCostume: "Costume skill",
   strengthHoloPanel: "Holo member panel",
-  strengthPassive: "Passive skill",
+  strengthPassive: "Passive (stats)",
+  strengthPassiveScoreOnly: "Passives here are score bonus only → see Score bonus · Passive",
   panelEffect: "Holo panel",
   panelLine: (unit, roster, value) => `${unit} (${roster}) +${value}`,
   scoreBonus: "Score bonus",
@@ -653,7 +776,9 @@ const en: Messages = {
   baseStats: (n) => `Base ${n}`,
   activeSkillCoverage: "Active skill coverage",
   activeSkillGap: "Skill gaps",
-  activeCoverageHint: "Higher is better · incl. CDR · active A · always on",
+  activeCoverageHint: "Higher is better · no CDR · matches PR · active always on",
+  timelineCoverageHint: "Includes CDR · does not affect PR",
+  activeIntervalMeta: (interval, duration) => `${interval}s / ${duration}s`,
   activeCoverageGapTotal: (sec) => `${sec}s`,
   timelineMemberSettings: "Timeline settings",
   cooldownReduction: "CDR",
@@ -685,6 +810,8 @@ const en: Messages = {
   fabTitleReady: "Find the best team",
   fabBusy: "Working…",
   fabBusyEstimate: (min) => `Est. ~${min} min`,
+  fabBusyProgress: (searched, phase) =>
+    `${phase === "baseline" ? "PR baseline" : "Teams"}: ${searched.toLocaleString()} tried`,
   fabRun: "Build team",
   fabPickLeader: "Pick captain",
   alertWantedMax: "You can lock at most 5 wanted members",
@@ -792,6 +919,18 @@ const ja: Messages = {
   brandSub: "制作 108_虎太郎 · ホロドリ補助ツール",
   heroMascotSub: "小悪魔",
   lastUpdated: (date) => `最終更新 ${date}`,
+  updateNotesBtn: "更新内容",
+  updateNotesTitle: "2026年8月10日 更新",
+  updateNotesClose: "閉じる",
+  updateNotesItems: [
+    "編成を全探索に（全池約600万）、高速パス削除",
+    "PR9999基準は必ず全探索、キャッシュがあれば再利用",
+    "最強／所持編成どちらもPR9999をキャッシュから表示可能",
+    "計算中に試行数を表示",
+    "初回利用須知を追加（利用須知から再表示）",
+    "5人目のスキル頻度表示を修正",
+    "PR算法v3：戦力・文言・キャッシュ整合",
+  ],
   footer: "制作 108_虎太郎 · データ照合：Game8 / AppMedia / Gamerch",
   langAria: "表示言語",
   themeAria: "機能メニュー",
@@ -819,7 +958,7 @@ const ja: Messages = {
     "キャプテンは衣装スキル用。編成5人にキャプテン本人は不要。入れたいメンバーを最大5人まで固定し、残りは自動で埋めます。",
   priority1: "キャプテン衣装スキル",
   priority2: "パッシブ全達成",
-  priority3: (sec) => `有効 Score UP / カバー率（${sec}秒）`,
+  priority3: (sec) => `戦力／PR優先（補助：平均 Score UP・カバー率 · ${sec}秒）`,
   priority4: "バフ後ステータス合計",
   captainTitle: "① キャプテン選択",
   labelGen: "期生 / グループ",
@@ -859,10 +998,12 @@ const ja: Messages = {
   trackOverallDesc:
     "衣装＋パッシブ成立時、総合力×分数ボーナス（戦力）を同衣装・指名なし最強編成と比較したPR上位8",
   prBaselineNote:
-    "PR＝基準に対する戦力（9999）。総合力＝メンバー能力＋衣装＋パッシブ（Holoメンバーパネル・思い出・強化除く）；分数ボーナス＝アク＋パッ＋SP（Holo分数パネル除く）。",
+    "PR＝基準に対する戦力（9999）。総合力＝メンバー能力＋衣装＋パッシブ（ステバフ）；分数ボーナス＝アク＋パッ分数＋SP。Holoパネル・思い出・強化は含まない。",
   prBaselineBtn: "PR 9999",
   prBaselineBtnTitle: "同衣装・指名なし最強編成（PR基準）を表示",
-  prBaselineBtnUnavailable: "先にキャプテン衣装を選び編成を計算してください",
+  prBaselineBtnUnavailable: "この衣装のPR基準キャッシュがありません",
+  prBaselineBtnNeedCostume: "先にキャプテン衣装を選んでください",
+  prBaselineBtnLoading: "PR基準キャッシュを読込中…",
   prBaselineViewBanner:
     "PR9999基準編成 — 同衣装・指名なし・★5＋イベント全池最強",
   calcRulesBtn: "計算ルール",
@@ -875,12 +1016,44 @@ const ja: Messages = {
   calcRulesCombatBody: "戦力 ＝ 総合力 ×（1 ＋ 分数ボーナス% ÷ 100）",
   calcRulesStrengthTitle: "総合力",
   calcRulesStrengthBody:
-    "ゲーム「隊伍分數詳情」に近い3項目：\n①メンバー能力\n②衣装スキル\n③パッシブ（ステバフ）\nHoloメンバーパネル・思い出カード・メンバー強化は含まない。",
+    "ゲーム「隊伍分數詳情」に近い3項目：\n①メンバー能力\n②衣装スキル\n③パッシブ（ステバフのみ）\nHoloメンバーパネル・思い出・強化は含まない。パッ分数サポートは分数ボーナス側。",
   calcRulesBonusTitle: "分数ボーナス",
   calcRulesBonusBody:
-    "アクティブ Score UP ＋ パッシブサポート ＋ SP。Holo分数パネルは含まない。",
+    "アク平均 Score UP（必発・確率なし；ライフ／コンボ加碼は達成想定）＋パッ分数＋SP。短縮は時間軸のみ、PRに影響しない。Holo分数パネル除く。",
   calcRulesPanelTitle: "Holo総合力パネル",
   calcRulesPanelBody: "期生人数：5人期 +1500/人、4人期 +1200、3人期 +1350。",
+  siteNoticeBtn: "利用須知",
+  siteNoticeTitle: "利用須知（必読）",
+  siteNoticeLead:
+    "編成参考ツールです。以下は度々説明している内容なので、使用前にご確認ください。",
+  siteNoticeSections: [
+    {
+      title: "目的",
+      body: "キャプテン衣装指定でPRの高い編成を全探索。PR9999は同衣装・指名なし・★5＋イベント全池の基準（衣装ごとに1組）。",
+    },
+    {
+      title: "並び順 ≠ おすすめ配置",
+      body: "曲ごとに得点箇所が異なります。場内順序は計算しません。1～5は識別用で、ゲーム内の推奨位置ではありません。",
+    },
+    {
+      title: "PRに含めないもの",
+      body: "Holo青パネル（全員MAX・同加成想定）、思い出カード、メンバー強化。枠配置は三圍特化に影響するため自己判断を。",
+    },
+    {
+      title: "PRとタイムライン",
+      body: "戦力＝総合力×分数ボーナス。CDRはタイムラインのみでPRに影響しません。",
+    },
+    {
+      title: "「○期2名以上」系スキル",
+      body: "条件を満たす中で該当ステータス上位2名に加成。2名超えても高い方が優先されます。",
+    },
+    {
+      title: "計算が長い理由",
+      body: "全池全探索は約600万編成をブラウザで計算します。CPU依存でスマホ・古いPCは遅くなりがち。試行数を表示します。PRキャッシュがあれば高速。計算中はタブを前面に。",
+    },
+  ],
+  siteNoticeDontShow: "今後表示しない",
+  siteNoticeConfirm: "読みました",
   allowDupSkills: "同一アクティブスキルを許可",
   allowDupSkillsHint: "OFFにすると Score UP の間隔・倍率などが同じ編成を除外",
   skillDupWarn: "アクティブスキル重複",
@@ -891,12 +1064,15 @@ const ja: Messages = {
   trackCoverage: "スキルカバー率",
   trackCoverageDesc: "衣装＋パッシブ優先、カバー率上位8",
   trackScore: "平均スコアUP",
-  trackScoreDesc: "衣装＋パッシブ優先、平均UP%上位8",
+  trackScoreDesc: "衣装＋パッシブ優先、アク平均UP%上位8（パッ分数除く）",
   noTrackTeams: "この観点の編成はありません。",
   pickTeamDetail: "左の編成を選ぶと詳細を表示します。",
   costumeSkill: "衣装スキル",
   activated: "発動",
   notActivated: "未発動",
+  activeBonusOn: "ボーナス：発動",
+  activeBonusOff: "ボーナス：未発動",
+  activeBonusAssumed: "ボーナス：達成想定（ライフ／コンボ）",
   allPassives: "パッシブ全体",
   satisfied: "達成",
   notAllSatisfied: "未達",
@@ -904,11 +1080,12 @@ const ja: Messages = {
   coveragePct: (n) => `カバー ${n}%`,
   buffedStats: "バフ後ステ",
   totalStrength: "総合力",
-  totalStrengthNote: "思い出カード・メンバー強化は含まない",
+  totalStrengthNote: "Holoメンバーパネル・思い出・強化は含まない",
   strengthMember: "メンバー能力",
   strengthCostume: "衣装スキル",
   strengthHoloPanel: "Holoメンバーパネル",
-  strengthPassive: "パッシブスキル",
+  strengthPassive: "パッシブ（ステ）",
+  strengthPassiveScoreOnly: "分数のみのパッ → 「分数ボーナス・パッ」参照",
   panelEffect: "Holoパネル",
   panelLine: (unit, roster, value) => `${unit}（${roster}人）+${value}`,
   scoreBonus: "分数ボーナス",
@@ -920,7 +1097,9 @@ const ja: Messages = {
   baseStats: (n) => `基礎 ${n}`,
   activeSkillCoverage: "アクティブカバー率",
   activeSkillGap: "スキル空白期",
-  activeCoverageHint: "高いほど良 · 短縮込 · アクA · 必発動",
+  activeCoverageHint: "高いほど良 · 短縮なし · PRと一致 · アク必発",
+  timelineCoverageHint: "短縮込 · PRに影響しない",
+  activeIntervalMeta: (interval, duration) => `${interval}秒 / ${duration}秒`,
   activeCoverageGapTotal: (sec) => `${sec} 秒`,
   timelineMemberSettings: "タイムライン設定",
   cooldownReduction: "短縮",
@@ -952,6 +1131,8 @@ const ja: Messages = {
   fabTitleReady: "最適編成を計算",
   fabBusy: "計算中…",
   fabBusyEstimate: (min) => `約${min}分`,
+  fabBusyProgress: (searched, phase) =>
+    `${phase === "baseline" ? "PR基準" : "編成"}：${searched.toLocaleString()}通り試行`,
   fabRun: "編成を計算",
   fabPickLeader: "キャプテンを選ぶ",
   alertWantedMax: "入れたいメンバーは最大5人までです",

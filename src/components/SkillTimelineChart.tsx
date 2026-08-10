@@ -3,6 +3,8 @@ import type { TimeWindow, UncoveredGap } from "../lib/coverage";
 export interface SkillTimelineMemberRow {
   id: string;
   label: string;
+  /** e.g. "19s / 8s" — active interval / duration */
+  freqLabel?: string;
   windows: TimeWindow[];
   scoreUp: number;
 }
@@ -87,12 +89,21 @@ export function SkillTimelineChart({
 
         {members.map((member) => (
           <div key={member.id} className="skill-timeline-row skill-timeline-row--active">
-            <span className="skill-timeline-rowname">{member.label}</span>
+            <span className="skill-timeline-rowname">
+              {member.label}
+              {member.freqLabel ? (
+                <span className="skill-timeline-rowfreq">{member.freqLabel}</span>
+              ) : null}
+            </span>
             <div className="skill-timeline-lane">
+              {member.windows.length === 0 ? (
+                <span className="skill-timeline-empty">—</span>
+              ) : null}
               {member.windows.map((win, i) => {
                 const dur = win.end - win.start;
                 const left = pct(win.start, songLength);
                 const width = pct(dur, songLength);
+                const labelLeft = Math.max(1.5, Math.min(98.5, left));
                 return (
                   <span key={`${member.id}-${i}`}>
                     <span
@@ -100,7 +111,10 @@ export function SkillTimelineChart({
                       style={{ left: `${left}%`, width: `${width}%` }}
                       title={labels.activeTitle(member.scoreUp)}
                     />
-                    <span className="skill-timeline-event" style={{ left: `${left}%` }}>
+                    <span
+                      className="skill-timeline-event"
+                      style={{ left: `${labelLeft}%` }}
+                    >
                       {fmtSec(win.start)}
                     </span>
                   </span>

@@ -24,6 +24,7 @@ function formatActiveJp(a) {
   if (!a.bonus) return s;
   const c = a.bonus.condition;
   const up = a.bonus.scoreUp;
+  if (up == null || Number.isNaN(up)) return s;
   if (c?.type === "misc") {
     const t = a.bonus.conditionText || c.text || "";
     if (/コンボ/.test(t)) {
@@ -112,6 +113,13 @@ function formatCostumeJp(skill) {
   return `${cond}で${body}`;
 }
 
+function parseActiveBonusScoreUp(raw) {
+  const matches = [...String(raw ?? "").replace(/\s+/g, "").matchAll(/スコアが(\d+)%UP/gi)];
+  if (matches.length < 2) return null;
+  const v = +matches[matches.length - 1][1];
+  return Number.isFinite(v) && v > 0 ? v : null;
+}
+
 function parseCostumeFromJp(raw) {
   const text = String(raw ?? "").replace(/％/g, "%");
   const effects = [];
@@ -145,6 +153,20 @@ function parseCostumeFromJp(raw) {
 }
 
 const log = [];
+
+// Repair active bonus scoreUp (parseActive regex used wrong capture group).
+let bonusFixed = 0;
+for (const c of data.cards) {
+  const bonus = c.active?.bonus;
+  if (!bonus) continue;
+  const parsed = parseActiveBonusScoreUp(c.active.raw);
+  if (parsed == null) continue;
+  if (bonus.scoreUp == null || bonus.scoreUp !== parsed) {
+    bonus.scoreUp = parsed;
+    bonusFixed += 1;
+  }
+}
+if (bonusFixed) log.push(`Repaired active bonus scoreUp on ${bonusFixed} cards`);
 
 // --- Manual numeric / type fixes (verified vs AppMedia / Game8) ---
 for (const c of data.cards) {

@@ -133,8 +133,9 @@ function parseActive(text) {
       raw,
     };
   }
+  // Non-capturing inner groups so bonus score is always capture [2].
   const bonusMatch = t.match(
-    /(ライフ\d+以上|\d+コンボ以上|(ハッピータイプ|ピュアタイプ|キュートタイプ)\d+人以上|(0|1|2|3|4|5)期生|ゲーマーズ|holoX|ID[123]期生|Myth|Promise|Advent|ReGLOSSが\d+人以上)でスコアが(\d+)%UP/i,
+    /(ライフ\d+以上|\d+コンボ以上|(?:ハッピータイプ|ピュアタイプ|キュートタイプ)\d+人以上|(?:0|1|2|3|4|5)期生|ゲーマーズ|holoX|ID[123]期生|Myth|Promise|Advent|ReGLOSSが\d+人以上)でスコアが(\d+)%UP/i,
   );
   return {
     interval: +m[1],

@@ -90,7 +90,7 @@ Cloudflare 會擋大量惡意掃描／DDoS，流量不會進你家。
 
 ### PR 9999 快取（改版後）
 
-算法版本已 bump（`PR_BASELINE_ALGO_VERSION`）。上線前請在 Supabase 執行一次：
+目前 `PR_BASELINE_ALGO_VERSION = 3`（含 Active 加碼 scoreUp 修正、戰力＝總合力×分數加成）。上線前請在 Supabase 執行一次：
 
 ```sql
 -- scripts/supabase-pr-baselines-purge.sql
