@@ -1,0 +1,21 @@
+---
+description: Remind about feedback and PR cache before deploy/publish
+alwaysApply: true
+---
+
+# Pre-publish: feedback & PR cache
+
+When the user asks to **publish**, **deploy**, **push to gh-pages**, **go live**, or similar:
+
+1. **Feedback (Supabase)** — confirm before deploy:
+   - Ran `scripts/supabase-feedback.sql` in Supabase SQL editor
+   - Build env has `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`
+   - Without env vars, feedback falls back to localStorage + GitHub Issue
+
+2. **PR baseline purge (after algo bump)** — remind once if not done:
+   - Run `scripts/supabase-pr-baselines-purge.sql` to delete old `pr_baselines` rows
+   - New top-8 records use `PR_BASELINE_ALGO_VERSION` in cache_key
+
+3. Full checklist: `DEPLOY.md` → section「發布前檢查清單」
+
+Do not skip when deploying unless the user confirms Supabase SQL + secrets are already set.

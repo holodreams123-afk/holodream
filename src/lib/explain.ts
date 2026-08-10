@@ -1,18 +1,20 @@
 import type { Attr, Condition, Costume, GameData } from "../types";
-import type { Messages } from "../i18n/messages";
+import type { Locale, Messages } from "../i18n/messages";
+import { formatUnitLabel } from "./groups";
 import { displayName } from "./names";
 
 export function describeCondition(
   condition: Condition | null | undefined,
   t: Messages,
   attrLabel: (attr: Attr) => string,
+  locale: Locale = "zh",
 ): string {
   if (!condition) return t.condNone;
   if (condition.type === "typeCount") {
     return t.condTypeCount(attrLabel(condition.attr), condition.min);
   }
   if (condition.type === "unitCount") {
-    return t.condUnitCount(condition.unit, condition.min);
+    return t.condUnitCount(formatUnitLabel(condition.unit, locale), condition.min);
   }
   return condition.text;
 }
@@ -22,6 +24,7 @@ export function conditionProgress(
   typeCounts: Record<Attr, number>,
   unitCounts: Record<string, number>,
   attrLabel: (attr: Attr) => string,
+  locale: Locale = "zh",
 ): { current: number; needed: number; label: string } | null {
   if (!condition) return null;
   if (condition.type === "typeCount") {
@@ -35,7 +38,7 @@ export function conditionProgress(
     return {
       current: unitCounts[condition.unit] ?? 0,
       needed: condition.min,
-      label: condition.unit,
+      label: formatUnitLabel(condition.unit, locale),
     };
   }
   return null;

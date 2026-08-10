@@ -3,6 +3,12 @@ import type { TeamEvaluation } from "../types";
 
 export const SHARED_TOP_N = 8;
 
+/**
+ * Bump when PR / 總合力 formula or baseline ranking rules change.
+ * Invalidates bundled JSON, localStorage, and Supabase cache keys.
+ */
+export const PR_BASELINE_ALGO_VERSION = 2;
+
 export type PrTeamCacheEntry = {
   leaderIndex: number;
   cardIds: string[];
@@ -10,6 +16,8 @@ export type PrTeamCacheEntry = {
   coverage: number;
   avgScoreUp: number;
   powerRating?: number;
+  combatPower?: number;
+  scoreBonusPct?: number;
 };
 
 /** @deprecated Use PrTeamCacheEntry — kept for bundled JSON compat. */
@@ -17,6 +25,7 @@ export type PrBaselineEntry = PrTeamCacheEntry & { costumeId: string };
 
 type PrCostumeCacheFile = {
   version: number;
+  algorithmVersion: number;
   songLength: number;
   poolCardCount: number;
   generatedAt: string | null;
@@ -26,6 +35,7 @@ type PrCostumeCacheFile = {
 
 const bundled = cacheFile as unknown as PrCostumeCacheFile & {
   baselines?: Record<string, PrBaselineEntry>;
+  algorithmVersion?: number;
 };
 const LOCAL_STORAGE_KEY = "holodream-pr-baselines";
 
@@ -44,7 +54,11 @@ export function prBaselineCacheKey(
   songLength: number,
   poolCardCount: number,
 ): string {
-  return `${songLength}\u001f${poolCardCount}\u001f${costumeId}`;
+  return `${PR_BASELINE_ALGO_VERSION}\u001f${songLength}\u001f${poolCardCount}\u001f${costumeId}`;
+}
+
+function cacheAlgoMatches(algorithmVersion: number | undefined): boolean {
+  return algorithmVersion === PR_BASELINE_ALGO_VERSION;
 }
 
 export function sharedPrBaselineEnabled(): boolean {
@@ -54,6 +68,7 @@ export function sharedPrBaselineEnabled(): boolean {
 function emptyLocalCache(songLength: number, poolCardCount: number): PrCostumeCacheFile {
   return {
     version: 2,
+    algorithmVersion: PR_BASELINE_ALGO_VERSION,
     songLength,
     poolCardCount,
     generatedAt: null,
@@ -73,7 +88,11 @@ function normalizeBundledTeams(
   ) {
     return {};
   }
-  if (bundled.songLength !== songLength || bundled.poolCardCount !== poolCardCount) {
+  if (
+    bundled.songLength !== songLength ||
+    bundled.poolCardCount !== poolCardCount ||
+    !cacheAlgoMatches(bundled.algorithmVersion)
+  ) {
     return {};
   }
   if (bundled.costumes && Object.keys(bundled.costumes).length > 0) {
@@ -101,27 +120,17 @@ function readLocalCache(songLength: number, poolCardCount: number): PrCostumeCac
     if (!raw) return emptyLocalCache(songLength, poolCardCount);
     const parsed = JSON.parse(raw) as PrCostumeCacheFile & {
       baselines?: Record<string, PrBaselineEntry>;
+      algorithmVersion?: number;
     };
-    if (parsed.songLength !== songLength || parsed.poolCardCount !== poolCardCount) {
+    if (
+      parsed.songLength !== songLength ||
+      parsed.poolCardCount !== poolCardCount ||
+      !cacheAlgoMatches(parsed.algorithmVersion)
+    ) {
       return emptyLocalCache(songLength, poolCardCount);
     }
     if (parsed.version === 2 && parsed.costumes) {
       return parsed;
-    }
-    if (parsed.version === 1 && parsed.baselines) {
-      const costumes: Record<string, PrTeamCacheEntry[]> = {};
-      for (const [id, entry] of Object.entries(parsed.baselines)) {
-        costumes[id] = [
-          {
-            leaderIndex: entry.leaderIndex,
-            cardIds: entry.cardIds,
-            effectiveStatTotal: entry.effectiveStatTotal,
-            coverage: entry.coverage,
-            avgScoreUp: entry.avgScoreUp,
-          },
-        ];
-      }
-      return { ...parsed, version: 2, costumes };
     }
   } catch {
     /* ignore corrupt local cache */
@@ -137,6 +146,8 @@ export function entryFromTeam(team: TeamEvaluation): PrTeamCacheEntry {
     coverage: team.coverage,
     avgScoreUp: team.avgScoreUp,
     powerRating: team.powerRating,
+    combatPower: team.combatPower,
+    scoreBonusPct: team.scoreBonusPct,
   };
 }
 
@@ -147,6 +158,7 @@ export function setLocalPrCostumeTop8(
   poolCardCount: number,
 ): void {
   const local = readLocalCache(songLength, poolCardCount);
+  local.algorithmVersion = PR_BASELINE_ALGO_VERSION;
   local.costumes[costumeId] = teams.slice(0, SHARED_TOP_N);
   local.generatedAt = new Date().toISOString();
   localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(local));

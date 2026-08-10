@@ -12,7 +12,8 @@ export const STORAGE_LOCALE = "holodream-locale";
 export type Messages = {
   brand: string;
   brandSub: string;
-  madeBy: string;
+  heroMascotSub: string;
+  lastUpdated: (date: string) => string;
   footer: string;
   langAria: string;
   themeAria: string;
@@ -59,6 +60,9 @@ export type Messages = {
   wantedLocked: (n: number) => string;
   captainOffTeam: string;
   wantedNote: string;
+  rosterWantedNote: string;
+  rosterWantedEmpty: string;
+  rosterWantedCollapsedHint: string;
   clearWanted: string;
   removeWantedAria: (name: string) => string;
   resultsTitle: string;
@@ -72,6 +76,19 @@ export type Messages = {
   prBaselineBtnTitle: string;
   prBaselineBtnUnavailable: string;
   prBaselineViewBanner: string;
+  calcRulesBtn: string;
+  calcRulesTitle: string;
+  calcRulesClose: string;
+  calcRulesPrTitle: string;
+  calcRulesPrBody: string;
+  calcRulesCombatTitle: string;
+  calcRulesCombatBody: string;
+  calcRulesStrengthTitle: string;
+  calcRulesStrengthBody: string;
+  calcRulesBonusTitle: string;
+  calcRulesBonusBody: string;
+  calcRulesPanelTitle: string;
+  calcRulesPanelBody: string;
   allowDupSkills: string;
   allowDupSkillsHint: string;
   skillDupWarn: string;
@@ -93,9 +110,37 @@ export type Messages = {
   avgScoreUp: string;
   coveragePct: (n: string) => string;
   buffedStats: string;
+  totalStrength: string;
+  totalStrengthNote: string;
+  strengthMember: string;
+  strengthCostume: string;
+  strengthHoloPanel: string;
+  strengthPassive: string;
+  panelEffect: string;
+  panelLine: (unit: string, roster: number, value: number) => string;
+  scoreBonus: string;
+  scoreBonusActive: string;
+  scoreBonusPassive: string;
+  scoreBonusSpecial: string;
+  scoreBonusNote: string;
+  combatPower: string;
   baseStats: (n: string) => string;
-  skillGaps: string;
-  shorterBetter: string;
+  activeSkillCoverage: string;
+  activeSkillGap: string;
+  activeCoverageHint: string;
+  activeCoverageGapTotal: (sec: string) => string;
+  activeCoverageSummary: (pct: string, sec: string) => string;
+  timelineMemberSettings: string;
+  cooldownReduction: string;
+  spStart: string;
+  optimizeReductions: string;
+  optimizeReductionsRestore: string;
+  spTimelineLabel: string;
+  spBarTitle: (start: number, duration: number, pct: number) => string;
+  timelineGapRow: string;
+  timelineSpRow: string;
+  timelineGapDur: (sec: number) => string;
+  timelineActiveBar: (scoreUp: number) => string;
   leaderCostume: string;
   leader: string;
   memberN: (n: number) => string;
@@ -105,13 +150,13 @@ export type Messages = {
   passivePrefix: string;
   scoreSupport: (n: number) => string;
   timelineLabel: string;
-  gapsTotal: (sec: string) => string;
   typeCounts: (h: number, p: number, c: number) => string;
   searchMeta: (searched: string, ms: number) => string;
   costumeNeed: (min: number) => string;
   fabTitleNeedLeader: string;
   fabTitleReady: string;
   fabBusy: string;
+  fabBusyEstimate: (min: number) => string;
   fabRun: string;
   fabPickLeader: string;
   alertWantedMax: string;
@@ -145,6 +190,7 @@ export type Messages = {
   technique: string;
   sense: string;
   total: (n: number | string) => string;
+  statTotal: string;
   statsMissing: string;
   special: string;
   active: string;
@@ -171,12 +217,51 @@ export type Messages = {
   flagStats: (n: string) => string;
   flagCoverage: (n: string) => string;
   flagUp: (n: string) => string;
+  feedbackReport: string;
+  feedbackSuggest: string;
+  feedbackReportTitle: string;
+  feedbackSuggestTitle: string;
+  feedbackReportKicker: string;
+  feedbackSuggestKicker: string;
+  feedbackReportDesc: string;
+  feedbackSuggestDesc: string;
+  feedbackClose: string;
+  feedbackCancel: string;
+  feedbackSubmit: string;
+  feedbackSubmitting: string;
+  feedbackSubmitError: string;
+  feedbackDone: string;
+  feedbackSuccess: string;
+  feedbackSuccessNoteCloud: string;
+  feedbackSuccessNoteLocal: string;
+  feedbackSuccessNoteFallback: string;
+  feedbackCopy: string;
+  feedbackCopied: string;
+  feedbackGithub: string;
+  feedbackLabelCategory: string;
+  feedbackLabelContext: string;
+  feedbackLabelMessage: string;
+  feedbackLabelContact: string;
+  feedbackLabelTime: string;
+  feedbackSelectPlaceholder: string;
+  feedbackReportPlaceholder: string;
+  feedbackSuggestPlaceholder: string;
+  feedbackContactPlaceholder: string;
+  feedbackContextGeneral: string;
+  feedbackCatStats: string;
+  feedbackCatSkills: string;
+  feedbackCatUi: string;
+  feedbackCatOptimize: string;
+  feedbackCatFeature: string;
+  feedbackCatData: string;
+  feedbackCatOther: string;
 };
 
 const zh: Messages = {
   brand: "Hololive Dreams 小工具",
   brandSub: "製作者 108_虎太郎 · ホロドリ便利ツール",
-  madeBy: "made by 108_虎太郎",
+  heroMascotSub: "小惡魔",
+  lastUpdated: (date) => `最近更新 ${date}`,
   footer: "製作者 108_虎太郎 · 資料對照 Game8 / AppMedia / Gamerch",
   langAria: "介面語言",
   themeAria: "功能主題",
@@ -228,6 +313,10 @@ const zh: Messages = {
   captainOffTeam: "（不在編成內）",
   wantedNote:
     "點選卡面加入想要隊員（最多 5）。隊長只決定衣裝，不必佔編成名額；鎖定隊員固定入隊，其餘空位由最佳化補齊。",
+  rosterWantedNote:
+    "從已擁有隊員中點選卡面加入想要隊員（最多 5）。隊長只決定衣裝，不必佔編成名額；鎖定隊員固定入隊，其餘空位由持有池補齊。",
+  rosterWantedEmpty: "請先在上方選擇已擁有隊員，或勾選要使用的★5卡面。",
+  rosterWantedCollapsedHint: "（選填）點擊展開",
   clearWanted: "清空想要隊員",
   removeWantedAria: (name) => `取消 ${name}`,
   resultsTitle: "③ 最佳編成結果",
@@ -236,13 +325,29 @@ const zh: Messages = {
   trackAria: "推薦導向",
   trackOverall: "最強隊伍",
   trackOverallDesc:
-    "衣裝＋被動前提下，三圍／覆蓋／平均 UP 相對「同衣裝無指定隊員最強隊」合成 PR 前 8",
+    "衣裝＋被動前提下，總合力×分數加成（戰力）相對「同衣裝無指定隊員最強隊」PR 前 8",
   prBaselineNote:
-    "PR 以選定衣裝、未指定隊員時的最強編成（★5 常駐＋活動卡）為 9999 分基準，其餘編成以此相對評分。",
+    "PR＝戰力相對基準（9999）。總合力＝成員能力＋服裝技能＋被動技能（不含 Holo 成員面板、回憶卡、成員強化）；分數加成含主動＋被動＋SP（不含 Holo 分數面板）。",
   prBaselineBtn: "PR 9999",
   prBaselineBtnTitle: "查看同衣裝、無指定隊員時的最強編隊（PR 基準）",
   prBaselineBtnUnavailable: "需先選定隊長衣裝並計算編隊",
   prBaselineViewBanner: "PR 9999 基準編隊 — 同衣裝、無指定隊員、全池 ★5＋活動最強",
+  calcRulesBtn: "計算規則",
+  calcRulesTitle: "PR 與戰力怎麼算？",
+  calcRulesClose: "知道了",
+  calcRulesPrTitle: "PR 是什麼？",
+  calcRulesPrBody:
+    "跟「同一套隊長衣裝、沒有指定任何隊員」時，系統能排出的最強編隊比。那組的 PR 固定是 9999，其他編隊依戰力比例換算（最高 9998）。",
+  calcRulesCombatTitle: "戰力（算 PR 用）",
+  calcRulesCombatBody: "戰力 ＝ 總合力 ×（1 ＋ 分數加成% ÷ 100）",
+  calcRulesStrengthTitle: "總合力",
+  calcRulesStrengthBody:
+    "與遊戲「隊伍分數詳情」相近，取三項相加：\n①成員能力\n②服裝技能\n③被動技能（三圍 buff）\n不含 Holo 成員面板、回憶卡效果、成員強化加成。",
+  calcRulesBonusTitle: "分數加成",
+  calcRulesBonusBody:
+    "主動 Score UP ＋ 被動分數加成 ＋ SP 技能。不含 Holo 的分數面板。",
+  calcRulesPanelTitle: "Holo 總合力面板",
+  calcRulesPanelBody: "依期別在隊人數：5 人期每人 +1500、4 人期 +1200、3 人期 +1350。",
   allowDupSkills: "允許主動技能重複",
   allowDupSkillsHint: "關閉後排除主動 Score UP 時程／倍率相同的編成",
   skillDupWarn: "主動技能重複",
@@ -264,9 +369,37 @@ const zh: Messages = {
   avgScoreUp: "平均 Score UP",
   coveragePct: (n) => `覆蓋 ${n}%`,
   buffedStats: "加成後三圍",
+  totalStrength: "總合力",
+  totalStrengthNote: "不含回憶卡效果、成員強化加成",
+  strengthMember: "成員能力",
+  strengthCostume: "服裝技能",
+  strengthHoloPanel: "Holo 成員面板",
+  strengthPassive: "被動技能",
+  panelEffect: "Holo 面板",
+  panelLine: (unit, roster, value) => `${unit}（${roster}人）+${value}`,
+  scoreBonus: "分數加成",
+  scoreBonusActive: "主動",
+  scoreBonusPassive: "被動",
+  scoreBonusSpecial: "SP",
+  scoreBonusNote: "不含 Holo 面板",
+  combatPower: "戰力",
   baseStats: (n) => `基礎 ${n}`,
-  skillGaps: "無技能空窗",
-  shorterBetter: "越短越好",
+  activeSkillCoverage: "主動技能覆蓋率",
+  activeSkillGap: "技能空窗期",
+  activeCoverageHint: "越高越好 · 含短縮率 · 僅主動 A · 必定觸發",
+  activeCoverageGapTotal: (sec) => `${sec} 秒`,
+  timelineMemberSettings: "時間軸設定",
+  cooldownReduction: "短縮",
+  spStart: "SP 開始",
+  optimizeReductions: "推薦短縮率",
+  optimizeReductionsRestore: "還原短縮率",
+  spTimelineLabel: "SP 技能時間軸（1 秒刻み）",
+  spBarTitle: (start, duration, pct) =>
+    `${start}s 起 ${duration}s · 分數 +${pct}%`,
+  timelineGapRow: "技能空窗",
+  timelineSpRow: "SP 技能",
+  timelineGapDur: (sec) => `${sec.toFixed(1)}秒`,
+  timelineActiveBar: (scoreUp) => `Score UP ${scoreUp}%`,
   leaderCostume: "隊長衣裝",
   leader: "隊長",
   memberN: (n) => `隊員 ${n}`,
@@ -275,15 +408,16 @@ const zh: Messages = {
   activeLine: (interval, duration, scoreUp) =>
     `Active：每 ${interval}s 發動 / 持續 ${duration}s / ${scoreUp}%（計算時視為必發動）`,
   passivePrefix: "Passive：",
-  scoreSupport: (n) => ` · 分數支援 +${n}%`,
+  scoreSupport: (n) => ` · 分數加成 +${n}%`,
   timelineLabel: "有效 Score UP 時間軸（每秒取最高加成％，技能預設全部發動）",
-  gapsTotal: (sec) => `合計 ${sec} 秒沒有 Score UP`,
+  activeCoverageSummary: (pct, sec) => `${pct}% 覆蓋 · 空窗 ${sec} 秒`,
   typeCounts: (h, p, c) => `類型：快樂 ${h} / 清純 ${p} / 可愛 ${c}`,
   searchMeta: (searched, ms) => `｜ 搜尋 ${searched} 組｜耗時 ${ms} ms`,
   costumeNeed: (min) => `（衣裝條件需 ≥ ${min}）`,
   fabTitleNeedLeader: "請先選擇隊長",
   fabTitleReady: "計算最佳配對",
   fabBusy: "計算中…",
+  fabBusyEstimate: (min) => `預估約 ${min} 分鐘`,
   fabRun: "計算編隊",
   fabPickLeader: "先選隊長",
   alertWantedMax: "想要的隊員最多 5 位",
@@ -299,7 +433,7 @@ const zh: Messages = {
   metricCoverage: (n) => `覆蓋 ${n}%`,
   metricAvgUp: (n) => `平均 UP ${n}%`,
   search: "搜尋",
-  searchPlaceholder: "成員 / 衣裝 / 快樂型…",
+  searchPlaceholder: "成員 / 衣裝 / 快樂類型…",
   filterSettings: "篩選設定",
   showFull: "顯示完整",
   hideDetails: "隱藏詳情",
@@ -313,29 +447,30 @@ const zh: Messages = {
   noMatchingCards: "沒有符合篩選的卡片。",
   eventPrefix: (name) => `活動｜${name}`,
   eventBadge: "活動",
-  performance: "表演力",
+  performance: "表現力",
   technique: "技巧",
-  sense: "感性",
+  sense: "品味",
   total: (n) => `合計 ${n}`,
+  statTotal: "合計",
   statsMissing: "數值資料未收錄",
-  special: "特殊",
-  active: "主動",
-  passive: "被動",
-  attrHappy: "快樂型",
-  attrPure: "清純型",
-  attrCute: "可愛型",
+  special: "特殊技能",
+  active: "主動技能",
+  passive: "被動技能",
+  attrHappy: "快樂類型",
+  attrPure: "清純類型",
+  attrCute: "可愛類型",
   condNone: "無條件（入場即發動）",
-  condTypeCount: (attr, min) => `${attr} ≥ ${min} 人`,
-  condUnitCount: (unit, min) => `${unit} ≥ ${min} 人`,
-  explainParamUp: (param, value) => `全員${param} +${value}%`,
-  explainScoreSupport: (value) => `全員分數支援 +${value}%`,
-  explainWhen: (cond, effects) => `${cond} 時：${effects}`,
+  condTypeCount: (attr, min) => `編入${min}名以上${attr}`,
+  condUnitCount: (unit, min) => `編入${min}名以上${unit}`,
+  explainParamUp: (param, value) => `全員${param}提升${value}%`,
+  explainScoreSupport: (value) => `全員分數加成效果${value}%`,
+  explainWhen: (cond, effects) => `若${cond}${effects}`,
   gapsNone: "無（全程有技能）",
   gapRange: (a, b, dur) => `${a}–${b}秒（${dur}秒）`,
   gapsJoin: "、",
-  paramPerf: "表演力",
+  paramPerf: "表現力",
   paramTech: "技巧",
-  paramSense: "感性",
+  paramSense: "品味",
   flagCostumeOn: "衣裝○",
   flagCostumeOff: "衣裝×",
   flagPassiveAll: "被動全○",
@@ -343,12 +478,53 @@ const zh: Messages = {
   flagStats: (n) => `三圍 ${n}`,
   flagCoverage: (n) => `覆蓋 ${n}%`,
   flagUp: (n) => `UP ${n}%`,
+  feedbackReport: "回報錯誤",
+  feedbackSuggest: "提供建議",
+  feedbackReportTitle: "回報錯誤",
+  feedbackSuggestTitle: "提供建議",
+  feedbackReportKicker: "發現資料或功能有問題？",
+  feedbackSuggestKicker: "想讓工具更好用？",
+  feedbackReportDesc: "請盡量描述卡名、頁面與錯誤內容，方便製作者修正。",
+  feedbackSuggestDesc: "歡迎提出新功能、介面或資料方面的想法。",
+  feedbackClose: "關閉",
+  feedbackCancel: "取消",
+  feedbackSubmit: "送出",
+  feedbackSubmitting: "送出中…",
+  feedbackSubmitError: "送出失敗，請稍後再試。",
+  feedbackDone: "完成",
+  feedbackSuccess: "已收到，謝謝你的回報！",
+  feedbackSuccessNoteCloud: "已同步至雲端，製作者可在後台查看。",
+  feedbackSuccessNoteLocal:
+    "未設定雲端儲存時僅存於本機；可複製內容或開 GitHub Issue 給製作者。",
+  feedbackSuccessNoteFallback:
+    "雲端同步失敗，內容已存於本機。請複製或開 GitHub Issue 以確保製作者收到。",
+  feedbackCopy: "複製內容",
+  feedbackCopied: "已複製",
+  feedbackGithub: "GitHub Issue",
+  feedbackLabelCategory: "類型",
+  feedbackLabelContext: "相關頁面",
+  feedbackLabelMessage: "內容",
+  feedbackLabelContact: "聯絡方式（選填）",
+  feedbackLabelTime: "時間",
+  feedbackSelectPlaceholder: "請選擇…",
+  feedbackReportPlaceholder: "例：櫻巫女「在海灘上炸裂…」被動技能文字與遊戲不符…",
+  feedbackSuggestPlaceholder: "例：希望最強編隊結果可以匯出成圖片…",
+  feedbackContactPlaceholder: "Discord / X @handle（選填）",
+  feedbackContextGeneral: "全站／其他",
+  feedbackCatStats: "三圍數值",
+  feedbackCatSkills: "技能文字",
+  feedbackCatUi: "介面／顯示",
+  feedbackCatOptimize: "編隊／PR 計算",
+  feedbackCatFeature: "新功能",
+  feedbackCatData: "資料／卡面",
+  feedbackCatOther: "其他",
 };
 
 const en: Messages = {
   brand: "Hololive Dreams Tools",
   brandSub: "by 108_虎太郎 · Holodori utility",
-  madeBy: "made by 108_虎太郎",
+  heroMascotSub: "Devil Princess",
+  lastUpdated: (date) => `Last updated ${date}`,
   footer: "Created by 108_虎太郎 · Data cross-checked with Game8 / AppMedia / Gamerch",
   langAria: "Interface language",
   themeAria: "Features",
@@ -401,6 +577,10 @@ const en: Messages = {
   captainOffTeam: " (not in lineup)",
   wantedNote:
     "Tap a card to lock a member (max 5). Captain sets the costume only; locked members stay in the team; other slots are optimized.",
+  rosterWantedNote:
+    "From your owned roster, tap a card to lock a member (max 5). Captain sets the costume only; locked members stay in the team; other slots are filled from your roster.",
+  rosterWantedEmpty: "Select owned members above, or check which ★5 cards you hold.",
+  rosterWantedCollapsedHint: "(Optional) Tap to expand",
   clearWanted: "Clear wanted",
   removeWantedAria: (name) => `Remove ${name}`,
   resultsTitle: "③ Best team results",
@@ -410,14 +590,30 @@ const en: Messages = {
   trackAria: "Ranking focus",
   trackOverall: "Best overall",
   trackOverallDesc:
-    "Costume + passives first; PR from stats / coverage / avg UP vs unconstrained best under this costume — top 8",
+    "Costume + all passives; PR top 8 by combat power (strength × score bonus) vs unconstrained baseline",
   prBaselineNote:
-    "PR 9999 = strongest ★5 team for this captain costume with no locked members (permanent + event). Other teams scale relative to it.",
+    "PR = combat power vs baseline (9999). Total strength = member ability + costume + passive (excl. Holo member panel, memory & enhancement); score bonus = active + passive + SP (excl. Holo score panel).",
   prBaselineBtn: "PR 9999",
   prBaselineBtnTitle: "View the unconstrained strongest team for this costume (PR baseline)",
   prBaselineBtnUnavailable: "Choose captain costume and run optimization first",
   prBaselineViewBanner:
     "PR 9999 baseline — strongest team for this costume with no locked members (full ★5 + event pool)",
+  calcRulesBtn: "How PR works",
+  calcRulesTitle: "PR & combat power",
+  calcRulesClose: "Got it",
+  calcRulesPrTitle: "What is PR?",
+  calcRulesPrBody:
+    "Compared to the strongest team for the same captain costume with no locked members. That baseline is PR 9999; others scale by combat power (max 9998).",
+  calcRulesCombatTitle: "Combat power",
+  calcRulesCombatBody: "Combat power = total strength × (1 + score bonus% ÷ 100)",
+  calcRulesStrengthTitle: "Total strength",
+  calcRulesStrengthBody:
+    "Close to in-game team score details — three parts:\n① member ability\n② costume skill\n③ passive skill (stat buffs)\nExcludes Holo member panel, memory cards, and member enhancement.",
+  calcRulesBonusTitle: "Score bonus",
+  calcRulesBonusBody:
+    "Active Score UP + passive score support + SP skills. Excludes Holo score panel.",
+  calcRulesPanelTitle: "Holo strength panel",
+  calcRulesPanelBody: "Per member on team by generation size: 5-member +1500, 4-member +1200, 3-member +1350.",
   allowDupSkills: "Allow duplicate active skills",
   allowDupSkillsHint: "Off excludes teams whose active Score UP timing/potency match",
   skillDupWarn: "Duplicate active skills",
@@ -440,9 +636,36 @@ const en: Messages = {
   avgScoreUp: "Avg Score UP",
   coveragePct: (n) => `Coverage ${n}%`,
   buffedStats: "Buffed stats",
+  totalStrength: "Total strength",
+  totalStrengthNote: "Excl. memory cards & member enhancement",
+  strengthMember: "Member ability",
+  strengthCostume: "Costume skill",
+  strengthHoloPanel: "Holo member panel",
+  strengthPassive: "Passive skill",
+  panelEffect: "Holo panel",
+  panelLine: (unit, roster, value) => `${unit} (${roster}) +${value}`,
+  scoreBonus: "Score bonus",
+  scoreBonusActive: "Active",
+  scoreBonusPassive: "Passive",
+  scoreBonusSpecial: "SP",
+  scoreBonusNote: "Excl. Holo panel",
+  combatPower: "Combat power",
   baseStats: (n) => `Base ${n}`,
-  skillGaps: "No-skill gaps",
-  shorterBetter: "Shorter is better",
+  activeSkillCoverage: "Active skill coverage",
+  activeSkillGap: "Skill gaps",
+  activeCoverageHint: "Higher is better · incl. CDR · active A · always on",
+  activeCoverageGapTotal: (sec) => `${sec}s`,
+  timelineMemberSettings: "Timeline settings",
+  cooldownReduction: "CDR",
+  spStart: "SP at",
+  optimizeReductions: "Recommend CDR",
+  optimizeReductionsRestore: "Restore CDR",
+  spTimelineLabel: "SP skill timeline (1s steps)",
+  spBarTitle: (start, duration, pct) => `${start}s +${duration}s · score +${pct}%`,
+  timelineGapRow: "Skill gaps",
+  timelineSpRow: "SP skills",
+  timelineGapDur: (sec) => `${sec.toFixed(1)}s`,
+  timelineActiveBar: (scoreUp) => `Score UP ${scoreUp}%`,
   leaderCostume: "Captain costume",
   leader: "Captain",
   memberN: (n) => `Member ${n}`,
@@ -454,13 +677,14 @@ const en: Messages = {
   scoreSupport: (n) => ` · Score Support +${n}%`,
   timelineLabel:
     "Effective Score UP timeline (per-second max %, skills assumed always on)",
-  gapsTotal: (sec) => `${sec}s total without Score UP`,
+  activeCoverageSummary: (pct, sec) => `${pct}% covered · ${sec}s gaps`,
   typeCounts: (h, p, c) => `Types: Happy ${h} / Pure ${p} / Cute ${c}`,
   searchMeta: (searched, ms) => `｜ Searched ${searched} teams｜${ms} ms`,
   costumeNeed: (min) => `(costume needs ≥ ${min})`,
   fabTitleNeedLeader: "Choose a captain first",
   fabTitleReady: "Find the best team",
   fabBusy: "Working…",
+  fabBusyEstimate: (min) => `Est. ~${min} min`,
   fabRun: "Build team",
   fabPickLeader: "Pick captain",
   alertWantedMax: "You can lock at most 5 wanted members",
@@ -494,6 +718,7 @@ const en: Messages = {
   technique: "Technique",
   sense: "Sense",
   total: (n) => `Total ${n}`,
+  statTotal: "Total",
   statsMissing: "Stats not listed yet",
   special: "Special",
   active: "Active",
@@ -520,12 +745,53 @@ const en: Messages = {
   flagStats: (n) => `Stats ${n}`,
   flagCoverage: (n) => `Cover ${n}%`,
   flagUp: (n) => `UP ${n}%`,
+  feedbackReport: "Report issue",
+  feedbackSuggest: "Suggestion",
+  feedbackReportTitle: "Report an issue",
+  feedbackSuggestTitle: "Send a suggestion",
+  feedbackReportKicker: "Found wrong data or a bug?",
+  feedbackSuggestKicker: "Ideas to improve the tool?",
+  feedbackReportDesc: "Include card name, page, and what looks wrong so it can be fixed.",
+  feedbackSuggestDesc: "Feature, UI, or data ideas are welcome.",
+  feedbackClose: "Close",
+  feedbackCancel: "Cancel",
+  feedbackSubmit: "Submit",
+  feedbackSubmitting: "Sending…",
+  feedbackSubmitError: "Could not send. Please try again.",
+  feedbackDone: "Done",
+  feedbackSuccess: "Thanks — we got your message!",
+  feedbackSuccessNoteCloud: "Synced to cloud. The author can review it in Supabase.",
+  feedbackSuccessNoteLocal:
+    "Cloud storage is not configured; saved locally only. Copy or open a GitHub Issue if needed.",
+  feedbackSuccessNoteFallback:
+    "Cloud sync failed; saved locally. Copy or open a GitHub Issue so the author receives it.",
+  feedbackCopy: "Copy text",
+  feedbackCopied: "Copied",
+  feedbackGithub: "GitHub Issue",
+  feedbackLabelCategory: "Category",
+  feedbackLabelContext: "Page",
+  feedbackLabelMessage: "Message",
+  feedbackLabelContact: "Contact (optional)",
+  feedbackLabelTime: "Time",
+  feedbackSelectPlaceholder: "Select…",
+  feedbackReportPlaceholder: "e.g. Wrong passive text on Miko's summer card…",
+  feedbackSuggestPlaceholder: "e.g. Export team results as an image…",
+  feedbackContactPlaceholder: "Discord / X @handle (optional)",
+  feedbackContextGeneral: "Site / other",
+  feedbackCatStats: "Stats",
+  feedbackCatSkills: "Skill text",
+  feedbackCatUi: "UI / display",
+  feedbackCatOptimize: "Teams / PR",
+  feedbackCatFeature: "New feature",
+  feedbackCatData: "Data / art",
+  feedbackCatOther: "Other",
 };
 
 const ja: Messages = {
   brand: "Hololive Dreams 便利ツール",
   brandSub: "制作 108_虎太郎 · ホロドリ補助ツール",
-  madeBy: "made by 108_虎太郎",
+  heroMascotSub: "小悪魔",
+  lastUpdated: (date) => `最終更新 ${date}`,
   footer: "制作 108_虎太郎 · データ照合：Game8 / AppMedia / Gamerch",
   langAria: "表示言語",
   themeAria: "機能メニュー",
@@ -578,6 +844,10 @@ const ja: Messages = {
   captainOffTeam: "（編成外）",
   wantedNote:
     "カードをタップして固定（最大5）。キャプテンは衣装のみで編成枠を使いません。固定メンバーは必ず入り、残りを最適化します。",
+  rosterWantedNote:
+    "所持メンバーからカードをタップして固定（最大5）。キャプテンは衣装のみで編成枠を使いません。固定メンバーは必ず入り、残りは所持プールから補充します。",
+  rosterWantedEmpty: "上で所持メンバーを選ぶか、所持★5カードにチェックを入れてください。",
+  rosterWantedCollapsedHint: "（任意）タップで展開",
   clearWanted: "固定をクリア",
   removeWantedAria: (name) => `${name} を外す`,
   resultsTitle: "③ 最適編成結果",
@@ -587,14 +857,30 @@ const ja: Messages = {
   trackAria: "ランキング観点",
   trackOverall: "総合最強",
   trackOverallDesc:
-    "衣装＋パッシブ優先。同衣装・指名なし最強編成を基準にステ／カバー／平均UPからPR上位8",
+    "衣装＋パッシブ成立時、総合力×分数ボーナス（戦力）を同衣装・指名なし最強編成と比較したPR上位8",
   prBaselineNote:
-    "PR9999＝この衣装・指名なし最強編成（★5常駐＋イベントカード）。他編成はこれを基準に相対評価。",
+    "PR＝基準に対する戦力（9999）。総合力＝メンバー能力＋衣装＋パッシブ（Holoメンバーパネル・思い出・強化除く）；分数ボーナス＝アク＋パッ＋SP（Holo分数パネル除く）。",
   prBaselineBtn: "PR 9999",
   prBaselineBtnTitle: "同衣装・指名なし最強編成（PR基準）を表示",
   prBaselineBtnUnavailable: "先にキャプテン衣装を選び編成を計算してください",
   prBaselineViewBanner:
     "PR9999基準編成 — 同衣装・指名なし・★5＋イベント全池最強",
+  calcRulesBtn: "計算ルール",
+  calcRulesTitle: "PRと戦力の計算",
+  calcRulesClose: "閉じる",
+  calcRulesPrTitle: "PRとは？",
+  calcRulesPrBody:
+    "同じキャプテン衣装で指名なしの最強編成を基準（PR9999）に、他編成の戦力を比例換算（最大9998）。",
+  calcRulesCombatTitle: "戦力",
+  calcRulesCombatBody: "戦力 ＝ 総合力 ×（1 ＋ 分数ボーナス% ÷ 100）",
+  calcRulesStrengthTitle: "総合力",
+  calcRulesStrengthBody:
+    "ゲーム「隊伍分數詳情」に近い3項目：\n①メンバー能力\n②衣装スキル\n③パッシブ（ステバフ）\nHoloメンバーパネル・思い出カード・メンバー強化は含まない。",
+  calcRulesBonusTitle: "分数ボーナス",
+  calcRulesBonusBody:
+    "アクティブ Score UP ＋ パッシブサポート ＋ SP。Holo分数パネルは含まない。",
+  calcRulesPanelTitle: "Holo総合力パネル",
+  calcRulesPanelBody: "期生人数：5人期 +1500/人、4人期 +1200、3人期 +1350。",
   allowDupSkills: "同一アクティブスキルを許可",
   allowDupSkillsHint: "OFFにすると Score UP の間隔・倍率などが同じ編成を除外",
   skillDupWarn: "アクティブスキル重複",
@@ -617,9 +903,37 @@ const ja: Messages = {
   avgScoreUp: "平均 Score UP",
   coveragePct: (n) => `カバー ${n}%`,
   buffedStats: "バフ後ステ",
+  totalStrength: "総合力",
+  totalStrengthNote: "思い出カード・メンバー強化は含まない",
+  strengthMember: "メンバー能力",
+  strengthCostume: "衣装スキル",
+  strengthHoloPanel: "Holoメンバーパネル",
+  strengthPassive: "パッシブスキル",
+  panelEffect: "Holoパネル",
+  panelLine: (unit, roster, value) => `${unit}（${roster}人）+${value}`,
+  scoreBonus: "分数ボーナス",
+  scoreBonusActive: "アク",
+  scoreBonusPassive: "パッ",
+  scoreBonusSpecial: "SP",
+  scoreBonusNote: "Holoパネル除く",
+  combatPower: "戦力",
   baseStats: (n) => `基礎 ${n}`,
-  skillGaps: "スキル空白",
-  shorterBetter: "短いほど良い",
+  activeSkillCoverage: "アクティブカバー率",
+  activeSkillGap: "スキル空白期",
+  activeCoverageHint: "高いほど良 · 短縮込 · アクA · 必発動",
+  activeCoverageGapTotal: (sec) => `${sec} 秒`,
+  timelineMemberSettings: "タイムライン設定",
+  cooldownReduction: "短縮",
+  spStart: "SP開始",
+  optimizeReductions: "短縮率おすすめ",
+  optimizeReductionsRestore: "短縮率を戻す",
+  spTimelineLabel: "SPスキルタイムライン（1秒刻み）",
+  spBarTitle: (start, duration, pct) =>
+    `${start}秒〜${duration}秒 · スコア +${pct}%`,
+  timelineGapRow: "スキル空白",
+  timelineSpRow: "SPスキル",
+  timelineGapDur: (sec) => `${sec.toFixed(1)}秒`,
+  timelineActiveBar: (scoreUp) => `Score UP ${scoreUp}%`,
   leaderCostume: "キャプテン衣装",
   leader: "キャプテン",
   memberN: (n) => `メンバー ${n}`,
@@ -630,13 +944,14 @@ const ja: Messages = {
   passivePrefix: "Passive：",
   scoreSupport: (n) => ` · スコアサポート +${n}%`,
   timelineLabel: "有効 Score UP タイムライン（秒ごとに最大％、スキルは常時発動想定）",
-  gapsTotal: (sec) => `Score UP なし合計 ${sec} 秒`,
+  activeCoverageSummary: (pct, sec) => `${pct}% カバー · 空白 ${sec} 秒`,
   typeCounts: (h, p, c) => `タイプ：ハッピー ${h} / ピュア ${p} / キュート ${c}`,
   searchMeta: (searched, ms) => `｜ 探索 ${searched} 組｜所要 ${ms} ms`,
   costumeNeed: (min) => `（衣装条件 ≥ ${min}）`,
   fabTitleNeedLeader: "先にキャプテンを選んでください",
   fabTitleReady: "最適編成を計算",
   fabBusy: "計算中…",
+  fabBusyEstimate: (min) => `約${min}分`,
   fabRun: "編成を計算",
   fabPickLeader: "キャプテンを選ぶ",
   alertWantedMax: "入れたいメンバーは最大5人までです",
@@ -671,6 +986,7 @@ const ja: Messages = {
   technique: "テクニック",
   sense: "センス",
   total: (n) => `合計 ${n}`,
+  statTotal: "合計",
   statsMissing: "ステータス未収録",
   special: "スペシャル",
   active: "アクティブ",
@@ -697,6 +1013,46 @@ const ja: Messages = {
   flagStats: (n) => `ステ ${n}`,
   flagCoverage: (n) => `カバー ${n}%`,
   flagUp: (n) => `UP ${n}%`,
+  feedbackReport: "不具合報告",
+  feedbackSuggest: "提案",
+  feedbackReportTitle: "不具合報告",
+  feedbackSuggestTitle: "提案を送る",
+  feedbackReportKicker: "データや機能の問題？",
+  feedbackSuggestKicker: "改善のアイデアは？",
+  feedbackReportDesc: "カード名・ページ・内容を具体的に書いてください。",
+  feedbackSuggestDesc: "機能・UI・データの提案を歓迎します。",
+  feedbackClose: "閉じる",
+  feedbackCancel: "キャンセル",
+  feedbackSubmit: "送信",
+  feedbackSubmitting: "送信中…",
+  feedbackSubmitError: "送信に失敗しました。もう一度お試しください。",
+  feedbackDone: "完了",
+  feedbackSuccess: "ありがとうございます。受け付けました。",
+  feedbackSuccessNoteCloud: "クラウドに保存しました。作者が Supabase で確認できます。",
+  feedbackSuccessNoteLocal:
+    "クラウド未設定のため端末内のみ保存。必要ならコピーまたは GitHub Issue をご利用ください。",
+  feedbackSuccessNoteFallback:
+    "クラウド同期に失敗しました。端末内に保存済み。Issue またはコピーで作者にお知らせください。",
+  feedbackCopy: "コピー",
+  feedbackCopied: "コピー済み",
+  feedbackGithub: "GitHub Issue",
+  feedbackLabelCategory: "種類",
+  feedbackLabelContext: "ページ",
+  feedbackLabelMessage: "内容",
+  feedbackLabelContact: "連絡先（任意）",
+  feedbackLabelTime: "日時",
+  feedbackSelectPlaceholder: "選択…",
+  feedbackReportPlaceholder: "例：〇〇のパッシブ文言がゲームと違う…",
+  feedbackSuggestPlaceholder: "例：編成結果を画像で出力してほしい…",
+  feedbackContactPlaceholder: "Discord / X @handle（任意）",
+  feedbackContextGeneral: "全体／その他",
+  feedbackCatStats: "ステータス",
+  feedbackCatSkills: "スキル文",
+  feedbackCatUi: "UI／表示",
+  feedbackCatOptimize: "編成／PR",
+  feedbackCatFeature: "新機能",
+  feedbackCatData: "データ／カード",
+  feedbackCatOther: "その他",
 };
 
 export const MESSAGES: Record<Locale, Messages> = { zh, en, ja };

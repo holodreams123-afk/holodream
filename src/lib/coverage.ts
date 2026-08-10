@@ -1,8 +1,58 @@
+import { COOLDOWN_REDUCTION_OPTIONS } from "./timelineSettings";
+
 export interface ActiveWindow {
   interval: number;
   duration: number;
   /** Score UP percent, e.g. 100 = +100%. Assumed to always trigger. */
   scoreUp: number;
+}
+
+/** In-game skill cooldown reduction (0 / 4 / 8 / 12%). */
+export function effectiveInterval(interval: number, reductionPct: number): number {
+  if (!interval || reductionPct <= 0) return interval;
+  return interval / (1 + reductionPct / 100);
+}
+
+export interface TimeWindow {
+  start: number;
+  end: number;
+}
+
+/** Active skill firing windows for one member (after cooldown reduction). */
+export function buildMemberActiveWindows(
+  active: ActiveWindow,
+  reductionPct: number,
+  songLength: number,
+): TimeWindow[] {
+  const out: TimeWindow[] = [];
+  const interval = effectiveInterval(active.interval, reductionPct);
+  if (!interval || !active.duration) return out;
+  for (let start = interval; start < songLength + 1e-9; start += interval) {
+    out.push({ start, end: Math.min(songLength, start + active.duration) });
+  }
+  return out;
+}
+
+export interface SpTimelineWindow {
+  member: string;
+  start: number;
+  duration: number;
+  scoreSupport: number;
+}
+
+export function buildSpTimelineWindows(
+  cards: Array<{ member: string; special: { duration: number; scoreSupport: number } }>,
+  spStarts: number[],
+  songLength: number,
+): SpTimelineWindow[] {
+  const out: SpTimelineWindow[] = [];
+  cards.forEach((card, i) => {
+    const { duration, scoreSupport } = card.special;
+    if (scoreSupport <= 0 || duration <= 0) return;
+    const start = Math.max(0, Math.min(songLength, spStarts[i] ?? 0));
+    out.push({ member: card.member, start, duration, scoreSupport });
+  });
+  return out;
 }
 
 export interface UncoveredGap {
@@ -45,16 +95,15 @@ export function formatUncoveredGaps(
 
 /**
  * Deterministic Score UP over a song.
- * - Skills always fire at interval, 2×interval, …
+ * - Skills always fire at interval, 2×interval, … (after cooldown reduction)
  * - Overlapping buffs do NOT stack: each moment uses the highest scoreUp %.
- *
- * Example (both every 19s): A = 100%/10s, B = 110%/6s
- * → seconds 0–6 of window: 110%, seconds 6–10: 100%.
+ * - Optional per-active cooldown reduction % (0/4/8/12).
  */
 export function calcScoreUpCoverage(
   actives: ActiveWindow[],
   songLength: number,
   step = 0.25,
+  reductions?: number[],
 ): CoverageResult {
   if (songLength <= 0 || actives.length === 0) {
     const gap = songLength > 0 ? [{ start: 0, end: songLength }] : [];
@@ -71,9 +120,12 @@ export function calcScoreUpCoverage(
   const n = Math.ceil(songLength / step);
   const maxUp = new Float64Array(n); // score-up percent
 
-  for (const a of actives) {
+  for (let ai = 0; ai < actives.length; ai++) {
+    const a = actives[ai];
     if (!a.interval || !a.duration || a.scoreUp <= 0) continue;
-    for (let start = a.interval; start < songLength + 1e-9; start += a.interval) {
+    const interval = effectiveInterval(a.interval, reductions?.[ai] ?? 0);
+    if (interval <= 0) continue;
+    for (let start = interval; start < songLength + 1e-9; start += interval) {
       const end = Math.min(songLength, start + a.duration);
       const i0 = Math.max(0, Math.floor(start / step));
       const i1 = Math.min(n, Math.ceil(end / step));
@@ -118,4 +170,41 @@ export function calcScoreUpCoverage(
     uncoveredGaps,
     uncoveredSeconds,
   };
+}
+
+/** Brute-force all 4^n CDR combos; minimize uncovered time, then minimize sum of CDR %. */
+export function findBestCooldownReductions(
+  actives: ActiveWindow[],
+  songLength: number,
+): number[] {
+  const n = actives.length;
+  const best = Array.from({ length: n }, () => 0);
+  if (n === 0) return best;
+
+  let bestUncovered = Infinity;
+  let bestSum = Infinity;
+  const cur = Array.from({ length: n }, () => 0);
+
+  const search = (idx: number) => {
+    if (idx >= n) {
+      const { uncoveredSeconds } = calcScoreUpCoverage(actives, songLength, 0.25, cur);
+      const sum = cur.reduce((s, v) => s + v, 0);
+      if (
+        uncoveredSeconds < bestUncovered ||
+        (uncoveredSeconds === bestUncovered && sum < bestSum)
+      ) {
+        bestUncovered = uncoveredSeconds;
+        bestSum = sum;
+        for (let i = 0; i < n; i++) best[i] = cur[i];
+      }
+      return;
+    }
+    for (const opt of COOLDOWN_REDUCTION_OPTIONS) {
+      cur[idx] = opt;
+      search(idx + 1);
+    }
+  };
+
+  search(0);
+  return best;
 }

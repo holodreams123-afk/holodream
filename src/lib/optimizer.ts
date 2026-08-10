@@ -1,4 +1,6 @@
 import { calcScoreUpCoverage } from "./coverage";
+import { resolveActiveScoreUp } from "./activeWindows";
+import { attachCombatMetrics } from "./combatPower";
 import { countTypes, countUnits, isConditionMet, memberUnits } from "./conditions";
 import {
   calcEffectiveStats,
@@ -42,7 +44,7 @@ export interface OptimizeResult {
   top: TeamEvaluation[];
   /**
    * 最強隊伍：衣裝＋全員被動前提下，
-   * 以三圍／覆蓋率／平均 UP 相對基準隊合成 PR 取前 8。
+   * 以總合力×分數加成（戰力）相對基準隊 PR 取前 8。
    */
   byOverall: TeamEvaluation[];
   /** Top by effective 三圍 (after costume + all-passives priority). */
@@ -259,7 +261,7 @@ function isSameTeam(a: TeamEvaluation, b: TeamEvaluation): boolean {
 
 /** Rough balanced score to keep PR candidate pool during search. */
 function roughPrSeed(t: TeamEvaluation): number {
-  return t.effectiveStatTotal / 250 + t.coverage * 120 + t.avgScoreUp;
+  return (t.combatPower ?? t.effectiveStatTotal) / 1000;
 }
 
 function minMaxNorm(values: number[], v: number): number {
@@ -280,9 +282,8 @@ function ratioToBaseline(value: number, base: number): number {
 }
 
 /**
- * Build overall PR ranking.
- * When baseline is set (unconstrained best under same costume),
- * PR = mean(stats/base, coverage/base, avgUP/base) × PR_MAX; baseline team = PR_MAX.
+ * Build overall PR ranking from combat power (總合力 × 分數加成).
+ * Baseline team = PR_MAX; others scale by combatPower ratio (capped at 1).
  */
 function rankByPowerRating(
   pool: TeamEvaluation[],
@@ -294,30 +295,20 @@ function rankByPowerRating(
   const preferred = pool.filter((t) => t.costumeSatisfied && t.allPassivesSatisfied);
   const use = preferred.length > 0 ? preferred : pool;
 
-  const stats = use.map((t) => t.effectiveStatTotal);
-  const cov = use.map((t) => t.coverage);
-  const avg = use.map((t) => t.avgScoreUp);
+  const combatValues = use.map((t) => t.combatPower ?? t.effectiveStatTotal);
 
-  const scored = use.map((t) => {
+  const scored = use.map((t, i) => {
     let pr: number;
+    const combat = combatValues[i];
     if (baseline) {
+      const baseCombat = baseline.combatPower ?? baseline.effectiveStatTotal;
       if (isSameTeam(t, baseline)) {
         pr = PR_MAX;
       } else {
-        // Cap each ratio at 1 — baseline is lexicographic-best, but one metric can
-        // exceed baseline while others lag; uncapped average falsely hit 9999 often.
-        const s = Math.min(ratioToBaseline(t.effectiveStatTotal, baseline.effectiveStatTotal), 1);
-        const c = Math.min(ratioToBaseline(t.coverage, baseline.coverage), 1);
-        const a = Math.min(ratioToBaseline(t.avgScoreUp, baseline.avgScoreUp), 1);
-        pr = ((s + c + a) / 3) * PR_MAX;
+        pr = Math.min(ratioToBaseline(combat, baseCombat), 1) * PR_MAX;
       }
     } else {
-      pr =
-        ((minMaxNorm(stats, t.effectiveStatTotal) +
-          minMaxNorm(cov, t.coverage) +
-          minMaxNorm(avg, t.avgScoreUp)) /
-          3) *
-        PR_MAX;
+      pr = minMaxNorm(combatValues, combat) * PR_MAX;
     }
     if (baseline && !isSameTeam(t, baseline)) {
       pr = Math.min(pr, PR_MAX - 1);
@@ -355,7 +346,11 @@ function pickBaselineTeam(result: OptimizeResult): TeamEvaluation | null {
   ];
   const ok = pools.filter((t) => t.costumeSatisfied && t.allPassivesSatisfied);
   if (!ok.length) return null;
-  return [...ok].sort((a, b) => compareEval(b, a))[0];
+  return [...ok].sort(
+    (a, b) =>
+      (b.combatPower ?? b.effectiveStatTotal) - (a.combatPower ?? a.effectiveStatTotal) ||
+      compareEval(b, a),
+  )[0];
 }
 
 function emptyResult(started: number): OptimizeResult {
@@ -548,7 +543,7 @@ export function evaluateTeam(
     return {
       interval: c.active.interval,
       duration: c.active.duration,
-      scoreUp: bonusOk && c.active.bonus ? c.active.bonus.scoreUp : c.active.scoreUp,
+      scoreUp: resolveActiveScoreUp(c.active, bonusOk),
     };
   });
 
@@ -571,38 +566,47 @@ export function evaluateTeam(
 
   const activeDuplicates = findActiveDuplicates(cards);
 
-  return {
-    cards,
-    leaderIndex,
-    costume,
-    costumeSatisfied,
-    costumeScore,
-    allPassivesSatisfied,
-    passiveScore,
-    passiveDetails,
-    coverage,
-    avgScoreUp,
-    expectedScoreUptime,
-    timeline,
-    uncoveredGaps,
-    uncoveredSeconds,
-    effectiveStatTotal: stats.teamTotal,
-    baseStatTotal: stats.baseTotal,
-    teamScoreSupportPct: stats.teamScoreSupportPct,
-    scoreSupportWeighted: stats.scoreSupportWeighted,
-    memberEffectiveStats: stats.members.map((m) => ({
-      member: m.member,
-      performance: m.effective.performance,
-      technique: m.effective.technique,
-      sense: m.effective.sense,
-      total: m.effective.total,
-      bonusPct: m.bonusPct,
-      scoreSupportPct: m.scoreSupportPct,
-    })),
-    typeCounts,
-    unitCounts,
-    activeDuplicates,
-  };
+  return attachCombatMetrics(
+    {
+      cards,
+      leaderIndex,
+      costume,
+      costumeSatisfied,
+      costumeScore,
+      allPassivesSatisfied,
+      passiveScore,
+      passiveDetails,
+      coverage,
+      avgScoreUp,
+      expectedScoreUptime,
+      timeline,
+      uncoveredGaps,
+      uncoveredSeconds,
+      effectiveStatTotal: stats.teamTotal,
+      baseStatTotal: stats.baseTotal,
+      teamScoreSupportPct: stats.teamScoreSupportPct,
+      scoreSupportWeighted: stats.scoreSupportWeighted,
+      memberEffectiveStats: stats.members.map((m) => ({
+        member: m.member,
+        base: {
+          performance: m.base.performance,
+          technique: m.base.technique,
+          sense: m.base.sense,
+        },
+        performance: m.effective.performance,
+        technique: m.effective.technique,
+        sense: m.effective.sense,
+        total: m.effective.total,
+        bonusPct: m.bonusPct,
+        scoreSupportPct: m.scoreSupportPct,
+      })),
+      typeCounts,
+      unitCounts,
+      activeDuplicates,
+    },
+    songLength,
+    data,
+  );
 }
 
 function* combinations<T>(arr: T[], k: number): Generator<T[]> {

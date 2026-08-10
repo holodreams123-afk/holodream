@@ -4,8 +4,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
+    "dev": "npm run predev && vite",
+    "build": "npm run predev && tsc -b && vite build",
     "preview": "vite preview",
     "generate-data": "node scripts/generateData.mjs",
     "add-swimsuits": "node scripts/addSwimsuits.mjs",
@@ -19,7 +19,15 @@
     "merge-stats": "node scripts/mergeStats.mjs",
     "cut-portraits": "node scripts/cutPortraitBg.mjs",
     "fix-game-data": "node scripts/fixGameData.mjs",
-    "precompute-pr": "npx tsx scripts/precomputePrBaselines.ts"
+    "precompute-pr": "npx tsx scripts/precomputePrBaselines.ts",
+    "organize-cards": "node scripts/organizeCharacterCardInbox.mjs",
+    "card-organizer": "node tools/card-organizer/server.mjs",
+    "rebuild-zh-titles": "node scripts/rebuildZhTitles.mjs",
+    "sync-card-catalog": "node scripts/syncCardCatalog.mjs",
+    "extract-costume-skills": "node scripts/extractCostumeSkillsFromCards.mjs",
+    "export-card-catalog": "node scripts/exportCardCatalogExcel.mjs",
+    "predev": "node scripts/syncCardCatalog.mjs && node scripts/syncCatalogToGameData.mjs && node scripts/fixGameData.mjs",
+    "sync-catalog-to-game-data": "node scripts/syncCatalogToGameData.mjs"
   },
   "dependencies": {
     "react": "^19.1.0",
@@ -30,6 +38,7 @@
     "@types/react-dom": "^19.1.0",
     "@vitejs/plugin-react": "^4.4.1",
     "sharp": "^0.35.3",
+    "tesseract.js": "^7.0.0",
     "typescript": "~5.8.3",
     "vite": "^6.3.5",
     "xlsx": "^0.18.5"

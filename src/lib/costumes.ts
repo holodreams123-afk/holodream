@@ -1,5 +1,26 @@
 import type { Card, Costume } from "../types";
 
+const costumeKey = (member: string, costumeName: string) => `${member}\0${costumeName}`;
+
+/** Lookup table: member + costumeName → captain costume skill. */
+export function buildCostumeLookup(costumes: Costume[]): Map<string, Costume> {
+  const map = new Map<string, Costume>();
+  for (const c of costumes) {
+    map.set(costumeKey(c.member, c.costumeName), c);
+  }
+  return map;
+}
+
+export function costumeForCard(lookup: Map<string, Costume>, card: Card): Costume | undefined {
+  return lookup.get(costumeKey(card.member, card.costumeName));
+}
+
+export function hasDisplayableCostumeSkill(costume: Costume): boolean {
+  const raw = costume.skill.raw?.trim();
+  if (!raw || raw === "なし") return false;
+  return costume.skill.effects.length > 0 || raw.length > 0;
+}
+
 /** Costume tied to a ★5 permanent or event-tagged card. */
 export function isStar5OrEventCostume(costume: Costume, cards: Card[]): boolean {
   return cards.some(

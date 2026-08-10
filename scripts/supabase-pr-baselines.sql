@@ -3,6 +3,7 @@
 --   VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
 --
 -- Existing projects: also run scripts/supabase-pr-baselines-migrate-top8.sql
+-- After PR algorithm bump: run scripts/supabase-pr-baselines-purge.sql once
 
 create table if not exists public.pr_baselines (
   cache_key text primary key,

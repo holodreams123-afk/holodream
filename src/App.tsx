@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import gameData from "./data/gameData.json";
-import { CardArt } from "./components/CardArt";
+import { LAST_UPDATED, formatSiteDate } from "./data/siteMeta";
+import { CardArt, cardArtUrl } from "./components/CardArt";
+import { SkillTimelineChart } from "./components/SkillTimelineChart";
 import { CardFilterToolbar, CardGroupBrowser } from "./components/CardBrowser";
+import { FeedbackPanel } from "./components/FeedbackPanel";
+import type { FeedbackKind } from "./lib/feedbackStore";
 import { MemberName } from "./components/MemberName";
 import { Portrait } from "./components/Portrait";
 import { useI18n } from "./i18n/LocaleContext";
@@ -12,16 +17,29 @@ import {
   describeCondition,
   formatMemberList,
 } from "./lib/explain";
-import { formatUncoveredGaps } from "./lib/coverage";
+import { formatUncoveredGaps, calcScoreUpCoverage, findBestCooldownReductions, buildMemberActiveWindows } from "./lib/coverage";
+import { buildActiveWindows } from "./lib/activeWindows";
 import {
-  UNIT_ORDER,
+  COOLDOWN_REDUCTION_OPTIONS,
+  defaultTimelineSettings,
+  teamTimelineKey,
+  type TeamTimelineSettings,
+} from "./lib/timelineSettings";
+import {
+  cardMatchesUnitFilter,
   categorySortKey,
+  collectUnitOptions,
   compareMembersByGroup,
+  memberBelongsToUnit,
   memberSortKey,
+  orderedGroupKeys,
+  orderedUnitKeys,
   primaryUnit,
+  unitsForMemberGrouping,
 } from "./lib/groups";
 import { displayName, listName, matchesQuery } from "./lib/names";
-import { captainCostumesForMember } from "./lib/costumes";
+import { buildCostumeLookup, captainCostumesForMember } from "./lib/costumes";
+import { formatBuffedStatDisplay } from "./lib/stats";
 import { optimizeTeamFast, buildOptimizeResultFromCache, hydratePrCostumeTop8 } from "./lib/optimizer";
 import {
   countOptimizerPoolCards,
@@ -32,13 +50,16 @@ import {
   syncSharedPrBaseline,
 } from "./lib/prBaselineStore";
 import {
-  formatActiveSkill,
-  formatCostumeSkillText,
-  formatPassiveSkill,
-} from "./lib/skillText";
+  displayActiveSkill,
+  displayCostumeSkill,
+  displayPassiveSkill,
+  displaySpecialSkill,
+} from "./lib/catalogDisplay";
+import { formatUnitBadge } from "./lib/groups";
 import type { Attr, Card, Costume, GameData, TeamEvaluation } from "./types";
 
 const data = gameData as GameData;
+const costumeLookup = buildCostumeLookup(data.costumes);
 const STORAGE_LOCKED = "holodream-wanted-members";
 const STORAGE_PREF_CARDS = "holodream-preferred-cards";
 const STORAGE_ROSTER = "holodream-owned-roster";
@@ -66,6 +87,65 @@ type OptimizeUiResult = {
 
 function unitsOf(member: string): string[] {
   return data.members[member]?.units ?? [];
+}
+
+function sortCardsInUnitGroup(a: Card, b: Card): number {
+  const byMember = memberSortKey(a.member) - memberSortKey(b.member);
+  if (byMember !== 0) return byMember;
+  if (a.member !== b.member) return a.member.localeCompare(b.member, "ja");
+  if (b.rarity !== a.rarity) return b.rarity - a.rarity;
+  return a.costumeName.localeCompare(b.costumeName, "ja");
+}
+
+/** Group cards by unit; dual-unit members (e.g. Fubuki) appear under each unit. */
+function buildUnitCardGroups(
+  cards: Card[],
+  options: { groupEventsByName: boolean; currentEvent?: string },
+): { unit: string; cards: Card[]; isEvent: boolean }[] {
+  const { groupEventsByName, currentEvent } = options;
+  const map = new Map<string, { cards: Card[]; isEvent: boolean }>();
+
+  for (const c of cards) {
+    const pinAsEvent =
+      !!c.event &&
+      (groupEventsByName || (!!currentEvent && c.event === currentEvent));
+
+    if (pinAsEvent) {
+      const unit = c.event!;
+      const bucket = map.get(unit);
+      if (bucket) bucket.cards.push(c);
+      else map.set(unit, { cards: [c], isEvent: true });
+      continue;
+    }
+
+    const units = c.event
+      ? [primaryUnit(unitsOf(c.member), c.unit)]
+      : unitsForMemberGrouping(unitsOf(c.member), c.unit);
+    for (const unit of units) {
+      const bucket = map.get(unit);
+      if (bucket) bucket.cards.push(c);
+      else map.set(unit, { cards: [c], isEvent: false });
+    }
+  }
+
+  const eventKeys = [...map.entries()]
+    .filter(([, v]) => v.isEvent)
+    .map(([k]) => k);
+  const regularKeys = orderedUnitKeys(
+    new Map([...map.entries()].filter(([, v]) => !v.isEvent).map(([k]) => [k, null])),
+  );
+  const unitKeys = orderedGroupKeys(regularKeys, eventKeys, currentEvent);
+
+  return unitKeys
+    .filter((unit) => map.has(unit))
+    .map((unit) => {
+      const bucket = map.get(unit)!;
+      return {
+        unit,
+        isEvent: bucket.isEvent,
+        cards: [...bucket.cards].sort(sortCardsInUnitGroup),
+      };
+    });
 }
 
 function isOptimizePoolCard(c: Card) {
@@ -136,10 +216,20 @@ export default function App() {
   const [resultTrack, setResultTrack] = useState<ResultTrack>("overall");
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [viewingPrBaseline, setViewingPrBaseline] = useState(false);
+  const [calcRulesOpen, setCalcRulesOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [busyEstimateSec, setBusyEstimateSec] = useState<number | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
   const [cardsCompact, setCardsCompact] = useState(false);
+  const [rosterWantedOpen, setRosterWantedOpen] = useState(false);
+  const [feedbackView, setFeedbackView] = useState<FeedbackKind | null>(null);
   const [allowDuplicateSkills, setAllowDuplicateSkills] = useState(true);
+  const [timelineKey, setTimelineKey] = useState("");
+  const [timelineSettings, setTimelineSettings] = useState<TeamTimelineSettings>(() =>
+    defaultTimelineSettings(),
+  );
+  const [reductionsUndo, setReductionsUndo] = useState<number[] | null>(null);
+  const [appliedBestReductions, setAppliedBestReductions] = useState<number[] | null>(null);
   const [ownedRosterMembers, setOwnedRosterMembers] = useState<string[]>(() =>
     loadJson<string[]>(STORAGE_ROSTER, []),
   );
@@ -150,17 +240,12 @@ export default function App() {
   const wantedSet = useMemo(() => new Set(wantedMembers), [wantedMembers]);
   const rosterSet = useMemo(() => new Set(ownedRosterMembers), [ownedRosterMembers]);
 
-  const unitOptions = useMemo(() => {
-    const present = new Set(
-      Object.keys(data.members).map((m) => primaryUnit(unitsOf(m))),
-    );
-    return UNIT_ORDER.filter((u) => present.has(u));
-  }, []);
+  const unitOptions = useMemo(() => collectUnitOptions(data.members), []);
 
   const membersInLeaderUnit = useMemo(() => {
     if (!leaderUnit) return [] as string[];
     return Object.keys(data.members)
-      .filter((m) => primaryUnit(unitsOf(m)) === leaderUnit)
+      .filter((m) => memberBelongsToUnit(unitsOf(m), leaderUnit))
       .sort((a, b) => memberSortKey(a) - memberSortKey(b) || a.localeCompare(b, "ja"));
   }, [leaderUnit]);
 
@@ -215,10 +300,7 @@ export default function App() {
       .filter((c) =>
         includeRarity && rarityFilters.length ? rarityFilters.includes(c.rarity) : true,
       )
-      .filter((c) => {
-        if (!unitFilters.length) return true;
-        return unitFilters.includes(primaryUnit(unitsOf(c.member), c.unit));
-      })
+      .filter((c) => cardMatchesUnitFilter(unitsOf(c.member), unitFilters))
       .filter((c) => {
         if (!query.trim()) return true;
         const q = query.trim().toLowerCase();
@@ -233,7 +315,8 @@ export default function App() {
       .sort((a, b) => {
         const ca = cardCategory(a);
         const cb = cardCategory(b);
-        const byCat = categorySortKey(ca) - categorySortKey(cb);
+        const byCat =
+          categorySortKey(ca, data.currentEvent) - categorySortKey(cb, data.currentEvent);
         if (byCat !== 0) return byCat;
         if (ca !== cb) return ca.localeCompare(cb, "ja");
         const byMember = memberSortKey(a.member) - memberSortKey(b.member);
@@ -253,6 +336,28 @@ export default function App() {
     [typeFilters, unitFilters, query, locale],
   );
 
+  const rosterPoolCards = useMemo(() => {
+    return data.cards.filter((c) => {
+      if (!isOptimizePoolCard(c)) return false;
+      if (!rosterSet.has(c.member)) return false;
+      return rosterOwnedIds(c.member).includes(c.id);
+    });
+  }, [ownedRosterMembers, rosterOwnedCards, rosterSet]);
+
+  const rosterWantedVisibleCards = useMemo(
+    () => filterAndSortCards(rosterPoolCards, false),
+    [rosterPoolCards, typeFilters, unitFilters, query, locale],
+  );
+
+  const rosterWantedGroups = useMemo(
+    () =>
+      buildUnitCardGroups(rosterWantedVisibleCards, {
+        groupEventsByName: true,
+        currentEvent: data.currentEvent,
+      }),
+    [rosterWantedVisibleCards],
+  );
+
   function toggleUnitFilter(unit: string) {
     setUnitFilters((prev) =>
       prev.includes(unit) ? prev.filter((u) => u !== unit) : [...prev, unit],
@@ -269,64 +374,72 @@ export default function App() {
     setTypeFilters((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
   }
 
-  const cardGroups = useMemo(() => {
-    const groups: { unit: string; cards: Card[]; isEvent: boolean }[] = [];
-    for (const c of optimizeVisibleCards) {
-      const unit = cardCategory(c);
-      const last = groups[groups.length - 1];
-      if (last && last.unit === unit) last.cards.push(c);
-      else groups.push({ unit, cards: [c], isEvent: !!c.event });
-    }
-    return groups;
-  }, [optimizeVisibleCards]);
+  const cardGroups = useMemo(
+    () =>
+      buildUnitCardGroups(optimizeVisibleCards, {
+        groupEventsByName: true,
+        currentEvent: data.currentEvent,
+      }),
+    [optimizeVisibleCards],
+  );
 
-  /** 角色一覽：嚴格依期數／分組排列（活動卡歸入該成員期數） */
-  const galleryGroups = useMemo(() => {
-    const map = new Map<string, Card[]>();
-    for (const c of galleryVisibleCards) {
-      const unit = primaryUnit(unitsOf(c.member), c.unit);
-      const list = map.get(unit);
-      if (list) list.push(c);
-      else map.set(unit, [c]);
-    }
-    const ordered = [
-      ...UNIT_ORDER.filter((u) => map.has(u)),
-      ...[...map.keys()].filter((u) => !UNIT_ORDER.includes(u)).sort((a, b) => a.localeCompare(b, "ja")),
-    ];
-    return ordered.map((unit) => {
-      const cards = [...(map.get(unit) ?? [])].sort((a, b) => {
-        const byMember = memberSortKey(a.member) - memberSortKey(b.member);
-        if (byMember !== 0) return byMember;
-        if (a.member !== b.member) return a.member.localeCompare(b.member, "ja");
-        if (b.rarity !== a.rarity) return b.rarity - a.rarity;
-        return a.costumeName.localeCompare(b.costumeName, "ja");
-      });
-      return { unit, cards, isEvent: false };
-    });
-  }, [galleryVisibleCards]);
+  /** 角色一覽：依期數／分組排列（雙期別成員各期都顯示；活動卡歸入該成員期數） */
+  const galleryGroups = useMemo(
+    () =>
+      buildUnitCardGroups(galleryVisibleCards, {
+        groupEventsByName: false,
+        currentEvent: data.currentEvent,
+      }),
+    [galleryVisibleCards],
+  );
 
   const rosterMemberGroups = useMemo(() => {
     const eligible = new Set<string>();
     for (const c of data.cards) {
       if (c.rarity === 5 || c.event) eligible.add(c.member);
     }
+    const currentEvent = data.currentEvent;
+    const eventMembers: string[] = [];
+    const eventMemberSet = new Set<string>();
+    if (currentEvent) {
+      const seen = new Set<string>();
+      for (const c of data.cards) {
+        if (c.event !== currentEvent || !eligible.has(c.member) || seen.has(c.member)) continue;
+        seen.add(c.member);
+        eventMembers.push(c.member);
+        eventMemberSet.add(c.member);
+      }
+      eventMembers.sort(
+        (a, b) => memberSortKey(a) - memberSortKey(b) || a.localeCompare(b, "ja"),
+      );
+    }
     const map = new Map<string, string[]>();
     for (const member of eligible) {
-      const unit = primaryUnit(unitsOf(member));
-      const list = map.get(unit);
-      if (list) list.push(member);
-      else map.set(unit, [member]);
+      if (eventMemberSet.has(member)) continue;
+      for (const unit of unitsForMemberGrouping(unitsOf(member))) {
+        const list = map.get(unit);
+        if (list) list.push(member);
+        else map.set(unit, [member]);
+      }
     }
-    const ordered = [
-      ...UNIT_ORDER.filter((u) => map.has(u)),
-      ...[...map.keys()].filter((u) => !UNIT_ORDER.includes(u)).sort((a, b) => a.localeCompare(b, "ja")),
-    ];
-    return ordered.map((unit) => ({
-      unit,
-      members: (map.get(unit) ?? []).sort(
-        (a, b) => memberSortKey(a) - memberSortKey(b) || a.localeCompare(b, "ja"),
-      ),
-    }));
+    const regularKeys = orderedUnitKeys(map);
+    const groupKeys = orderedGroupKeys(
+      regularKeys,
+      eventMembers.length && currentEvent ? [currentEvent] : [],
+      currentEvent,
+    );
+    return groupKeys
+      .filter((unit) => unit === currentEvent || map.has(unit))
+      .map((unit) => ({
+        unit,
+        isEvent: unit === currentEvent,
+        members:
+          unit === currentEvent
+            ? eventMembers
+            : (map.get(unit) ?? []).sort(
+                (a, b) => memberSortKey(a) - memberSortKey(b) || a.localeCompare(b, "ja"),
+              ),
+      }));
   }, []);
 
   function persistRosterCards(prefs: Record<string, string[]>) {
@@ -348,6 +461,19 @@ export default function App() {
         persistRosterCards(nextPrefs);
         return nextPrefs;
       });
+      if (removing) {
+        setWantedMembers((wm) => {
+          if (!wm.includes(member)) return wm;
+          const nextWanted = wm.filter((m) => m !== member);
+          setPreferredCards((prefs) => {
+            const nextPrefs = { ...prefs };
+            delete nextPrefs[member];
+            persistWanted(nextWanted, nextPrefs);
+            return nextPrefs;
+          });
+          return nextWanted;
+        });
+      }
       setResult(null);
       return next;
     });
@@ -384,6 +510,7 @@ export default function App() {
   }
 
   function toggleWantedCard(card: Card) {
+    if (theme === "roster" && !rosterSet.has(card.member)) return;
     setWantedMembers((prev) => {
       const isWanted = prev.includes(card.member);
       let next: string[];
@@ -456,6 +583,38 @@ export default function App() {
     [],
   );
 
+  function estimateOptimizeSeconds(
+    options: Omit<Parameters<typeof optimizeTeamFast>[1], "ownedCardIds">,
+    sharePr9999Baseline: boolean,
+    prFullyCached: boolean,
+  ): number {
+    const wanted = (options.fixedMembers ?? []).filter(Boolean).length;
+    const pool = options.memberPool?.length ?? 0;
+    if (sharePr9999Baseline && prFullyCached && wanted === 0 && pool === 0) return 8;
+    if (pool >= 5) return 50;
+    if (wanted >= 4) return 25;
+    if (wanted > 0) return 40;
+    if (sharePr9999Baseline && !prFullyCached) return 150;
+    return 90;
+  }
+
+  function startBusy(seconds: number) {
+    setBusyEstimateSec(seconds);
+    setBusy(true);
+  }
+
+  function stopBusy() {
+    setBusy(false);
+    setBusyEstimateSec(null);
+  }
+
+  function extendBusyDeadline(seconds: number) {
+    setBusyEstimateSec((prev) => (prev == null ? seconds : Math.max(prev, seconds)));
+  }
+
+  const busyEstimateMin =
+    busyEstimateSec != null ? Math.max(1, Math.ceil(busyEstimateSec / 60)) : null;
+
   async function prepareAndRunOptimize(
     ownedCardIds: Set<string>,
     options: Omit<Parameters<typeof optimizeTeamFast>[1], "ownedCardIds">,
@@ -474,11 +633,14 @@ export default function App() {
       }
     }
 
+    const estimateSec = estimateOptimizeSeconds(options, sharePr9999Baseline, prFullyCached);
+    extendBusyDeadline(estimateSec);
+
     const finish = (out: ReturnType<typeof optimizeTeamFast>) => {
       setResult(out);
       setResultTrack("overall");
       setSelectedIdx(0);
-      setBusy(false);
+      stopBusy();
       requestAnimationFrame(() => {
         document.getElementById("optimize-results")?.scrollIntoView({
           behavior: "smooth",
@@ -539,7 +701,7 @@ export default function App() {
       return;
     }
 
-    setBusy(true);
+    startBusy(90);
     void prepareAndRunOptimize(
       allCardIds,
       {
@@ -571,8 +733,13 @@ export default function App() {
       alert(t.alertNeedLeader);
       return;
     }
+    const rosterWanted = wantedMembers.filter((m) => rosterSet.has(m));
+    if (rosterWanted.length > 5) {
+      alert(t.alertWantedMax);
+      return;
+    }
 
-    setBusy(true);
+    startBusy(90);
     void prepareAndRunOptimize(
       rosterOwnedCardIdsForOptimize(),
       {
@@ -580,7 +747,8 @@ export default function App() {
         songLength: SONG_LENGTH,
         fixedLeader: leaderMember,
         fixedCostumeId: leaderCostumeId || null,
-        fixedMembers: [],
+        fixedMembers: rosterWanted,
+        preferredCardByMember: preferredCards,
         memberPool: ownedRosterMembers,
         maxResults: 8,
         allowDuplicateSkills,
@@ -646,14 +814,104 @@ export default function App() {
         detailEv.typeCounts,
         detailEv.unitCounts,
         attrLabel,
+        locale,
       )
     : null;
+
+  useEffect(() => {
+    if (!detailEv) return;
+    const key = teamTimelineKey(detailEv);
+    if (key !== timelineKey) {
+      setTimelineKey(key);
+      setTimelineSettings(defaultTimelineSettings(detailEv.cards.length));
+      setReductionsUndo(null);
+      setAppliedBestReductions(null);
+    }
+  }, [detailEv, timelineKey]);
+
+  const liveCoverage = useMemo(() => {
+    if (!detailEv) return null;
+    const actives = buildActiveWindows(
+      detailEv.cards,
+      detailEv.typeCounts,
+      detailEv.unitCounts,
+    );
+    return calcScoreUpCoverage(actives, SONG_LENGTH, 0.25, timelineSettings.reductions);
+  }, [detailEv, timelineSettings.reductions]);
+
+  const timelineMemberRows = useMemo(() => {
+    if (!detailEv) return [];
+    const actives = buildActiveWindows(
+      detailEv.cards,
+      detailEv.typeCounts,
+      detailEv.unitCounts,
+    );
+    return detailEv.cards.map((card, i) => ({
+      id: card.id,
+      label: `${listName(card.member, unitsOf(card.member), locale)}（★${card.rarity}）`,
+      windows: buildMemberActiveWindows(
+        actives[i],
+        timelineSettings.reductions[i] ?? 0,
+        SONG_LENGTH,
+      ),
+      scoreUp: actives[i].scoreUp,
+    }));
+  }, [detailEv, timelineSettings.reductions, locale]);
+
+  const displayCoverage = liveCoverage ?? detailEv;
+
+  const reductionsOptimized =
+    appliedBestReductions != null &&
+    reductionsUndo != null &&
+    timelineSettings.reductions.length === appliedBestReductions.length &&
+    timelineSettings.reductions.every((v, i) => v === appliedBestReductions[i]);
+
+  function optimizeTimelineReductions() {
+    if (!detailEv) return;
+
+    if (reductionsOptimized && reductionsUndo) {
+      setTimelineSettings((s) => ({ ...s, reductions: [...reductionsUndo] }));
+      setReductionsUndo(null);
+      setAppliedBestReductions(null);
+      return;
+    }
+
+    const actives = buildActiveWindows(
+      detailEv.cards,
+      detailEv.typeCounts,
+      detailEv.unitCounts,
+    );
+    const best = findBestCooldownReductions(actives, SONG_LENGTH);
+    setReductionsUndo([...timelineSettings.reductions]);
+    setAppliedBestReductions(best);
+    setTimelineSettings((s) => ({ ...s, reductions: best }));
+  }
+
+  function setMemberReduction(index: number, value: number) {
+    setReductionsUndo(null);
+    setAppliedBestReductions(null);
+    setTimelineSettings((s) => {
+      const reductions = [...s.reductions];
+      reductions[index] = value;
+      return { ...s, reductions };
+    });
+  }
 
   useEffect(() => {
     setViewingPrBaseline(false);
   }, [result]);
 
-  const requiredCount = wantedMembers.length;
+  useEffect(() => {
+    if (!calcRulesOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setCalcRulesOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [calcRulesOpen]);
+
+  const activeWantedMembers =
+    theme === "roster" ? wantedMembers.filter((m) => rosterSet.has(m)) : wantedMembers;
 
   function trackMetricLabel(ev: TeamEvaluation): string {
     if (resultTrack === "overall") {
@@ -694,7 +952,7 @@ export default function App() {
         </div>
         <div className="hero-main">
           <div className="hero-copy">
-            <p className="hero-kicker">{t.madeBy}</p>
+            <p className="hero-kicker">{t.lastUpdated(formatSiteDate(LAST_UPDATED, locale))}</p>
             <h1 className="brand">
               <span className="brand-mark" aria-hidden />
               {t.brand}
@@ -733,9 +991,86 @@ export default function App() {
           <div className="hero-mascot">
             <Portrait member="常闇トワ" size="lg" className="hero-portrait" />
             <span className="hero-mascot-caption">常闇トワ</span>
+            <span className="hero-mascot-sub">{t.heroMascotSub}</span>
+            <div className="hero-feedback">
+              <button
+                type="button"
+                className="hero-feedback-btn"
+                onClick={() => setFeedbackView("report")}
+              >
+                {t.feedbackReport}
+              </button>
+              <button
+                type="button"
+                className="hero-feedback-btn hero-feedback-btn--suggest"
+                onClick={() => setFeedbackView("suggest")}
+              >
+                {t.feedbackSuggest}
+              </button>
+            </div>
           </div>
         </div>
       </header>
+
+      {feedbackView && (
+        <FeedbackPanel kind={feedbackView} onClose={() => setFeedbackView(null)} />
+      )}
+
+      {calcRulesOpen &&
+        createPortal(
+          <div
+            className="calc-rules-backdrop"
+            role="presentation"
+            onClick={() => setCalcRulesOpen(false)}
+          >
+            <div
+              className="calc-rules-dialog"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="calc-rules-title"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="calc-rules-dialog-head">
+                <h3 id="calc-rules-title" className="calc-rules-dialog-title">
+                  {t.calcRulesTitle}
+                </h3>
+                <button
+                  type="button"
+                  className="calc-rules-x"
+                  aria-label={t.feedbackClose}
+                  onClick={() => setCalcRulesOpen(false)}
+                >
+                  ×
+                </button>
+              </div>
+              <ul className="calc-rules-list">
+                {(
+                  [
+                    [t.calcRulesPrTitle, t.calcRulesPrBody],
+                    [t.calcRulesCombatTitle, t.calcRulesCombatBody],
+                    [t.calcRulesStrengthTitle, t.calcRulesStrengthBody],
+                    [t.calcRulesBonusTitle, t.calcRulesBonusBody],
+                  ] as const
+                ).map(([title, body]) => (
+                  <li key={title}>
+                    <strong>{title}</strong>
+                    <p>{body}</p>
+                  </li>
+                ))}
+              </ul>
+              <div className="calc-rules-footer">
+                <button
+                  type="button"
+                  className="calc-rules-close"
+                  onClick={() => setCalcRulesOpen(false)}
+                >
+                  {t.calcRulesClose}
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
 
       {theme === "gallery" && (
         <section className="panel gallery-panel">
@@ -771,6 +1106,7 @@ export default function App() {
             groups={galleryGroups}
             compact={cardsCompact}
             unitsOf={unitsOf}
+            costumeLookup={costumeLookup}
           />
         </section>
       )}
@@ -810,7 +1146,9 @@ export default function App() {
           <div className="roster-groups">
             {rosterMemberGroups.map((g) => (
               <div key={g.unit} className="roster-group">
-                <div className="group-heading">{g.unit}</div>
+                <div className={`group-heading ${g.isEvent ? "event" : ""}`}>
+                  {g.isEvent ? t.eventPrefix(g.unit) : g.unit}
+                </div>
                 <div className="roster-member-grid">
                   {g.members.map((member) => {
                     const selected = rosterSet.has(member);
@@ -972,7 +1310,7 @@ export default function App() {
                       <div className="costume-card-body">
                         <div className="costume-name">{cos.costumeName}</div>
                         <div className="costume-skill">
-                          {formatCostumeSkillText(cos.skill, locale)}
+                          {displayCostumeSkill(cos, locale, data.cards)}
                         </div>
                       </div>
                     </button>
@@ -986,7 +1324,7 @@ export default function App() {
                 <div>
                   <span className="label">{t.conditionLabel}</span>
                   <strong>
-                    {describeCondition(selectedCostume.skill.condition, t, attrLabel)}
+                    {describeCondition(selectedCostume.skill.condition, t, attrLabel, locale)}
                   </strong>
                 </div>
                 {selectedCostume.skill.condition?.type === "unitCount" && (
@@ -1017,13 +1355,59 @@ export default function App() {
       </section>
 
       <div className="stack">
-        {theme === "optimize" && (
-        <section className="panel">
-          <h2>
-            {t.wantedTitle(wantedMembers.length)}
-            {wantedMembers.length > 0 ? t.wantedLocked(requiredCount) : ""}
-          </h2>
-          <p className="panel-note">{t.wantedNote}</p>
+        {(theme === "optimize" || theme === "roster") && (
+        <section
+          className={`panel${theme === "roster" ? " panel--collapsible" : ""}${theme === "roster" && rosterWantedOpen ? " is-open" : ""}`}
+        >
+          {theme === "roster" ? (
+            <button
+              type="button"
+              className="panel-collapse-trigger"
+              aria-expanded={rosterWantedOpen}
+              onClick={() => setRosterWantedOpen((v) => !v)}
+            >
+              <span className="panel-collapse-heading">
+                <h2>
+                  {t.wantedTitle(activeWantedMembers.length)}
+                  {activeWantedMembers.length > 0
+                    ? t.wantedLocked(activeWantedMembers.length)
+                    : ""}
+                </h2>
+                {!rosterWantedOpen && (
+                  <span className="panel-collapse-hint">{t.rosterWantedCollapsedHint}</span>
+                )}
+              </span>
+              <span className="panel-collapse-chevron" aria-hidden>
+                {rosterWantedOpen ? "▲" : "▼"}
+              </span>
+            </button>
+          ) : (
+            <h2>
+              {t.wantedTitle(activeWantedMembers.length)}
+              {activeWantedMembers.length > 0 ? t.wantedLocked(activeWantedMembers.length) : ""}
+            </h2>
+          )}
+
+          {theme === "roster" && !rosterWantedOpen && activeWantedMembers.length > 0 && (
+            <div className="wanted-bar wanted-bar--collapsed">
+              {activeWantedMembers.map((m) => {
+                const cardId = preferredCards[m];
+                const card = data.cards.find((c) => c.id === cardId);
+                return (
+                  <div key={m} className="wanted-card wanted-card--compact">
+                    <CardArt cardId={cardId} alt={card?.costumeName ?? m} className="wanted-card-art" />
+                    <div className="wanted-card-body">
+                      <MemberName member={m} units={unitsOf(m)} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {(theme !== "roster" || rosterWantedOpen) && (
+          <>
+          <p className="panel-note">{theme === "roster" ? t.rosterWantedNote : t.wantedNote}</p>
           <label className="dup-option">
             <input
               type="checkbox"
@@ -1064,9 +1448,9 @@ export default function App() {
             }
           />
 
-          {wantedMembers.length > 0 && (
+          {activeWantedMembers.length > 0 && (
             <div className="wanted-bar">
-              {wantedMembers.map((m) => {
+              {activeWantedMembers.map((m) => {
                 const cardId = preferredCards[m];
                 const card = data.cards.find((c) => c.id === cardId);
                 return (
@@ -1097,20 +1481,33 @@ export default function App() {
           )}
 
           <CardGroupBrowser
-            groups={cardGroups}
+            groups={theme === "roster" ? rosterWantedGroups : cardGroups}
             compact={cardsCompact}
             unitsOf={unitsOf}
             onCardClick={toggleWantedCard}
             memberLockedSet={wantedSet}
             preferredByMember={preferredCards}
             leaderMember={leaderMember}
+            emptyText={theme === "roster" ? t.rosterWantedEmpty : undefined}
           />
+          </>
+          )}
         </section>
         )}
 
         <section className="panel" id="optimize-results">
-          <div className="panel-head">
+          <div className={`panel-head ${result ? "panel-head--results" : ""}`}>
             <h2>{t.resultsTitle}</h2>
+            {result ? (
+              <button
+                type="button"
+                className="calc-rules-btn"
+                aria-expanded={calcRulesOpen}
+                onClick={() => setCalcRulesOpen(true)}
+              >
+                {t.calcRulesBtn}
+              </button>
+            ) : null}
           </div>
           {!result ? (
             <div className="empty">
@@ -1170,27 +1567,25 @@ export default function App() {
                     <span className="browser-tab-title">{tab.title}</span>
                   </button>
                 ))}
-                <button
-                  type="button"
-                  role="tab"
-                  className={`browser-tab browser-tab-pr ${viewingPrBaseline ? "active" : ""}`}
-                  disabled={!prBaselineTeam}
-                  aria-selected={viewingPrBaseline}
-                  title={
-                    prBaselineTeam ? t.prBaselineBtnTitle : t.prBaselineBtnUnavailable
-                  }
-                  onClick={() => setViewingPrBaseline((on) => !on)}
-                >
-                  <span className="browser-tab-icon" aria-hidden>
-                    PR
-                  </span>
-                  <span className="browser-tab-title">{t.prBaselineBtn}</span>
-                </button>
+                <div className="browser-tabs-trailing">
+                  <button
+                    type="button"
+                    role="tab"
+                    className={`browser-tab browser-tab-pr ${viewingPrBaseline ? "active" : ""}`}
+                    disabled={!prBaselineTeam}
+                    aria-selected={viewingPrBaseline}
+                    title={
+                      prBaselineTeam ? t.prBaselineBtnTitle : t.prBaselineBtnUnavailable
+                    }
+                    onClick={() => setViewingPrBaseline((on) => !on)}
+                  >
+                    <span className="browser-tab-icon" aria-hidden>
+                      PR
+                    </span>
+                    <span className="browser-tab-title">{t.prBaselineBtn}</span>
+                  </button>
+                </div>
               </div>
-
-              {resultTrack === "overall" && result.baselineTeam && (
-                <p className="pr-baseline-note">{t.prBaselineNote}</p>
-              )}
 
               <div className="result-split">
                 <aside className="result-rank-col">
@@ -1244,13 +1639,12 @@ export default function App() {
                             {resultTrack === "overall" ? (
                               <>
                                 <span className="track-pick-flags">
-                                  {t.flagStats(ev.effectiveStatTotal.toLocaleString())}
+                                  {t.flagStats(
+                                    (ev.totalStrength ?? ev.effectiveStatTotal).toLocaleString(),
+                                  )}
                                 </span>
                                 <span className="track-pick-flags">
-                                  {t.flagCoverage((ev.coverage * 100).toFixed(0))}
-                                </span>
-                                <span className="track-pick-flags">
-                                  {t.flagUp(ev.avgScoreUp.toFixed(0))}
+                                  {t.flagUp((ev.scoreBonusPct ?? ev.avgScoreUp).toFixed(0))}
                                 </span>
                               </>
                             ) : null}
@@ -1270,57 +1664,151 @@ export default function App() {
                 <p className="pr-baseline-banner">{t.prBaselineViewBanner}</p>
               ) : null}
               <div className="stats-row stats-row-5">
-                <div className="stat">
+                <div className="stat stat-compact stat-span-2">
                   <div className="label">{t.costumeSkill}</div>
-                  <div className={`value ${detailEv.costumeSatisfied ? "ok" : "bad"}`}>
-                    {detailEv.costumeSatisfied ? t.activated : t.notActivated}
+                  <div className="stat-body">
+                    <div className={`value ${detailEv.costumeSatisfied ? "ok" : "bad"}`}>
+                      {detailEv.costumeSatisfied ? t.activated : t.notActivated}
+                    </div>
                   </div>
                   {detailProgress && (
-                    <div className="sub">
+                    <div className="stat-foot sub">
                       {detailProgress.label} {detailProgress.current}/{detailProgress.needed}
                     </div>
                   )}
                 </div>
-                <div className="stat">
+                <div className="stat stat-compact stat-span-2">
                   <div className="label">{t.allPassives}</div>
-                  <div className={`value ${detailEv.allPassivesSatisfied ? "ok" : "bad"}`}>
-                    {detailEv.allPassivesSatisfied ? t.satisfied : t.notAllSatisfied}
+                  <div className="stat-body">
+                    <div className={`value ${detailEv.allPassivesSatisfied ? "ok" : "bad"}`}>
+                      {detailEv.allPassivesSatisfied ? t.satisfied : t.notAllSatisfied}
+                    </div>
                   </div>
-                  <div className="sub">
+                  <div className="stat-foot sub">
                     {detailEv.passiveDetails.filter((p) => p.satisfied).length}/
                     {detailEv.passiveDetails.length}
                   </div>
                 </div>
-                <div className="stat">
-                  <div className="label">{t.avgScoreUp}</div>
-                  <div className="value">{detailEv.avgScoreUp.toFixed(1)}%</div>
-                  <div className="sub">
-                    {t.coveragePct((detailEv.coverage * 100).toFixed(0))}
+                <div className="stat stat-rich stat-span-3">
+                  <div className="label">{t.scoreBonus}</div>
+                  <div className="stat-body">
+                    <div className="value">
+                      {(detailEv.scoreBonusPct ?? detailEv.avgScoreUp).toFixed(1)}%
+                    </div>
                   </div>
+                  {detailEv.scoreBonus ? (
+                    <ul className="stat-breakdown">
+                      <li>
+                        <span>{t.scoreBonusActive}</span>
+                        <span>{detailEv.scoreBonus.activePct.toFixed(1)}%</span>
+                      </li>
+                      <li>
+                        <span>{t.scoreBonusPassive}</span>
+                        <span>{detailEv.scoreBonus.passiveScoreSupportPct.toFixed(1)}%</span>
+                      </li>
+                      <li>
+                        <span>{t.scoreBonusSpecial}</span>
+                        <span>{detailEv.scoreBonus.specialPct.toFixed(1)}%</span>
+                      </li>
+                    </ul>
+                  ) : (
+                    <div className="stat-foot sub">
+                      {t.coveragePct((detailEv.coverage * 100).toFixed(0))}
+                    </div>
+                  )}
                 </div>
-                <div className="stat">
-                  <div className="label">{t.buffedStats}</div>
-                  <div className="value">{detailEv.effectiveStatTotal.toLocaleString()}</div>
-                  <div className="sub">
-                    {t.baseStats(detailEv.baseStatTotal.toLocaleString())}
+                <div className="stat stat-rich stat-span-3">
+                  <div className="label">{t.totalStrength}</div>
+                  <div className="stat-body">
+                    <div className="value">
+                      {(detailEv.totalStrength ?? detailEv.effectiveStatTotal).toLocaleString()}
+                    </div>
                   </div>
+                  {detailEv.totalStrengthBreakdown ? (
+                    <ul className="stat-breakdown muted">
+                      <li>
+                        <span>{t.strengthMember}</span>
+                        <span>
+                          {detailEv.totalStrengthBreakdown.memberAbility.toLocaleString()}
+                        </span>
+                      </li>
+                      <li>
+                        <span>{t.strengthCostume}</span>
+                        <span>
+                          {detailEv.totalStrengthBreakdown.costumeSkill.toLocaleString()}
+                        </span>
+                      </li>
+                      <li>
+                        <span>{t.strengthPassive}</span>
+                        <span>
+                          {detailEv.totalStrengthBreakdown.passiveSkill.toLocaleString()}
+                        </span>
+                      </li>
+                    </ul>
+                  ) : (
+                    <div className="stat-foot sub">
+                      {t.buffedStats} {detailEv.effectiveStatTotal.toLocaleString()}
+                    </div>
+                  )}
                 </div>
-                <div className="stat">
-                  <div className="label">{t.skillGaps}</div>
-                  <div className={`value ${detailEv.uncoveredSeconds <= 0 ? "ok" : ""}`}>
-                    {detailEv.uncoveredSeconds.toFixed(1)}s
-                  </div>
-                  <div className="sub">{t.shorterBetter}</div>
+                <div className="stat stat-metrics stat-span-2">
+                  {displayCoverage ? (
+                    <>
+                      <div className="stat-metric">
+                        <div className="label">{t.activeSkillCoverage}</div>
+                        <div
+                          className={`value ${displayCoverage.coverage >= 1 ? "ok" : ""}`}
+                        >
+                          {(displayCoverage.coverage * 100).toFixed(1)}%
+                        </div>
+                      </div>
+                      <div className="stat-metric-divider" aria-hidden />
+                      <div className="stat-metric">
+                        <div className="label">{t.activeSkillGap}</div>
+                        <div className="value">
+                          {t.activeCoverageGapTotal(
+                            displayCoverage.uncoveredSeconds.toFixed(1),
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="label">{t.activeSkillCoverage}</div>
+                      <div className="value">—</div>
+                    </>
+                  )}
                 </div>
               </div>
+
+              {detailEv.combatPower != null && (
+                <p className="combat-power-line">
+                  {t.combatPower}{" "}
+                  <strong>{Math.round(detailEv.combatPower).toLocaleString()}</strong>
+                  <span className="sub muted">
+                    {" "}
+                    （{t.totalStrength}{" "}
+                    {(detailEv.totalStrength ?? detailEv.effectiveStatTotal).toLocaleString()} ×{" "}
+                    {(
+                      1 +
+                      (detailEv.scoreBonusPct ?? detailEv.avgScoreUp) / 100
+                    ).toFixed(3)}
+                    ）
+                  </span>
+                </p>
+              )}
 
               <div className="skill-banner">
                 <strong>{t.leaderCostume}</strong>
                 <span>
-                  {displayName(leaderMember, unitsOf(leaderMember), locale)}
+                  {displayName(
+                    detailEv.costume.member,
+                    unitsOf(detailEv.costume.member),
+                    locale,
+                  )}
                   {detailEv.leaderIndex < 0 ? t.captainOffTeam : ""}
                   {" · "}
-                  {formatCostumeSkillText(detailEv.costume.skill, locale)}
+                  {displayCostumeSkill(detailEv.costume, locale, data.cards)}
                 </span>
               </div>
 
@@ -1350,110 +1838,194 @@ export default function App() {
                   const isLeader = detailEv.leaderIndex >= 0 && i === detailEv.leaderIndex;
                   const units = data.members[card.member]?.units ?? [card.unit];
                   const forced = wantedSet.has(card.member);
+                  const passiveOk = detailEv.passiveDetails[i]?.satisfied;
+                  const stats = detailEv.memberEffectiveStats[i];
+                  const timelineRow = timelineMemberRows[i];
+                  const usedScoreUp = timelineRow?.scoreUp ?? card.active.scoreUp ?? 0;
+                  const artUrl = cardArtUrl(card.id);
                   return (
-                    <div key={card.id} className={`slot ${isLeader ? "leader" : ""}`}>
-                      <div className="slot-pos">
-                        {isLeader ? t.leader : t.memberN(i + 1)}
-                        <CardArt cardId={card.id} className="card-art-md" />
-                        <strong>{attrLabel(card.type)}</strong>
-                      </div>
-                      <div>
-                        <h3>
-                          <MemberName member={card.member} units={unitsOf(card.member)} />{" "}
-                          <span className="badge star">★{card.rarity}</span>
-                          {forced && <span className="badge">{t.forced}</span>}
-                        </h3>
-                        <p>
-                          {units.join(" · ")}
+                    <article
+                      key={card.id}
+                      className={`team-slot team-slot--${card.type} ${isLeader ? "is-leader" : ""} ${artUrl ? "has-art" : ""}`}
+                    >
+                      {artUrl ? (
+                        <div
+                          className="team-slot-bg"
+                          style={{ backgroundImage: `url("${artUrl}")` }}
+                          aria-hidden
+                        />
+                      ) : null}
+                      <div className="team-slot-inner">
+                        <div className="team-slot-top">
+                          <span className={`team-slot-role ${isLeader ? "is-leader" : ""}`}>
+                            {isLeader ? t.leader : t.memberN(i + 1)}
+                          </span>
+                          <div className="team-slot-top-main">
+                            <h3 className="team-slot-name">
+                              <MemberName member={card.member} units={unitsOf(card.member)} />
+                            </h3>
+                            <div className="meta">
+                              <span className={`badge ${card.type}`}>{attrLabel(card.type)}</span>
+                              <span className="badge star">★{card.rarity}</span>
+                              <span className="badge unit">
+                                {card.event
+                                  ? t.eventBadge
+                                  : formatUnitBadge(unitsOf(card.member), card.unit)}
+                              </span>
+                              {forced ? <span className="badge">{t.forced}</span> : null}
+                            </div>
+                          </div>
+                        </div>
+                        <p className="card-sub team-slot-sub">
                           {isLeader
-                            ? t.costumeColon(detailEv.costume.costumeName)
-                            : `｜${card.costumeName}`}
+                            ? `${units.join(" · ")}${t.costumeColon(detailEv.costume.costumeName)}`
+                            : `${units.join(" · ")}｜${card.costumeName}`}
                         </p>
-                        <p>
-                          {t.activeLine(
-                            card.active.interval,
-                            card.active.duration,
-                            card.active.scoreUp,
-                          )}
-                        </p>
-                        <p className="skill-raw-line">{formatActiveSkill(card.active, locale)}</p>
-                        <p>
-                          {t.passivePrefix}
-                          <span
-                            style={{
-                              color: detailEv.passiveDetails[i]?.satisfied
-                                ? "var(--ok)"
-                                : "var(--bad)",
-                            }}
-                          >
-                            {detailEv.passiveDetails[i]?.satisfied
-                              ? t.activated
-                              : t.notActivated}
-                          </span>{" "}
-                          {formatPassiveSkill(card.passive, locale)}
-                        </p>
-                        {detailEv.memberEffectiveStats[i] && (
-                          <p className="slot-stats">
-                            {t.performance}{" "}
-                            {detailEv.memberEffectiveStats[i].performance.toLocaleString()}
-                            {detailEv.memberEffectiveStats[i].bonusPct.performance > 0
-                              ? ` (+${detailEv.memberEffectiveStats[i].bonusPct.performance}%)`
-                              : ""}
-                            {" · "}
-                            {t.technique}{" "}
-                            {detailEv.memberEffectiveStats[i].technique.toLocaleString()}
-                            {detailEv.memberEffectiveStats[i].bonusPct.technique > 0
-                              ? ` (+${detailEv.memberEffectiveStats[i].bonusPct.technique}%)`
-                              : ""}
-                            {" · "}
-                            {t.sense}{" "}
-                            {detailEv.memberEffectiveStats[i].sense.toLocaleString()}
-                            {detailEv.memberEffectiveStats[i].bonusPct.sense > 0
-                              ? ` (+${detailEv.memberEffectiveStats[i].bonusPct.sense}%)`
-                              : ""}
-                            {detailEv.memberEffectiveStats[i].scoreSupportPct > 0
-                              ? t.scoreSupport(
-                                  detailEv.memberEffectiveStats[i].scoreSupportPct,
-                                )
-                              : ""}
+                        {stats ? (
+                          <div className="card-stats team-slot-stats">
+                            {(
+                              [
+                                ["performance", t.performance] as const,
+                                ["technique", t.technique] as const,
+                                ["sense", t.sense] as const,
+                              ] as const
+                            ).map(([key, label]) => {
+                              const { value, formula } = formatBuffedStatDisplay(
+                                stats.base[key],
+                                stats.bonusPct[key],
+                                stats[key],
+                              );
+                              return (
+                                <div key={key} className="stat-cell">
+                                  <span className="stat-label">{label}</span>
+                                  <span className="stat-val">
+                                    {value}
+                                    {formula ? (
+                                      <span className="team-slot-stat-formula"> {formula}</span>
+                                    ) : null}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                            <div className="stat-cell total">
+                              <span className="stat-label">{t.statTotal}</span>
+                              <span className="stat-val">{stats.total.toLocaleString()}</span>
+                            </div>
+                          </div>
+                        ) : null}
+                        <div className="card-skills team-slot-skills">
+                          <div className="skill-row">
+                            <span className="skill-chip sp" aria-hidden>
+                              SP
+                            </span>
+                            <p className="skill-text">{displaySpecialSkill(card, locale)}</p>
+                          </div>
+                          <div className="skill-row">
+                            <span className="skill-chip active" aria-hidden>
+                              A
+                            </span>
+                            <p className="skill-text">
+                              <span className="skill-inline-meta">
+                                {t.activeLine(
+                                  card.active.interval,
+                                  card.active.duration,
+                                  usedScoreUp,
+                                )}
+                              </span>
+                              {" · "}
+                              {displayActiveSkill(card, locale)}
+                            </p>
+                          </div>
+                          <div className={`skill-row ${passiveOk ? "is-ok" : "is-bad"}`}>
+                            <span className="skill-chip passive" aria-hidden>
+                              P
+                            </span>
+                            <p className="skill-text">
+                              <span
+                                className={`skill-inline-status ${passiveOk ? "is-ok" : "is-bad"}`}
+                              >
+                                {passiveOk ? t.activated : t.notActivated}
+                              </span>
+                              {" · "}
+                              {displayPassiveSkill(card, locale)}
+                            </p>
+                          </div>
+                        </div>
+                        {stats && stats.scoreSupportPct > 0 ? (
+                          <p className="team-slot-foot">
+                            {t.scoreBonus} +{stats.scoreSupportPct}%
                           </p>
-                        )}
+                        ) : null}
                       </div>
-                    </div>
+                    </article>
                   );
                 })}
               </div>
 
               <div className="timeline-wrap">
-                <div className="label" style={{ color: "var(--muted)", fontSize: "0.75rem" }}>
-                  {t.timelineLabel}
+                <div className="timeline-controls">
+                  <div className="timeline-controls-head">
+                    <span className="label">{t.timelineMemberSettings}</span>
+                    <button
+                      type="button"
+                      className={`btn timeline-opt-btn ${reductionsOptimized ? "is-active" : ""}`}
+                      onClick={optimizeTimelineReductions}
+                    >
+                      {reductionsOptimized ? t.optimizeReductionsRestore : t.optimizeReductions}
+                    </button>
+                  </div>
+                  {detailEv.cards.map((card, i) => (
+                    <div key={card.id} className="timeline-control-row">
+                      <span className="timeline-control-name">
+                        {listName(card.member, unitsOf(card.member), locale)}
+                      </span>
+                      <label className="timeline-control-field">
+                        <span>{t.cooldownReduction}</span>
+                        <select
+                          value={timelineSettings.reductions[i] ?? 0}
+                          onChange={(e) =>
+                            setMemberReduction(i, Number(e.target.value))
+                          }
+                        >
+                          {COOLDOWN_REDUCTION_OPTIONS.map((opt) => (
+                            <option key={opt} value={opt}>
+                              {opt}%
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                  ))}
                 </div>
-                <div className="timeline" aria-hidden>
-                  {(() => {
-                    const peak = Math.max(1, ...detailEv.timeline);
-                    return detailEv.timeline.map((p, i) => (
-                      <span
-                        key={i}
-                        className={p > 0 ? "on" : ""}
-                        style={{
-                          height: `${Math.max(4, (p / peak) * 100)}%`,
-                          opacity: p > 0 ? 0.35 + (p / peak) * 0.65 : 0.15,
-                        }}
-                        title={`${i}s：${p.toFixed(0)}%`}
-                      />
-                    ));
-                  })()}
-                </div>
+                <SkillTimelineChart
+                  songLength={SONG_LENGTH}
+                  gaps={displayCoverage?.uncoveredGaps ?? []}
+                  members={timelineMemberRows}
+                  labels={{
+                    gapRow: t.timelineGapRow,
+                    gapDur: t.timelineGapDur,
+                    activeTitle: t.timelineActiveBar,
+                  }}
+                />
                 <div className="gap-banner">
-                  <strong>{t.skillGaps}</strong>
+                  <strong>{t.activeSkillCoverage}</strong>
                   <span>
-                    {formatUncoveredGaps(detailEv.uncoveredGaps, {
-                      none: t.gapsNone,
-                      range: t.gapRange,
-                      join: t.gapsJoin,
-                    })}
+                    {displayCoverage
+                      ? formatUncoveredGaps(displayCoverage.uncoveredGaps, {
+                          none: t.gapsNone,
+                          range: t.gapRange,
+                          join: t.gapsJoin,
+                        })
+                      : ""}
                   </span>
-                  <small>{t.gapsTotal(detailEv.uncoveredSeconds.toFixed(1))}</small>
+                  <small>
+                    {displayCoverage
+                      ? t.activeCoverageSummary(
+                          (displayCoverage.coverage * 100).toFixed(1),
+                          displayCoverage.uncoveredSeconds.toFixed(1),
+                        )
+                      : ""}
+                  </small>
                 </div>
                 <div className="meta-line">
                   {t.typeCounts(
@@ -1522,14 +2094,31 @@ export default function App() {
         }
       >
         <span className="fab-optimize-label">
-          {busy ? t.fabBusy : theme === "roster" ? t.fabRosterRun : t.fabRun}
+          {busy ? (
+            <>
+              {t.fabBusy}
+              {busyEstimateMin != null && (
+                <span className="fab-optimize-timer" aria-live="polite">
+                  {t.fabBusyEstimate(busyEstimateMin)}
+                </span>
+              )}
+            </>
+          ) : theme === "roster" ? (
+            t.fabRosterRun
+          ) : (
+            t.fabRun
+          )}
         </span>
         <span className="fab-optimize-sub">
-          {leaderMember
-            ? displayName(leaderMember, unitsOf(leaderMember), locale)
-            : theme === "roster" && ownedRosterMembers.length < 5
-              ? t.rosterNeedFive
-              : t.fabPickLeader}
+          {busy
+            ? leaderMember
+              ? displayName(leaderMember, unitsOf(leaderMember), locale)
+              : t.fabBusy
+            : leaderMember
+              ? displayName(leaderMember, unitsOf(leaderMember), locale)
+              : theme === "roster" && ownedRosterMembers.length < 5
+                ? t.rosterNeedFive
+                : t.fabPickLeader}
         </span>
       </button>
         </>

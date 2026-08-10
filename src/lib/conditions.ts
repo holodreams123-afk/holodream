@@ -40,13 +40,13 @@ export function isConditionMet(
 }
 
 export const ATTR_LABEL: Record<Attr, string> = {
-  happy: "快樂型",
-  pure: "清純型",
-  cute: "可愛型",
+  happy: "快樂類型",
+  pure: "清純類型",
+  cute: "可愛類型",
 };
 
 export const ATTR_JP: Record<Attr, string> = {
-  happy: "快樂型",
-  pure: "清純型",
-  cute: "可愛型",
+  happy: "快樂類型",
+  pure: "清純類型",
+  cute: "可愛類型",
 };

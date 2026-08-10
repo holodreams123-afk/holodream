@@ -70,3 +70,32 @@ Cloudflare 會擋大量惡意掃描／DDoS，流量不會進你家。
 
 本工具為粉絲製作的非官方小工具，卡圖／角色為 COVER／QualiArts 等權利方所有。  
 公開分享時請標明非官方、勿用於商業用途。
+
+## 發布前檢查清單
+
+部署／push 到 GitHub Pages 或 Cloudflare **之前**，請確認：
+
+### 回報錯誤／提供建議
+
+已接上 **Supabase**（與 PR 快取同一組環境變數）：
+
+| 項目 | 說明 |
+| --- | --- |
+| SQL | 在 Supabase 執行 `scripts/supabase-feedback.sql` |
+| 環境變數 | GitHub Actions / Cloudflare：`VITE_SUPABASE_URL`、`VITE_SUPABASE_ANON_KEY` |
+| 權限 | 訪客 **僅可 INSERT**；無公開讀取。製作者在 Supabase 查看：**feedback_reports**（錯誤）、**feedback_suggestions**（建議） |
+| 備援 | 雲端失敗時仍存本機，並提示 GitHub Issue |
+
+本機開發：複製 `.env.example` 為 `.env.local` 並填入 Supabase 金鑰。
+
+### PR 9999 快取（改版後）
+
+算法版本已 bump（`PR_BASELINE_ALGO_VERSION`）。上線前請在 Supabase 執行一次：
+
+```sql
+-- scripts/supabase-pr-baselines-purge.sql
+delete from public.pr_baselines;
+```
+
+內建 `src/data/prBaselines.json` 已清空；訪客本機舊快取會因版本不符自動忽略。  
+之後在 **最強編隊、無鎖定隊員** 時會自動寫入新算法的 top 8。

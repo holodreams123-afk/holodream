@@ -1,3 +1,5 @@
+import type { Locale } from "../i18n/messages";
+
 /** Hololive generation / unit display order for member pickers. */
 export const UNIT_ORDER: string[] = [
   "0期生",
@@ -22,9 +24,23 @@ export function isEventCategory(label: string): boolean {
   return !UNIT_ORDER.includes(label) && label !== "その他";
 }
 
-export function categorySortKey(label: string): number {
+export function categorySortKey(label: string, currentEvent?: string): number {
+  if (currentEvent && label === currentEvent) return -1000;
   if (isEventCategory(label)) return -100;
   return unitSortKey(label);
+}
+
+/** Group headers: current event first, then generations, then other events. */
+export function orderedGroupKeys(
+  regularKeys: string[],
+  eventKeys: string[],
+  currentEvent?: string,
+): string[] {
+  const currentKey = currentEvent && eventKeys.includes(currentEvent) ? currentEvent : null;
+  const otherEventKeys = eventKeys
+    .filter((k) => k !== currentEvent)
+    .sort((a, b) => a.localeCompare(b, "ja"));
+  return [...(currentKey ? [currentKey] : []), ...regularKeys, ...otherEventKeys];
 }
 
 /** Preferred debut order within each unit (when member exists). */
@@ -105,6 +121,69 @@ export const MEMBER_ORDER: string[] = [
   "轟はじめ",
 ];
 
+/** Member units only (drops composite card.unit values like "ゲーマーズ:1期生"). */
+export function cleanMemberUnits(units: string[] | undefined): string[] {
+  if (!units?.length) return [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const u of units) {
+    if (!u || u.includes(":")) continue;
+    if (!seen.has(u)) {
+      seen.add(u);
+      out.push(u);
+    }
+  }
+  return out.sort((a, b) => unitSortKey(a) - unitSortKey(b));
+}
+
+export function memberBelongsToUnit(units: string[] | undefined, unit: string): boolean {
+  return cleanMemberUnits(units).includes(unit);
+}
+
+export function collectUnitOptions(
+  members: Record<string, { units?: string[] }>,
+): string[] {
+  const present = new Set<string>();
+  for (const meta of Object.values(members)) {
+    for (const u of cleanMemberUnits(meta.units)) present.add(u);
+  }
+  return UNIT_ORDER.filter((u) => present.has(u));
+}
+
+export function cardMatchesUnitFilter(
+  memberUnits: string[] | undefined,
+  filters: string[],
+): boolean {
+  if (!filters.length) return true;
+  const units = cleanMemberUnits(memberUnits);
+  return filters.some((f) => units.includes(f));
+}
+
+export function formatUnitBadge(units: string[] | undefined, fallback = ""): string {
+  const cleaned = cleanMemberUnits(units);
+  if (cleaned.length) return cleaned.join(" · ");
+  return fallback || "その他";
+}
+
+export function unitsForMemberGrouping(
+  memberUnits: string[] | undefined,
+  cardUnit?: string,
+): string[] {
+  const cleaned = cleanMemberUnits(memberUnits);
+  if (cleaned.length) return cleaned;
+  const fallback = primaryUnit(memberUnits, cardUnit);
+  return fallback ? [fallback] : [];
+}
+
+export function orderedUnitKeys(map: Map<string, unknown>): string[] {
+  return [
+    ...UNIT_ORDER.filter((u) => map.has(u)),
+    ...[...map.keys()]
+      .filter((u) => !UNIT_ORDER.includes(u))
+      .sort((a, b) => a.localeCompare(b, "ja")),
+  ];
+}
+
 export function primaryUnit(units: string[] | undefined, fallback = ""): string {
   if (!units?.length) return fallback || "その他";
   const cleaned = units.filter((u) => u && !u.includes(":"));
@@ -146,4 +225,29 @@ export function compareMembersByGroup(
 
 export function groupLabel(unit: string): string {
   return unit || "その他";
+}
+
+const UNIT_LABEL_EN: Record<string, string> = {
+  "0期生": "Gen 0",
+  "1期生": "Gen 1",
+  "2期生": "Gen 2",
+  "3期生": "Gen 3",
+  "4期生": "Gen 4",
+  "5期生": "Gen 5",
+  ゲーマーズ: "Gamers",
+  holoX: "holoX",
+  ID1期生: "ID Gen 1",
+  ID2期生: "ID Gen 2",
+  ID3期生: "ID Gen 3",
+  Myth: "Myth",
+  Promise: "Promise",
+  Advent: "Advent",
+  ReGLOSS: "ReGLOSS",
+  その他: "Other",
+};
+
+/** Localized generation / unit label for skill text and condition UI. */
+export function formatUnitLabel(unit: string, locale: Locale): string {
+  if (locale === "en") return UNIT_LABEL_EN[unit] ?? unit;
+  return unit;
 }

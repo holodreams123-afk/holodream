@@ -12,7 +12,7 @@ import { fileURLToPath } from "url";
 import gameData from "../src/data/gameData.json";
 import { isStar5OrEventCostume } from "../src/lib/costumes";
 import { optimizeTeam } from "../src/lib/optimizer";
-import { countOptimizerPoolCards } from "../src/lib/prBaselineStore";
+import { countOptimizerPoolCards, PR_BASELINE_ALGO_VERSION } from "../src/lib/prBaselineStore";
 import type { Costume, GameData, TeamEvaluation } from "../src/types";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -39,6 +39,7 @@ type BaselineEntry = {
 
 type CacheFile = {
   version: number;
+  algorithmVersion: number;
   songLength: number;
   poolCardCount: number;
   generatedAt: string | null;
@@ -48,11 +49,12 @@ type CacheFile = {
 function loadCache(): CacheFile {
   try {
     const raw = fs.readFileSync(outPath, "utf8");
-    const parsed = JSON.parse(raw) as CacheFile;
+    const parsed = JSON.parse(raw) as CacheFile & { algorithmVersion?: number };
     if (
       parsed.version === 1 &&
       parsed.songLength === SONG_LENGTH &&
-      parsed.poolCardCount === poolCardCount
+      parsed.poolCardCount === poolCardCount &&
+      parsed.algorithmVersion === PR_BASELINE_ALGO_VERSION
     ) {
       return parsed;
     }
@@ -61,6 +63,7 @@ function loadCache(): CacheFile {
   }
   return {
     version: 1,
+    algorithmVersion: PR_BASELINE_ALGO_VERSION,
     songLength: SONG_LENGTH,
     poolCardCount,
     generatedAt: null,

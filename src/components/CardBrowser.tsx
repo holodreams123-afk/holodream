@@ -1,13 +1,18 @@
 import type { ReactNode } from "react";
 import { useI18n } from "../i18n/LocaleContext";
 import {
-  formatActiveSkill,
-  formatPassiveSkill,
-  formatSpecialSkill,
-} from "../lib/skillText";
+  displayActiveSkill,
+  displayCardStats,
+  displayCostumeSkill,
+  displayPassiveSkill,
+  displaySpecialSkill,
+  displayStatNum,
+} from "../lib/catalogDisplay";
+import { costumeForCard, hasDisplayableCostumeSkill } from "../lib/costumes";
+import { formatUnitBadge } from "../lib/groups";
 import { MemberName } from "./MemberName";
 import { CardArt } from "./CardArt";
-import type { Attr, Card } from "../types";
+import type { Attr, Card, Costume } from "../types";
 
 type Props = {
   groups: { unit: string; cards: Card[]; isEvent?: boolean }[];
@@ -19,6 +24,8 @@ type Props = {
   preferredByMember?: Record<string, string>;
   leaderMember?: string;
   emptyText?: string;
+  /** When set, gallery cards show matching captain costume skills. */
+  costumeLookup?: Map<string, Costume>;
 };
 
 export function CardGroupBrowser({
@@ -31,6 +38,7 @@ export function CardGroupBrowser({
   preferredByMember = {},
   leaderMember = "",
   emptyText,
+  costumeLookup,
 }: Props) {
   const { t, attrLabel, locale } = useI18n();
   const empty = emptyText ?? t.noMatchingCards;
@@ -53,59 +61,108 @@ export function CardGroupBrowser({
               const selected = selectedCardId
                 ? selectedCardId === card.id
                 : preferred;
-              const className = `card-item ${selected ? "owned" : ""} ${
+              const costume = costumeLookup ? costumeForCard(costumeLookup, card) : undefined;
+              const spText = displaySpecialSkill(card, locale);
+              const activeText = displayActiveSkill(card, locale);
+              const passiveText = displayPassiveSkill(card, locale);
+              const costumeText =
+                costume && hasDisplayableCostumeSkill(costume)
+                  ? displayCostumeSkill(costume, locale, [card])
+                  : "";
+              const displayStats = displayCardStats(card, locale);
+              const className = `card-item card-item--${card.type} ${selected ? "owned" : ""} ${
                 memberLocked && !selected ? "member-locked" : ""
               } ${leaderMember === card.member ? "is-leader" : ""} ${
                 compact ? "is-compact" : ""
               } ${onCardClick ? "" : "is-static"}`;
               const body = (
                 <>
-                  <CardArt cardId={card.id} alt={card.costumeName} />
-                  <div className="name">
-                    <MemberName member={card.member} units={unitsOf(card.member)} />
+                  <div className="card-art-wrap">
+                    <CardArt cardId={card.id} alt={card.costumeName} />
                   </div>
                   {!compact && (
-                    <>
+                    <div className="card-body">
+                      <div className="name">
+                        <MemberName member={card.member} units={unitsOf(card.member)} />
+                      </div>
                       <div className="meta">
                         <span className={`badge ${card.type}`}>{attrLabel(card.type)}</span>
                         <span className="badge star">★{card.rarity}</span>
-                        <span className="badge">
-                          {card.event ? t.eventBadge : card.unit}
+                        <span className="badge unit">
+                          {card.event
+                            ? t.eventBadge
+                            : formatUnitBadge(unitsOf(card.member), card.unit)}
                         </span>
                       </div>
                       <p className="card-sub">{card.costumeName}</p>
-                      {card.stats && (
-                        <div className="card-stats">
-                          <div>
-                            {t.performance} {card.stats.performance}
-                          </div>
-                          <div>
-                            {t.technique} {card.stats.technique}
-                          </div>
-                          <div>
-                            {t.sense} {card.stats.sense}
-                          </div>
-                          <div className="total">{t.total(card.stats.total)}</div>
+                      <div className="card-stats">
+                        <div className="stat-cell">
+                          <span className="stat-label">{t.performance}</span>
+                          <span
+                            className={`stat-val ${displayStats?.performance == null ? "is-missing" : ""}`}
+                          >
+                            {displayStatNum(displayStats?.performance)}
+                          </span>
                         </div>
-                      )}
-                      {!card.stats && (
-                        <div className="card-stats muted-stats">{t.statsMissing}</div>
-                      )}
-                      <div className="card-skills">
-                        <p>
-                          <strong>{t.special}</strong>
-                          {formatSpecialSkill(card.special, locale) || "—"}
-                        </p>
-                        <p>
-                          <strong>{t.active}</strong>
-                          {formatActiveSkill(card.active, locale) || "—"}
-                        </p>
-                        <p>
-                          <strong>{t.passive}</strong>
-                          {formatPassiveSkill(card.passive, locale) || "—"}
-                        </p>
+                        <div className="stat-cell">
+                          <span className="stat-label">{t.technique}</span>
+                          <span
+                            className={`stat-val ${displayStats?.technique == null ? "is-missing" : ""}`}
+                          >
+                            {displayStatNum(displayStats?.technique)}
+                          </span>
+                        </div>
+                        <div className="stat-cell">
+                          <span className="stat-label">{t.sense}</span>
+                          <span
+                            className={`stat-val ${displayStats?.sense == null ? "is-missing" : ""}`}
+                          >
+                            {displayStatNum(displayStats?.sense)}
+                          </span>
+                        </div>
+                        <div className="stat-cell total">
+                          <span className="stat-label">{t.statTotal}</span>
+                          <span
+                            className={`stat-val ${displayStats?.total == null ? "is-missing" : ""}`}
+                          >
+                            {displayStatNum(displayStats?.total)}
+                          </span>
+                        </div>
                       </div>
-                    </>
+                      <div className="card-skills">
+                        <div className="skill-row">
+                          <span className="skill-chip sp" aria-hidden>
+                            SP
+                          </span>
+                          <p className="skill-text">{spText}</p>
+                        </div>
+                        <div className="skill-row">
+                          <span className="skill-chip active" aria-hidden>
+                            A
+                          </span>
+                          <p className="skill-text">{activeText}</p>
+                        </div>
+                        <div className="skill-row">
+                          <span className="skill-chip passive" aria-hidden>
+                            P
+                          </span>
+                          <p className="skill-text">{passiveText}</p>
+                        </div>
+                        {costumeText && (
+                          <div className="skill-row costume">
+                            <span className="skill-chip costume" aria-hidden>
+                              ★
+                            </span>
+                            <p className="skill-text">{costumeText}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {compact && (
+                    <div className="name compact-name">
+                      <MemberName member={card.member} units={unitsOf(card.member)} />
+                    </div>
                   )}
                 </>
               );
@@ -116,7 +173,7 @@ export function CardGroupBrowser({
                     type="button"
                     className={className}
                     onClick={() => onCardClick(card)}
-                    title={formatActiveSkill(card.active, locale)}
+                    title={displayActiveSkill(card, locale)}
                   >
                     {body}
                   </button>
@@ -126,7 +183,7 @@ export function CardGroupBrowser({
                 <article
                   key={card.id}
                   className={className}
-                  title={formatActiveSkill(card.active, locale)}
+                  title={displayActiveSkill(card, locale)}
                 >
                   {body}
                 </article>

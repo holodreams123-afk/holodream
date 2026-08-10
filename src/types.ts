@@ -126,6 +126,7 @@ export interface TeamEvaluation {
   /** Per-member effective stats after buffs. */
   memberEffectiveStats: Array<{
     member: string;
+    base: { performance: number; technique: number; sense: number };
     performance: number;
     technique: number;
     sense: number;
@@ -135,7 +136,27 @@ export interface TeamEvaluation {
   }>;
   typeCounts: Record<Attr, number>;
   unitCounts: Record<string, number>;
-  /** Composite PR from stats / coverage / avgScoreUp; baseline team = 9999 max (overall ranking). */
+  /** Song length used for SP uptime (seconds). */
+  songLength?: number;
+  /** 總合力: 成員能力 + 服裝 + 被動（不含 Holo 成員面板、回憶卡 / 強化）. */
+  totalStrength?: number;
+  totalStrengthBreakdown?: {
+    memberAbility: number;
+    costumeSkill: number;
+    passiveSkill: number;
+    total: number;
+  };
+  /** 分數加成 % total (active + passive score support + SP; no Holo panel). */
+  scoreBonusPct?: number;
+  scoreBonus?: {
+    activePct: number;
+    passiveScoreSupportPct: number;
+    specialPct: number;
+    totalPct: number;
+  };
+  /** totalStrength × (1 + scoreBonusPct/100) — PR comparison metric. */
+  combatPower?: number;
+  /** Composite PR vs baseline combat power; baseline team = 9999 max (overall ranking). */
   powerRating?: number;
   /**
    * Active Score UP skills that share the same timing/potency

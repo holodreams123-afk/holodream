@@ -65,13 +65,13 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
     };
     const paramLabel = (param: string) => {
       const key = param.toLowerCase();
-      if (key.includes("perf") || param === "表演力" || param === "パフォーマンス") {
+      if (key.includes("perf") || param === "表現力" || param === "表演力" || param === "パフォーマンス") {
         return t.paramPerf;
       }
       if (key.includes("tech") || param === "技巧" || param === "テクニック") {
         return t.paramTech;
       }
-      if (key.includes("sense") || param === "感性" || param === "センス") {
+      if (key.includes("sense") || param === "感性" || param === "品味" || param === "センス") {
         return t.paramSense;
       }
       return param;

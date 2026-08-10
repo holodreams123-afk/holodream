@@ -203,20 +203,25 @@ data.costumes = data.costumes.filter((c) => {
 });
 
 for (const c of data.costumes) {
-  if (!c.skill.effects?.length && c.skill.raw) {
-    const parsed = parseCostumeFromJp(c.skill.raw);
-    if (parsed.effects.length) {
-      c.skill = parsed;
-      log.push(`Reparsed costume ${c.member} ${c.costumeName}`);
-    }
+  if (!c.skill.raw) continue;
+  const parsed = parseCostumeFromJp(c.skill.raw);
+  if (!parsed.effects.length) continue;
+
+  const condBefore = JSON.stringify(c.skill.condition);
+  c.skill.condition = parsed.condition;
+  c.skill.unconditional = parsed.unconditional;
+  if (!c.skill.effects?.length) {
+    c.skill.effects = parsed.effects;
+    c.skill.score = parsed.score;
+    log.push(`Reparsed costume effects ${c.member} ${c.costumeName}`);
+  } else if (condBefore !== JSON.stringify(parsed.condition)) {
+    log.push(`Fixed costume condition ${c.member} ${c.costumeName}`);
   }
-  // Normalize Excel-style costume raw
+
   if (/全參數|Perf|Tech|Sense|Support \+|人以上：/.test(c.skill.raw) || c.skill.effects?.length) {
-    if (c.skill.effects?.length) {
-      c.skill.raw = formatCostumeJp(c.skill);
-      if (typeof c.skill.score === "number") {
-        c.skill.score = Math.round(c.skill.score * 10) / 10;
-      }
+    c.skill.raw = formatCostumeJp(c.skill);
+    if (typeof c.skill.score === "number") {
+      c.skill.score = Math.round(c.skill.score * 10) / 10;
     }
   }
 }

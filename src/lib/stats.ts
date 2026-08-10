@@ -60,12 +60,12 @@ function estimateBase(card: Card): CardStats {
 
 export function paramKey(param?: string): ParamKey | "all" | null {
   if (!param) return null;
-  if (param === "全パラメータ" || param === "全參數") return "all";
+  if (param === "全パラメータ" || param === "全參數" || param === "全能力") return "all";
   if (param === "パフォーマンス" || param === "表現力" || param === "表演力" || param === "Perf") {
     return "performance";
   }
   if (param === "テクニック" || param === "技巧" || param === "Tech") return "technique";
-  if (param === "センス" || param === "感性" || param === "Sense") return "sense";
+  if (param === "センス" || param === "感性" || param === "品味" || param === "Sense") return "sense";
   return null;
 }
 
@@ -84,12 +84,25 @@ function applyPct(base: number, pct: number): number {
   return Math.round(base * (1 + pct / 100));
 }
 
+/** Display buffed stat with optional `base * multiplier` formula. */
+export function formatBuffedStatDisplay(
+  base: number,
+  bonusPct: number,
+  effective: number,
+): { value: string; formula: string | null } {
+  const value = effective.toLocaleString();
+  if (bonusPct <= 0) return { value, formula: null };
+  const mult = 1 + bonusPct / 100;
+  const multStr = String(parseFloat(mult.toFixed(2)));
+  return { value, formula: `(${base} * ${multStr})` };
+}
+
 /** Parse 「ピュアタイプ3人の…」 style count from raw skill text. */
 function countFromRaw(raw?: string): number | null {
   if (!raw) return null;
   const patterns = [
     /(\d+)人の(?:センス|テクニック|パフォーマンス|スコアサポート効果|全パラメータ)/,
-    /(\d+)人\s*(?:Support|全參數|Perf|Tech|Sense)/i,
+    /(\d+)人\s*(?:Support|全參數|全能力|Perf|Tech|Sense)/i,
     /(?:Happy|Pure|Cute|快樂|清純|可愛)\s*(\d+)人/i,
   ];
   for (const re of patterns) {
