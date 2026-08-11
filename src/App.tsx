@@ -555,7 +555,14 @@ export default function App() {
   }
 
   function toggleWantedCard(card: Card) {
-    if (theme === "roster" && !rosterSet.has(card.member)) return;
+    if (theme === "roster" && !rosterSet.has(card.member)) {
+      alert(
+        t.alertRosterWantedNeedOwned(
+          listName(card.member, unitsOf(card.member), locale),
+        ),
+      );
+      return;
+    }
     const mode: "optimize" | "roster" = theme === "roster" ? "roster" : "optimize";
     const prev = mode === "roster" ? rosterWantedMembers : optimizeWantedMembers;
     const prevPrefs = mode === "roster" ? rosterPreferredCards : optimizePreferredCards;

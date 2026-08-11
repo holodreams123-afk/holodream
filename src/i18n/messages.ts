@@ -35,6 +35,7 @@ export type Messages = {
   rosterClear: string;
   alertRosterMin: string;
   alertRosterCardMin: string;
+  alertRosterWantedNeedOwned: (name: string) => string;
   fabRosterRun: string;
   galleryTitle: string;
   dataNoticeBefore: string;
@@ -274,6 +275,12 @@ export type Messages = {
   feedbackCatFeature: string;
   feedbackCatData: string;
   feedbackCatOther: string;
+  feedbackLabelImages: string;
+  feedbackImagesHint: string;
+  feedbackImagesAdd: string;
+  feedbackImagesRemove: (name: string) => string;
+  feedbackImagesTooMany: string;
+  feedbackImagesInvalid: string;
 };
 
 const zh: Messages = {
@@ -311,6 +318,8 @@ const zh: Messages = {
   rosterClear: "清空已選",
   alertRosterMin: "請至少選擇 5 位已擁有隊員。",
   alertRosterCardMin: "每位成員至少需勾選一張★5卡面。",
+  alertRosterWantedNeedOwned: (name) =>
+    `${name} 尚未在「① 已擁有隊員」中勾選。請先在上方勾選該成員，再加入想要的隊員。`,
   fabRosterRun: "從現有隊員配對",
   galleryTitle: "角色一覽",
   dataNoticeBefore: "數值與技能皆為",
@@ -557,8 +566,8 @@ const zh: Messages = {
   feedbackSuggestTitle: "提供建議",
   feedbackReportKicker: "發現資料或功能有問題？",
   feedbackSuggestKicker: "想讓工具更好用？",
-  feedbackReportDesc: "請盡量描述卡名、頁面與錯誤內容，方便製作者修正。",
-  feedbackSuggestDesc: "歡迎提出新功能、介面或資料方面的想法。",
+  feedbackReportDesc: "請盡量描述卡名、頁面與錯誤內容；可附上截圖，方便製作者修正。",
+  feedbackSuggestDesc: "歡迎提出新功能、介面或資料方面的想法；可附上示意截圖。",
   feedbackClose: "關閉",
   feedbackCancel: "取消",
   feedbackSubmit: "送出",
@@ -591,6 +600,12 @@ const zh: Messages = {
   feedbackCatFeature: "新功能",
   feedbackCatData: "資料／卡面",
   feedbackCatOther: "其他",
+  feedbackLabelImages: "附圖（選填）",
+  feedbackImagesHint: "最多 3 張。可選擇檔案，或在表單內 Ctrl+V 貼上截圖。",
+  feedbackImagesAdd: "加入圖片",
+  feedbackImagesRemove: (name) => `移除 ${name}`,
+  feedbackImagesTooMany: "最多只能附加 3 張圖片。",
+  feedbackImagesInvalid: "無法讀取該圖片，請改用 JPG／PNG／WebP。",
 };
 
 const en: Messages = {
@@ -628,6 +643,8 @@ const en: Messages = {
   rosterClear: "Clear selection",
   alertRosterMin: "Select at least 5 owned members.",
   alertRosterCardMin: "Each member needs at least one ★5 card selected.",
+  alertRosterWantedNeedOwned: (name) =>
+    `${name} is not selected in Owned members (section ①). Select them above before locking as wanted.`,
   fabRosterRun: "Match from roster",
   galleryTitle: "Card Gallery",
   dataNoticeBefore: "All stats and skills shown are at ",
@@ -878,8 +895,8 @@ const en: Messages = {
   feedbackSuggestTitle: "Send a suggestion",
   feedbackReportKicker: "Found wrong data or a bug?",
   feedbackSuggestKicker: "Ideas to improve the tool?",
-  feedbackReportDesc: "Include card name, page, and what looks wrong so it can be fixed.",
-  feedbackSuggestDesc: "Feature, UI, or data ideas are welcome.",
+  feedbackReportDesc: "Include card name, page, and what looks wrong. Screenshots help.",
+  feedbackSuggestDesc: "Feature, UI, or data ideas are welcome. You can attach screenshots.",
   feedbackClose: "Close",
   feedbackCancel: "Cancel",
   feedbackSubmit: "Submit",
@@ -912,6 +929,12 @@ const en: Messages = {
   feedbackCatFeature: "New feature",
   feedbackCatData: "Data / art",
   feedbackCatOther: "Other",
+  feedbackLabelImages: "Screenshots (optional)",
+  feedbackImagesHint: "Up to 3 images. Pick files or paste (Ctrl+V) inside the form.",
+  feedbackImagesAdd: "Add image",
+  feedbackImagesRemove: (name) => `Remove ${name}`,
+  feedbackImagesTooMany: "You can attach at most 3 images.",
+  feedbackImagesInvalid: "Could not read that image. Try JPG, PNG, or WebP.",
 };
 
 const ja: Messages = {
@@ -949,6 +972,8 @@ const ja: Messages = {
   rosterClear: "選択をクリア",
   alertRosterMin: "所持メンバーを5人以上選んでください。",
   alertRosterCardMin: "各メンバーは★5を1枚以上選んでください。",
+  alertRosterWantedNeedOwned: (name) =>
+    `${name} は「① 所持メンバー」に未選択です。先に上で選択してから、入れたいメンバーに追加してください。`,
   fabRosterRun: "所持から編成",
   galleryTitle: "キャラ一覧",
   dataNoticeBefore: "表示している数値・スキルはすべて",
@@ -1200,8 +1225,8 @@ const ja: Messages = {
   feedbackSuggestTitle: "提案を送る",
   feedbackReportKicker: "データや機能の問題？",
   feedbackSuggestKicker: "改善のアイデアは？",
-  feedbackReportDesc: "カード名・ページ・内容を具体的に書いてください。",
-  feedbackSuggestDesc: "機能・UI・データの提案を歓迎します。",
+  feedbackReportDesc: "カード名・ページ・内容を具体的に。スクショ添付可。",
+  feedbackSuggestDesc: "機能・UI・データの提案を歓迎します。スクショ添付可。",
   feedbackClose: "閉じる",
   feedbackCancel: "キャンセル",
   feedbackSubmit: "送信",
@@ -1234,6 +1259,12 @@ const ja: Messages = {
   feedbackCatFeature: "新機能",
   feedbackCatData: "データ／カード",
   feedbackCatOther: "その他",
+  feedbackLabelImages: "画像（任意）",
+  feedbackImagesHint: "最大3枚。ファイル選択、またはフォーム内で Ctrl+V 貼り付け。",
+  feedbackImagesAdd: "画像を追加",
+  feedbackImagesRemove: (name) => `${name} を削除`,
+  feedbackImagesTooMany: "画像は最大3枚までです。",
+  feedbackImagesInvalid: "画像を読み込めません。JPG／PNG／WebP をお試しください。",
 };
 
 export const MESSAGES: Record<Locale, Messages> = { zh, en, ja };

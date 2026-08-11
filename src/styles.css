@@ -648,7 +648,80 @@ button {
   font-family: inherit;
   font-size: 0.82rem;
   line-height: 1.45;
+}
+
+.feedback-images-label {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.feedback-images-hint {
+  margin: 0 0 0.5rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.feedback-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+.feedback-images li {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(199, 125, 255, 0.28);
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.feedback-images img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.feedback-images a {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.feedback-image-remove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(6, 3, 13, 0.82);
   color: var(--ink);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.feedback-image-remove:hover {
+  background: rgba(255, 77, 158, 0.85);
+}
+
+.feedback-images-add {
+  font-size: 0.82rem;
+  padding: 0.35rem 0.65rem;
+}
+
+.feedback-images--readonly {
+  margin-bottom: 0.85rem;
 }
 
 @keyframes mascot-float {

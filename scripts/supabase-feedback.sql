@@ -4,6 +4,8 @@
 --
 -- anon: INSERT only (no public read). View in Table Editor:
 --   feedback_reports | feedback_suggestions
+-- Image URLs in column image_urls; files in Storage bucket feedback-images.
+-- Existing DB: also run scripts/supabase-feedback-images.sql once.
 
 create table if not exists public.feedback_reports (
   id uuid primary key default gen_random_uuid(),
@@ -12,6 +14,7 @@ create table if not exists public.feedback_reports (
   message text not null check (char_length(message) between 1 and 4000),
   contact text not null default '' check (char_length(contact) <= 120),
   locale text not null default '' check (char_length(locale) <= 16),
+  image_urls text[] not null default '{}',
   created_at timestamptz not null default now()
 );
 
@@ -22,8 +25,38 @@ create table if not exists public.feedback_suggestions (
   message text not null check (char_length(message) between 1 and 4000),
   contact text not null default '' check (char_length(contact) <= 120),
   locale text not null default '' check (char_length(locale) <= 16),
+  image_urls text[] not null default '{}',
   created_at timestamptz not null default now()
 );
+
+-- Screenshot uploads (public read; anon insert only under report/ or suggest/)
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'feedback-images',
+  'feedback-images',
+  true,
+  1048576,
+  array['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+)
+on conflict (id) do update set
+  public = excluded.public,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "Anon upload feedback images" on storage.objects;
+create policy "Anon upload feedback images"
+  on storage.objects for insert
+  to anon, authenticated
+  with check (
+    bucket_id = 'feedback-images'
+    and (storage.foldername(name))[1] in ('report', 'suggest')
+  );
+
+drop policy if exists "Public read feedback images" on storage.objects;
+create policy "Public read feedback images"
+  on storage.objects for select
+  to public
+  using (bucket_id = 'feedback-images');
 
 create index if not exists feedback_reports_created_at_idx
   on public.feedback_reports (created_at desc);

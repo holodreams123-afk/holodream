@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type ClipboardEvent, type FormEvent } from "react";
 import { useI18n } from "../i18n/LocaleContext";
 import type { FeedbackKind } from "../lib/feedbackStore";
 import {
@@ -7,6 +7,12 @@ import {
   submitFeedback,
   type FeedbackSubmitResult,
 } from "../lib/feedbackStore";
+import {
+  FEEDBACK_MAX_IMAGES,
+  fileToFeedbackAttachment,
+  revokeFeedbackAttachment,
+  type FeedbackAttachment,
+} from "../lib/feedbackImages";
 
 type Props = {
   kind: FeedbackKind;
@@ -19,10 +25,16 @@ export function FeedbackPanel({ kind, onClose }: Props) {
   const [context, setContext] = useState("");
   const [message, setMessage] = useState("");
   const [contact, setContact] = useState("");
+  const [attachments, setAttachments] = useState<FeedbackAttachment[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [result, setResult] = useState<FeedbackSubmitResult | null>(null);
   const [copied, setCopied] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function clearAttachments(list: FeedbackAttachment[]) {
+    for (const att of list) revokeFeedbackAttachment(att);
+  }
 
   const categories =
     kind === "report"
@@ -47,6 +59,55 @@ export function FeedbackPanel({ kind, onClose }: Props) {
     { id: "general", label: t.feedbackContextGeneral },
   ];
 
+  async function addImageFiles(files: FileList | File[]) {
+    const list = [...files];
+    if (!list.length) return;
+    const room = FEEDBACK_MAX_IMAGES - attachments.length;
+    if (room <= 0) {
+      setSubmitError(t.feedbackImagesTooMany);
+      return;
+    }
+    setSubmitError("");
+    const next = [...attachments];
+    for (const file of list.slice(0, room)) {
+      try {
+        next.push(await fileToFeedbackAttachment(file));
+      } catch {
+        setSubmitError(t.feedbackImagesInvalid);
+      }
+    }
+    setAttachments(next);
+  }
+
+  function removeAttachment(id: string) {
+    setAttachments((prev) => {
+      const target = prev.find((a) => a.id === id);
+      if (target) revokeFeedbackAttachment(target);
+      return prev.filter((a) => a.id !== id);
+    });
+  }
+
+  function handlePaste(e: ClipboardEvent) {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    const imageFiles: File[] = [];
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) imageFiles.push(file);
+      }
+    }
+    if (!imageFiles.length) return;
+    e.preventDefault();
+    void addImageFiles(imageFiles);
+  }
+
+  function handleClose() {
+    clearAttachments(attachments);
+    setAttachments([]);
+    onClose();
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     const trimmed = message.trim();
@@ -56,15 +117,20 @@ export function FeedbackPanel({ kind, onClose }: Props) {
     setSubmitting(true);
     setSubmitError("");
     try {
-      const out = await submitFeedback({
-        kind,
-        category: catLabel,
-        context: ctxLabel,
-        message: trimmed,
-        contact: contact.trim(),
-        locale,
-      });
+      const out = await submitFeedback(
+        {
+          kind,
+          category: catLabel,
+          context: ctxLabel,
+          message: trimmed,
+          contact: contact.trim(),
+          locale,
+        },
+        attachments,
+      );
       setResult(out);
+      clearAttachments(attachments);
+      setAttachments([]);
     } catch {
       setSubmitError(t.feedbackSubmitError);
     } finally {
@@ -82,6 +148,7 @@ export function FeedbackPanel({ kind, onClose }: Props) {
       message: t.feedbackLabelMessage,
       contact: t.feedbackLabelContact,
       time: t.feedbackLabelTime,
+      images: t.feedbackLabelImages,
     });
     await navigator.clipboard.writeText(text);
     setCopied(true);
@@ -101,8 +168,10 @@ export function FeedbackPanel({ kind, onClose }: Props) {
       ? t.feedbackSuccessNoteFallback
       : t.feedbackSuccessNoteLocal;
 
+  const previewImages = submitted?.imageUrls ?? [];
+
   return (
-    <div className="feedback-overlay" role="presentation" onClick={onClose}>
+    <div className="feedback-overlay" role="presentation" onClick={handleClose}>
       <section
         className="feedback-panel panel"
         role="dialog"
@@ -120,13 +189,13 @@ export function FeedbackPanel({ kind, onClose }: Props) {
               {kind === "report" ? t.feedbackReportDesc : t.feedbackSuggestDesc}
             </p>
           </div>
-          <button type="button" className="btn btn-ghost feedback-close" onClick={onClose}>
+          <button type="button" className="btn btn-ghost feedback-close" onClick={handleClose}>
             {t.feedbackClose}
           </button>
         </header>
 
         {!submitted ? (
-          <form className="feedback-form" onSubmit={handleSubmit}>
+          <form className="feedback-form" onSubmit={handleSubmit} onPaste={handlePaste}>
             <div className="field">
               <label htmlFor="feedback-category">{t.feedbackLabelCategory}</label>
               <select
@@ -171,6 +240,47 @@ export function FeedbackPanel({ kind, onClose }: Props) {
               />
             </div>
             <div className="field">
+              <span className="feedback-images-label">{t.feedbackLabelImages}</span>
+              <p className="feedback-images-hint">{t.feedbackImagesHint}</p>
+              {attachments.length > 0 ? (
+                <ul className="feedback-images">
+                  {attachments.map((att) => (
+                    <li key={att.id}>
+                      <img src={att.previewUrl} alt="" />
+                      <button
+                        type="button"
+                        className="feedback-image-remove"
+                        aria-label={t.feedbackImagesRemove(att.name)}
+                        onClick={() => removeAttachment(att.id)}
+                      >
+                        ×
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                hidden
+                onChange={(e) => {
+                  if (e.target.files?.length) void addImageFiles(e.target.files);
+                  e.target.value = "";
+                }}
+              />
+              {attachments.length < FEEDBACK_MAX_IMAGES ? (
+                <button
+                  type="button"
+                  className="btn btn-ghost feedback-images-add"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {t.feedbackImagesAdd}
+                </button>
+              ) : null}
+            </div>
+            <div className="field">
               <label htmlFor="feedback-contact">{t.feedbackLabelContact}</label>
               <input
                 id="feedback-contact"
@@ -183,7 +293,7 @@ export function FeedbackPanel({ kind, onClose }: Props) {
             </div>
             {submitError ? <p className="feedback-error">{submitError}</p> : null}
             <div className="feedback-actions">
-              <button type="button" className="btn btn-ghost" onClick={onClose} disabled={submitting}>
+              <button type="button" className="btn btn-ghost" onClick={handleClose} disabled={submitting}>
                 {t.feedbackCancel}
               </button>
               <button type="submit" className="btn btn-primary" disabled={submitting}>
@@ -198,6 +308,17 @@ export function FeedbackPanel({ kind, onClose }: Props) {
             <div className="feedback-preview">
               <pre>{submitted.message}</pre>
             </div>
+            {previewImages.length > 0 ? (
+              <ul className="feedback-images feedback-images--readonly">
+                {previewImages.map((url, i) => (
+                  <li key={`${url}-${i}`}>
+                    <a href={url} target="_blank" rel="noreferrer">
+                      <img src={url} alt="" />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
             <div className="feedback-actions">
               <button type="button" className="btn btn-ghost" onClick={copyText}>
                 {copied ? t.feedbackCopied : t.feedbackCopy}
@@ -212,7 +333,7 @@ export function FeedbackPanel({ kind, onClose }: Props) {
                   {t.feedbackGithub}
                 </a>
               ) : null}
-              <button type="button" className="btn btn-ghost" onClick={onClose}>
+              <button type="button" className="btn btn-ghost" onClick={handleClose}>
                 {t.feedbackDone}
               </button>
             </div>
