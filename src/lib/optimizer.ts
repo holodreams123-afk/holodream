@@ -1,6 +1,6 @@
 import { calcScoreUpCoverage } from "./coverage";
 import { resolveActiveScoreUp, parseActiveBonusScoreUp } from "./activeWindows";
-import { attachCombatMetrics } from "./combatPower";
+import { attachCombatMetrics, teamScoreBonusPct } from "./combatPower";
 import { countTypes, countUnits, isConditionMet, memberUnits } from "./conditions";
 import {
   calcEffectiveStats,
@@ -121,7 +121,9 @@ export function buildOptimizeResultFromCache(byOverall: TeamEvaluation[]): Optim
   const top = ranked.slice(0, 8);
   const byStats = [...top].sort((a, b) => b.effectiveStatTotal - a.effectiveStatTotal);
   const byCoverage = [...top].sort((a, b) => b.coverage - a.coverage);
-  const byAvgScoreUp = [...top].sort((a, b) => b.avgScoreUp - a.avgScoreUp);
+  const byAvgScoreUp = [...top].sort(
+    (a, b) => teamScoreBonusPct(b) - teamScoreBonusPct(a),
+  );
   const baselineTeam = top.find((t) => t.powerRating === PR_MAX) ?? top[0] ?? null;
   return {
     best: top[0] ?? null,
@@ -740,7 +742,7 @@ function recordCandidate(
   insertTop(composite, ev, maxComposite);
   insertByMetric(byStats, ev, maxPerTrack, (t) => t.effectiveStatTotal);
   insertByMetric(byCoverage, ev, maxPerTrack, (t) => t.coverage);
-  insertByMetric(byAvgScoreUp, ev, maxPerTrack, (t) => t.avgScoreUp);
+  insertByMetric(byAvgScoreUp, ev, maxPerTrack, teamScoreBonusPct);
   insertByMetric(prPool, ev, prPoolSize, roughPrSeed);
 }
 

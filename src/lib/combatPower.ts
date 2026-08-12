@@ -10,7 +10,7 @@ import { calcEffectiveStats } from "./stats";
 export interface ScoreBonusBreakdown {
   /** Active Score UP uptime average (%). */
   activePct: number;
-  /** Sum of passive score-support buffs on recipients (%). */
+  /** Team-equivalent passive score-support % (weighted by recipient 三圍). */
   passiveScoreSupportPct: number;
   /** SP score-support averaged over song length (%). */
   specialPct: number;
@@ -77,15 +77,28 @@ export function calcSpEquivalentPct(cards: Card[], songLength: number): number {
   return sum;
 }
 
+/** Convert per-member score support into one team-wide % (matches in-game 分數加成・被動). */
+export function calcPassiveScoreSupportTeamPct(
+  scoreSupportWeighted: number,
+  baseStatTotal: number,
+): number {
+  if (baseStatTotal <= 0 || scoreSupportWeighted <= 0) return 0;
+  return (scoreSupportWeighted / baseStatTotal) * 100;
+}
+
 export function calcScoreBonusBreakdown(
   cards: Card[],
   avgScoreUp: number,
-  teamScoreSupportPct: number,
+  scoreSupportWeighted: number,
+  baseStatTotal: number,
   songLength: number,
 ): ScoreBonusBreakdown {
   const specialPct = calcSpEquivalentPct(cards, songLength);
   const activePct = avgScoreUp;
-  const passiveScoreSupportPct = teamScoreSupportPct;
+  const passiveScoreSupportPct = calcPassiveScoreSupportTeamPct(
+    scoreSupportWeighted,
+    baseStatTotal,
+  );
   return {
     activePct,
     passiveScoreSupportPct,
@@ -96,6 +109,14 @@ export function calcScoreBonusBreakdown(
 
 export function calcScoreBonusPct(breakdown: ScoreBonusBreakdown): number {
   return breakdown.totalPct;
+}
+
+/** Total score bonus % for ranking / UI (active + passive score support + SP). */
+export function teamScoreBonusPct(ev: {
+  scoreBonusPct?: number;
+  avgScoreUp: number;
+}): number {
+  return ev.scoreBonusPct ?? ev.avgScoreUp;
 }
 
 /** Expected combat score proxy: 總合力 × (1 + 分數加成%). */
@@ -119,7 +140,8 @@ export function attachCombatMetrics(
   const scoreBonus = calcScoreBonusBreakdown(
     ev.cards,
     ev.avgScoreUp,
-    ev.teamScoreSupportPct,
+    ev.scoreSupportWeighted,
+    ev.baseStatTotal,
     songLength,
   );
   const scoreBonusPct = calcScoreBonusPct(scoreBonus);

@@ -90,7 +90,7 @@ Cloudflare 會擋大量惡意掃描／DDoS，流量不會進你家。
 
 ### PR 9999 快取（改版後）
 
-目前 `PR_BASELINE_ALGO_VERSION = 3`（含 Active 加碼 scoreUp 修正、戰力＝總合力×分數加成）。上線前請在 Supabase 執行一次：
+目前 `PR_BASELINE_ALGO_VERSION = 4`（被動分數加成改為三圍加權等效 %，修正全員 support 被算成 5 倍的問題）。上線前請在 Supabase 執行一次：
 
 ```sql
 -- scripts/supabase-pr-baselines-purge.sql
@@ -99,3 +99,14 @@ delete from public.pr_baselines;
 
 內建 `src/data/prBaselines.json` 已清空；訪客本機舊快取會因版本不符自動忽略。  
 之後在 **最強編隊、無鎖定隊員** 時會自動寫入新算法的 top 8。
+
+### 新增 ★5 卡面後（PR 9999 會變）
+
+**編隊計算方式不變**（仍是全池窮舉），但卡池多一張，各衣裝的 PR 9999 基準隊都會改變，必須重算並重存：
+
+1. `npm run process-new-cards` — 同步名片（卡池變大時會自動清空 `prBaselines.json`）
+2. `npm run precompute-pr` — 窮舉重算每件隊長衣裝的 top 8（耗時，可 `--from=N` 續跑）
+3. Supabase 執行 `scripts/supabase-pr-baselines-purge.sql` — 清雲端舊基準
+4. commit `prBaselines.json` + `gameData.json` 後發布
+
+快取 key 含 `poolCardCount`（★5＋活動卡數），舊資料不會被誤用，但 purge 可避免 Supabase 堆積無效列。

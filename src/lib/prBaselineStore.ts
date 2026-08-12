@@ -7,7 +7,7 @@ export const SHARED_TOP_N = 8;
  * Bump when PR / 總合力 formula or baseline ranking rules change.
  * Invalidates bundled JSON, localStorage, and Supabase cache keys.
  */
-export const PR_BASELINE_ALGO_VERSION = 3;
+export const PR_BASELINE_ALGO_VERSION = 4;
 
 export type PrTeamCacheEntry = {
   leaderIndex: number;

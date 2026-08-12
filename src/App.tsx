@@ -1153,7 +1153,9 @@ export default function App() {
     if (resultTrack === "coverage") {
       return t.metricCoverage((ev.coverage * 100).toFixed(1));
     }
-    return t.metricAvgUp(ev.avgScoreUp.toFixed(1));
+    return t.metricScoreBonus(
+      (ev.scoreBonusPct ?? ev.avgScoreUp).toFixed(1),
+    );
   }
 
   function rankClass(idx: number): string {
