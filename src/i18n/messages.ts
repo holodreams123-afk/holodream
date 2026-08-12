@@ -18,6 +18,10 @@ export type Messages = {
   updateNotesTitle: string;
   updateNotesClose: string;
   updateNotesItems: string[];
+  releaseAnnouncementTitle: string;
+  releaseAnnouncementItems: string[];
+  releaseAnnouncementDontShow: string;
+  releaseAnnouncementConfirm: string;
   footer: string;
   langAria: string;
   themeAria: string;
@@ -181,6 +185,7 @@ export type Messages = {
   fabPickLeader: string;
   alertWantedMax: string;
   alertNeedLeader: string;
+  alertOptimizeFailed: string;
   alertTooMany: string;
   filterAllStars: string;
   filterAllAttrs: string;
@@ -289,9 +294,12 @@ const zh: Messages = {
   heroMascotSub: "小惡魔",
   lastUpdated: (date) => `最近更新 ${date}`,
   updateNotesBtn: "更新說明",
-  updateNotesTitle: "2026年8月10日 更新內容",
+  updateNotesTitle: "2026年8月12日 更新內容",
   updateNotesClose: "知道了",
   updateNotesItems: [
+    "修正現有隊員編隊重新整理後無法計算的問題（持有卡面資料儲存衝突）",
+    "修正回報錯誤附圖後無法按送出的問題",
+    "未選隊長就按計算編隊時，會在畫面正中間彈出提示",
     "編隊改為全窮舉（全池約 600 萬組），移除 32 人快速路徑",
     "PR 9999 基準必須窮舉；有快取直接使用，不再重算",
     "最強編隊／現有編隊皆可從快取查看 PR 9999 基準",
@@ -300,6 +308,14 @@ const zh: Messages = {
     "修正第 5 位成員技能頻率無法顯示",
     "PR 算法 v3：戰力公式、文案與快取一致性修正",
   ],
+  releaseAnnouncementTitle: "8/12 更新",
+  releaseAnnouncementItems: [
+    "修正現有隊員編隊重新整理後無法計算的問題",
+    "修正回報錯誤附圖後無法按送出的問題",
+    "未選隊長就按計算編隊時，會在畫面正中間彈出提示",
+  ],
+  releaseAnnouncementDontShow: "不再顯示此公告",
+  releaseAnnouncementConfirm: "知道了",
   footer: "製作者 108_虎太郎 · 資料對照 Game8 / AppMedia / Gamerch",
   langAria: "介面語言",
   themeAria: "功能主題",
@@ -504,6 +520,7 @@ const zh: Messages = {
   fabPickLeader: "先選隊長",
   alertWantedMax: "想要的隊員最多 5 位",
   alertNeedLeader: "請先選擇隊長",
+  alertOptimizeFailed: "編隊計算失敗，請重新整理後再試。",
   alertTooMany: "隊長 + 想要的隊員合計不能超過 5 人，請減少想要隊員",
   filterAllStars: "全部星級",
   filterAllAttrs: "全部屬性",
@@ -614,9 +631,12 @@ const en: Messages = {
   heroMascotSub: "Devil Princess",
   lastUpdated: (date) => `Last updated ${date}`,
   updateNotesBtn: "What's new",
-  updateNotesTitle: "Aug 10, 2026 update",
+  updateNotesTitle: "Aug 12, 2026 update",
   updateNotesClose: "Got it",
   updateNotesItems: [
+    "Fixed owned-roster mode failing after page reload (localStorage key collision)",
+    "Fixed feedback form submit button hidden after attaching screenshots",
+    "Centered prompt when running optimize without choosing a captain",
     "Team search is fully exhaustive (~6M combos full pool); fast path removed",
     "PR 9999 baseline is always exhaustive; uses cache when available",
     "PR 9999 baseline readable from cache in both optimize & roster modes",
@@ -625,6 +645,14 @@ const en: Messages = {
     "Fixed skill frequency display for 5th member on timeline",
     "PR algo v3: combat power formula, copy & cache consistency fixes",
   ],
+  releaseAnnouncementTitle: "Aug 12 update",
+  releaseAnnouncementItems: [
+    "Fixed owned-roster mode failing after page reload",
+    "Fixed feedback form submit button hidden after attaching screenshots",
+    "Centered prompt when running optimize without choosing a captain",
+  ],
+  releaseAnnouncementDontShow: "Don't show again",
+  releaseAnnouncementConfirm: "Got it",
   footer: "Created by 108_虎太郎 · Data cross-checked with Game8 / AppMedia / Gamerch",
   langAria: "Interface language",
   themeAria: "Features",
@@ -833,6 +861,7 @@ const en: Messages = {
   fabPickLeader: "Pick captain",
   alertWantedMax: "You can lock at most 5 wanted members",
   alertNeedLeader: "Please choose a captain first",
+  alertOptimizeFailed: "Team optimization failed. Please refresh and try again.",
   alertTooMany: "Captain + wanted members cannot exceed 5. Remove some wanted members.",
   filterAllStars: "All rarities",
   filterAllAttrs: "All attributes",
@@ -943,9 +972,12 @@ const ja: Messages = {
   heroMascotSub: "小悪魔",
   lastUpdated: (date) => `最終更新 ${date}`,
   updateNotesBtn: "更新内容",
-  updateNotesTitle: "2026年8月10日 更新",
+  updateNotesTitle: "2026年8月12日 更新",
   updateNotesClose: "閉じる",
   updateNotesItems: [
+    "所持メン編成が再読み込み後に計算できない問題を修正（保存データの衝突）",
+    "報告フォームで画像添付後に送信ボタンが隠れる問題を修正",
+    "キャプテン未選択で計算すると中央に案内を表示",
     "編成を全探索に（全池約600万）、高速パス削除",
     "PR9999基準は必ず全探索、キャッシュがあれば再利用",
     "最強／所持編成どちらもPR9999をキャッシュから表示可能",
@@ -954,6 +986,14 @@ const ja: Messages = {
     "5人目のスキル頻度表示を修正",
     "PR算法v3：戦力・文言・キャッシュ整合",
   ],
+  releaseAnnouncementTitle: "8/12 更新",
+  releaseAnnouncementItems: [
+    "所持メン編成が再読み込み後に計算できない問題を修正",
+    "報告フォームで画像添付後に送信ボタンが隠れる問題を修正",
+    "キャプテン未選択で計算すると中央に案内を表示",
+  ],
+  releaseAnnouncementDontShow: "今後表示しない",
+  releaseAnnouncementConfirm: "了解",
   footer: "制作 108_虎太郎 · データ照合：Game8 / AppMedia / Gamerch",
   langAria: "表示言語",
   themeAria: "機能メニュー",
@@ -1162,6 +1202,7 @@ const ja: Messages = {
   fabPickLeader: "キャプテンを選ぶ",
   alertWantedMax: "入れたいメンバーは最大5人までです",
   alertNeedLeader: "先にキャプテンを選んでください",
+  alertOptimizeFailed: "編成計算に失敗しました。再読み込みしてお試しください。",
   alertTooMany:
     "キャプテン＋入れたいメンバーは合計5人までです。人数を減らしてください。",
   filterAllStars: "全レアリティ",

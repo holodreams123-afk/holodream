@@ -10,6 +10,7 @@ import { OptimizeFab } from "./components/OptimizeFab";
 import { FeedbackPanel } from "./components/FeedbackPanel";
 import { SiteNoticeDialog } from "./components/SiteNoticeDialog";
 import { UpdateNotesDialog } from "./components/UpdateNotesDialog";
+import { ReleaseAnnouncementDialog } from "./components/ReleaseAnnouncementDialog";
 import type { FeedbackKind } from "./lib/feedbackStore";
 import { MemberName } from "./components/MemberName";
 import { Portrait } from "./components/Portrait";
@@ -61,6 +62,10 @@ import {
 } from "./lib/catalogDisplay";
 import { formatUnitBadge } from "./lib/groups";
 import { dismissSiteNotice, isSiteNoticeDismissed } from "./lib/siteNoticeStore";
+import {
+  dismissReleaseAnnouncement,
+  isReleaseAnnouncementDismissed,
+} from "./lib/releaseAnnouncementStore";
 import type { Attr, Card, Costume, GameData, TeamEvaluation } from "./types";
 
 const data = gameData as GameData;
@@ -70,7 +75,8 @@ const STORAGE_PREF_CARDS = "holodream-preferred-cards";
 const STORAGE_ROSTER_LOCKED = "holodream-roster-wanted-members";
 const STORAGE_ROSTER_PREF = "holodream-roster-preferred-cards";
 const STORAGE_ROSTER = "holodream-owned-roster";
-const STORAGE_ROSTER_CARDS = "holodream-roster-preferred-cards";
+const STORAGE_ROSTER_CARDS = "holodream-roster-owned-cards";
+const STORAGE_ROSTER_MIGRATED = "holodream-roster-storage-v2";
 
 const allCardIds = new Set(data.cards.map((c) => c.id));
 const allCostumeIds = new Set(data.costumes.map((c) => c.id));
@@ -174,7 +180,36 @@ function defaultRosterCardIds(member: string): string[] {
   return rosterCardsForMember(member).map((c) => c.id);
 }
 
+function migrateRosterStorageIfNeeded(): void {
+  try {
+    if (localStorage.getItem(STORAGE_ROSTER_MIGRATED) === "1") return;
+    const raw = localStorage.getItem(STORAGE_ROSTER_PREF);
+    if (!raw) {
+      localStorage.setItem(STORAGE_ROSTER_MIGRATED, "1");
+      return;
+    }
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    const owned: Record<string, string[]> = {};
+    const preferred: Record<string, string> = {};
+    for (const [member, value] of Object.entries(parsed)) {
+      if (Array.isArray(value)) {
+        owned[member] = value.filter((id): id is string => typeof id === "string");
+      } else if (typeof value === "string") {
+        preferred[member] = value;
+      }
+    }
+    if (!localStorage.getItem(STORAGE_ROSTER_CARDS) && Object.keys(owned).length) {
+      localStorage.setItem(STORAGE_ROSTER_CARDS, JSON.stringify(owned));
+    }
+    localStorage.setItem(STORAGE_ROSTER_PREF, JSON.stringify(preferred));
+    localStorage.setItem(STORAGE_ROSTER_MIGRATED, "1");
+  } catch {
+    /* ignore */
+  }
+}
+
 function loadRosterOwnedCards(): Record<string, string[]> {
+  migrateRosterStorageIfNeeded();
   try {
     const raw = localStorage.getItem(STORAGE_ROSTER_CARDS);
     if (!raw) return {};
@@ -186,6 +221,22 @@ function loadRosterOwnedCards(): Record<string, string[]> {
       } else if (typeof value === "string") {
         out[member] = [value];
       }
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+function loadRosterPreferredCards(): Record<string, string> {
+  migrateRosterStorageIfNeeded();
+  try {
+    const raw = localStorage.getItem(STORAGE_ROSTER_PREF);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    const out: Record<string, string> = {};
+    for (const [member, value] of Object.entries(parsed)) {
+      if (typeof value === "string") out[member] = value;
     }
     return out;
   } catch {
@@ -215,8 +266,8 @@ export default function App() {
   const [rosterWantedMembers, setRosterWantedMembers] = useState<string[]>(() =>
     loadJson<string[]>(STORAGE_ROSTER_LOCKED, []).slice(0, 5),
   );
-  const [rosterPreferredCards, setRosterPreferredCards] = useState<Record<string, string>>(() =>
-    loadJson(STORAGE_ROSTER_PREF, {}),
+  const [rosterPreferredCards, setRosterPreferredCards] = useState<Record<string, string>>(
+    () => loadRosterPreferredCards(),
   );
   const [typeFilters, setTypeFilters] = useState<Attr[]>([]);
   const [rarityFilters, setRarityFilters] = useState<number[]>([]);
@@ -233,7 +284,11 @@ export default function App() {
   const [cachedPrTop8, setCachedPrTop8] = useState<TeamEvaluation[]>([]);
   const [prBaselineCacheLoading, setPrBaselineCacheLoading] = useState(false);
   const [calcRulesOpen, setCalcRulesOpen] = useState(false);
-  const [siteNoticeOpen, setSiteNoticeOpen] = useState(() => !isSiteNoticeDismissed());
+  const siteNoticeInitiallyOpen = !isSiteNoticeDismissed();
+  const [siteNoticeOpen, setSiteNoticeOpen] = useState(siteNoticeInitiallyOpen);
+  const [releaseAnnouncementOpen, setReleaseAnnouncementOpen] = useState(
+    () => !siteNoticeInitiallyOpen && !isReleaseAnnouncementDismissed(),
+  );
   const [updateNotesOpen, setUpdateNotesOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [busyEstimateSec, setBusyEstimateSec] = useState<number | null>(null);
@@ -754,27 +809,34 @@ export default function App() {
     await new Promise<void>((resolve) => {
       setTimeout(() => {
         void (async () => {
-          const out = await optimizeTeamFastAsync(data, {
-            ...options,
-            ownedCardIds,
-            onProgress: (p) => setOptimizeProgress(p),
-          });
-          if (
-            sharePr9999Baseline &&
-            unconstrainedRun &&
-            !prFullyCached &&
-            out.byOverall.length &&
-            costumeId
-          ) {
-            void persistSharedPrBaseline(
-              out.byOverall,
-              costumeId,
-              SONG_LENGTH,
-              fullPoolCardCount,
-            );
+          try {
+            const out = await optimizeTeamFastAsync(data, {
+              ...options,
+              ownedCardIds,
+              onProgress: (p) => setOptimizeProgress(p),
+            });
+            if (
+              sharePr9999Baseline &&
+              unconstrainedRun &&
+              !prFullyCached &&
+              out.byOverall.length &&
+              costumeId
+            ) {
+              void persistSharedPrBaseline(
+                out.byOverall,
+                costumeId,
+                SONG_LENGTH,
+                fullPoolCardCount,
+              );
+            }
+            finish(out);
+          } catch {
+            stopBusy();
+            setOptimizeProgress(null);
+            showCenterAlert(t.alertOptimizeFailed);
+          } finally {
+            resolve();
           }
-          finish(out);
-          resolve();
         })();
       }, 30);
     });
@@ -1025,20 +1087,30 @@ export default function App() {
   function closeSiteNotice(dontShowAgain: boolean) {
     if (dontShowAgain) dismissSiteNotice();
     setSiteNoticeOpen(false);
+    if (!isReleaseAnnouncementDismissed()) {
+      setReleaseAnnouncementOpen(true);
+    }
+  }
+
+  function closeReleaseAnnouncement(dontShowAgain: boolean) {
+    if (dontShowAgain) dismissReleaseAnnouncement();
+    setReleaseAnnouncementOpen(false);
   }
 
   useEffect(() => {
-    if (!calcRulesOpen && !siteNoticeOpen && !updateNotesOpen && centerAlert == null) return;
+    if (!calcRulesOpen && !siteNoticeOpen && !releaseAnnouncementOpen && !updateNotesOpen && centerAlert == null)
+      return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       if (centerAlert != null) setCenterAlert(null);
       if (updateNotesOpen) setUpdateNotesOpen(false);
+      if (releaseAnnouncementOpen) closeReleaseAnnouncement(false);
       if (siteNoticeOpen) closeSiteNotice(false);
       if (calcRulesOpen) setCalcRulesOpen(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [calcRulesOpen, siteNoticeOpen, updateNotesOpen, centerAlert]);
+  }, [calcRulesOpen, siteNoticeOpen, releaseAnnouncementOpen, updateNotesOpen, centerAlert]);
 
   const activeWantedMembers =
     theme === "roster" ? rosterWantedMembers.filter((m) => rosterSet.has(m)) : optimizeWantedMembers;
@@ -1208,6 +1280,11 @@ export default function App() {
       )}
 
       <SiteNoticeDialog open={siteNoticeOpen} onClose={closeSiteNotice} />
+
+      <ReleaseAnnouncementDialog
+        open={releaseAnnouncementOpen}
+        onClose={closeReleaseAnnouncement}
+      />
 
       <UpdateNotesDialog open={updateNotesOpen} onClose={() => setUpdateNotesOpen(false)} />
 

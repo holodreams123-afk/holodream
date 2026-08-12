@@ -491,7 +491,7 @@ function buildMemberSlots(
       const all = byMember.get(member) ?? [];
       if (!all.length) return null;
       const preferredId = preferred[member];
-      if (preferredId) {
+      if (typeof preferredId === "string" && preferredId) {
         const one = all.find((c) => c.id === preferredId);
         return one ? { member, cards: [one] } : null;
       }
