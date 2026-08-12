@@ -9,6 +9,7 @@ import {
   canonicalTitle,
   findWfCard,
   loadWfAllCards,
+  parseActive,
 } from "./wfcalcImport.mjs";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -209,6 +210,23 @@ function ensureCostumesFromCards(game, wfCards) {
   }
 }
 
+/** Re-parse active skills when import missed 「秒ごとに」 or other wf-calc variants. */
+function repairActiveFromWfcalc(game, wfCards, catalogCardIds) {
+  let fixed = 0;
+  for (const card of game.cards) {
+    if (catalogCardIds.has(card.id)) continue;
+    if (!card.active || card.active.interval > 0) continue;
+    const wf = findWfCard(wfCards, { member: card.member, costumeName: card.costumeName });
+    if (!wf?.skills?.active) continue;
+    const parsed = parseActive(wf.skills.active);
+    if (parsed.interval <= 0 || parsed.duration <= 0) continue;
+    card.active = parsed;
+    log.push(`Repaired active skill ${card.id}`);
+    fixed += 1;
+  }
+  if (fixed) log.push(`Repaired active skills on ${fixed} cards`);
+}
+
 const log = [];
 
 // Repair active bonus scoreUp (parseActive regex used wrong capture group).
@@ -254,6 +272,14 @@ for (const c of data.cards) {
     log.push("Watame swimsuit special fixed → 11s SS130 + skillRate45");
   }
 }
+
+const wfCards = loadWfAllCards();
+const catalogCardIds = new Set(
+  JSON.parse(fs.readFileSync(path.join(root, "角色名片/card-catalog.json"), "utf8"))
+    .map((e) => e.cardId)
+    .filter(Boolean),
+);
+repairActiveFromWfcalc(data, wfCards, catalogCardIds);
 
 // Normalize all ★5 (and any mixed) skill raw from structured fields
 let rawFixed = 0;
@@ -305,7 +331,7 @@ for (const c of data.costumes) {
   }
 }
 
-ensureCostumesFromCards(data, loadWfAllCards());
+ensureCostumesFromCards(data, wfCards);
 
 fs.writeFileSync(dataPath, JSON.stringify(data));
 console.log(log.join("\n"));

@@ -121,7 +121,7 @@ function scorePassive(effects) {
 function parseActive(text) {
   const raw = normalizeJpSkillText(text);
   const t = raw.replace(/\s+/g, "");
-  const m = t.match(/(\d+)秒毎に(高確率|中確率|低確率)で(\d+)秒間スコアが(\d+)%UP/i);
+  const m = t.match(/(\d+)秒(?:毎|ごと)に(高確率|中確率|低確率)で(\d+)秒間スコアが(\d+)%UP/i);
   if (!m) {
     return {
       interval: 0,

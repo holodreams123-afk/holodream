@@ -1,5 +1,5 @@
 /** Bump when a new release announcement should auto-show after the site notice. */
-export const RELEASE_ANNOUNCEMENT_ID = "2026-08-12-v3";
+export const RELEASE_ANNOUNCEMENT_ID = "2026-08-12-v4";
 
 export const STORAGE_RELEASE_ANNOUNCEMENT = `holodream-release-${RELEASE_ANNOUNCEMENT_ID}`;
 
