@@ -195,148 +195,160 @@ export function FeedbackPanel({ kind, onClose }: Props) {
         </header>
 
         {!submitted ? (
-          <form className="feedback-form" onSubmit={handleSubmit} onPaste={handlePaste}>
-            <div className="field">
-              <label htmlFor="feedback-category">{t.feedbackLabelCategory}</label>
-              <select
-                id="feedback-category"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-              >
-                <option value="">{t.feedbackSelectPlaceholder}</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.label}
-                  </option>
-                ))}
-              </select>
+          <form className="feedback-form-layout" onSubmit={handleSubmit} onPaste={handlePaste}>
+            <div className="feedback-scroll theme-scrollbar">
+              <div className="feedback-form">
+                <div className="field">
+                  <label htmlFor="feedback-category">{t.feedbackLabelCategory}</label>
+                  <select
+                    id="feedback-category"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                  >
+                    <option value="">{t.feedbackSelectPlaceholder}</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="field">
+                  <label htmlFor="feedback-context">{t.feedbackLabelContext}</label>
+                  <select
+                    id="feedback-context"
+                    value={context}
+                    onChange={(e) => setContext(e.target.value)}
+                  >
+                    <option value="">{t.feedbackSelectPlaceholder}</option>
+                    {contexts.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="field">
+                  <label htmlFor="feedback-message">{t.feedbackLabelMessage}</label>
+                  <textarea
+                    id="feedback-message"
+                    rows={5}
+                    required
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder={
+                      kind === "report" ? t.feedbackReportPlaceholder : t.feedbackSuggestPlaceholder
+                    }
+                  />
+                </div>
+                <div className="field">
+                  <span className="feedback-images-label">{t.feedbackLabelImages}</span>
+                  <p className="feedback-images-hint">{t.feedbackImagesHint}</p>
+                  {attachments.length > 0 ? (
+                    <ul className="feedback-images">
+                      {attachments.map((att) => (
+                        <li key={att.id}>
+                          <img src={att.previewUrl} alt="" />
+                          <button
+                            type="button"
+                            className="feedback-image-remove"
+                            aria-label={t.feedbackImagesRemove(att.name)}
+                            onClick={() => removeAttachment(att.id)}
+                          >
+                            ×
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    hidden
+                    onChange={(e) => {
+                      if (e.target.files?.length) void addImageFiles(e.target.files);
+                      e.target.value = "";
+                    }}
+                  />
+                  {attachments.length < FEEDBACK_MAX_IMAGES ? (
+                    <button
+                      type="button"
+                      className="btn btn-ghost feedback-images-add"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      {t.feedbackImagesAdd}
+                    </button>
+                  ) : null}
+                </div>
+                <div className="field">
+                  <label htmlFor="feedback-contact">{t.feedbackLabelContact}</label>
+                  <input
+                    id="feedback-contact"
+                    type="text"
+                    value={contact}
+                    onChange={(e) => setContact(e.target.value)}
+                    placeholder={t.feedbackContactPlaceholder}
+                    maxLength={80}
+                  />
+                </div>
+              </div>
             </div>
-            <div className="field">
-              <label htmlFor="feedback-context">{t.feedbackLabelContext}</label>
-              <select
-                id="feedback-context"
-                value={context}
-                onChange={(e) => setContext(e.target.value)}
-              >
-                <option value="">{t.feedbackSelectPlaceholder}</option>
-                {contexts.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="field">
-              <label htmlFor="feedback-message">{t.feedbackLabelMessage}</label>
-              <textarea
-                id="feedback-message"
-                rows={6}
-                required
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder={
-                  kind === "report" ? t.feedbackReportPlaceholder : t.feedbackSuggestPlaceholder
-                }
-              />
-            </div>
-            <div className="field">
-              <span className="feedback-images-label">{t.feedbackLabelImages}</span>
-              <p className="feedback-images-hint">{t.feedbackImagesHint}</p>
-              {attachments.length > 0 ? (
-                <ul className="feedback-images">
-                  {attachments.map((att) => (
-                    <li key={att.id}>
-                      <img src={att.previewUrl} alt="" />
-                      <button
-                        type="button"
-                        className="feedback-image-remove"
-                        aria-label={t.feedbackImagesRemove(att.name)}
-                        onClick={() => removeAttachment(att.id)}
-                      >
-                        ×
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                hidden
-                onChange={(e) => {
-                  if (e.target.files?.length) void addImageFiles(e.target.files);
-                  e.target.value = "";
-                }}
-              />
-              {attachments.length < FEEDBACK_MAX_IMAGES ? (
-                <button
-                  type="button"
-                  className="btn btn-ghost feedback-images-add"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  {t.feedbackImagesAdd}
+            <footer className="feedback-foot">
+              {submitError ? <p className="feedback-error">{submitError}</p> : null}
+              <div className="feedback-actions">
+                <button type="button" className="btn btn-ghost" onClick={handleClose} disabled={submitting}>
+                  {t.feedbackCancel}
                 </button>
-              ) : null}
-            </div>
-            <div className="field">
-              <label htmlFor="feedback-contact">{t.feedbackLabelContact}</label>
-              <input
-                id="feedback-contact"
-                type="text"
-                value={contact}
-                onChange={(e) => setContact(e.target.value)}
-                placeholder={t.feedbackContactPlaceholder}
-                maxLength={80}
-              />
-            </div>
-            {submitError ? <p className="feedback-error">{submitError}</p> : null}
-            <div className="feedback-actions">
-              <button type="button" className="btn btn-ghost" onClick={handleClose} disabled={submitting}>
-                {t.feedbackCancel}
-              </button>
-              <button type="submit" className="btn btn-primary" disabled={submitting}>
-                {submitting ? t.feedbackSubmitting : t.feedbackSubmit}
-              </button>
-            </div>
+                <button type="submit" className="btn btn-primary" disabled={submitting}>
+                  {submitting ? t.feedbackSubmitting : t.feedbackSubmit}
+                </button>
+              </div>
+            </footer>
           </form>
         ) : (
-          <div className="feedback-success">
-            <p className="feedback-success-msg">{t.feedbackSuccess}</p>
-            <p className="feedback-success-note">{successNote}</p>
-            <div className="feedback-preview">
-              <pre>{submitted.message}</pre>
+          <div className="feedback-form-layout">
+            <div className="feedback-scroll theme-scrollbar">
+              <div className="feedback-success">
+                <p className="feedback-success-msg">{t.feedbackSuccess}</p>
+                <p className="feedback-success-note">{successNote}</p>
+                <div className="feedback-preview">
+                  <pre>{submitted.message}</pre>
+                </div>
+                {previewImages.length > 0 ? (
+                  <ul className="feedback-images feedback-images--readonly">
+                    {previewImages.map((url, i) => (
+                      <li key={`${url}-${i}`}>
+                        <a href={url} target="_blank" rel="noreferrer">
+                          <img src={url} alt="" />
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
             </div>
-            {previewImages.length > 0 ? (
-              <ul className="feedback-images feedback-images--readonly">
-                {previewImages.map((url, i) => (
-                  <li key={`${url}-${i}`}>
-                    <a href={url} target="_blank" rel="noreferrer">
-                      <img src={url} alt="" />
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-            <div className="feedback-actions">
-              <button type="button" className="btn btn-ghost" onClick={copyText}>
-                {copied ? t.feedbackCopied : t.feedbackCopy}
-              </button>
-              {!result?.cloudSaved ? (
-                <a
-                  className="btn btn-primary"
-                  href={githubIssueUrl(submitted, issueTitle)}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {t.feedbackGithub}
-                </a>
-              ) : null}
-              <button type="button" className="btn btn-ghost" onClick={handleClose}>
-                {t.feedbackDone}
-              </button>
-            </div>
+            <footer className="feedback-foot">
+              <div className="feedback-actions">
+                <button type="button" className="btn btn-ghost" onClick={copyText}>
+                  {copied ? t.feedbackCopied : t.feedbackCopy}
+                </button>
+                {!result?.cloudSaved ? (
+                  <a
+                    className="btn btn-primary"
+                    href={githubIssueUrl(submitted, issueTitle)}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {t.feedbackGithub}
+                  </a>
+                ) : null}
+                <button type="button" className="btn btn-ghost" onClick={handleClose}>
+                  {t.feedbackDone}
+                </button>
+              </div>
+            </footer>
           </div>
         )}
       </section>

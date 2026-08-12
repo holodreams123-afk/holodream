@@ -5,6 +5,8 @@ import { LAST_UPDATED, formatSiteDate } from "./data/siteMeta";
 import { CardArt, cardArtUrl } from "./components/CardArt";
 import { SkillTimelineChart } from "./components/SkillTimelineChart";
 import { CardFilterToolbar, CardGroupBrowser } from "./components/CardBrowser";
+import { AppAlertDialog } from "./components/AppAlertDialog";
+import { OptimizeFab } from "./components/OptimizeFab";
 import { FeedbackPanel } from "./components/FeedbackPanel";
 import { SiteNoticeDialog } from "./components/SiteNoticeDialog";
 import { UpdateNotesDialog } from "./components/UpdateNotesDialog";
@@ -240,6 +242,7 @@ export default function App() {
   const [cardsCompact, setCardsCompact] = useState(false);
   const [rosterWantedOpen, setRosterWantedOpen] = useState(false);
   const [feedbackView, setFeedbackView] = useState<FeedbackKind | null>(null);
+  const [centerAlert, setCenterAlert] = useState<string | null>(null);
   const [allowDuplicateSkills, setAllowDuplicateSkills] = useState(true);
   const [timelineKey, setTimelineKey] = useState("");
   const [timelineSettings, setTimelineSettings] = useState<TeamTimelineSettings>(() =>
@@ -777,13 +780,26 @@ export default function App() {
     });
   }
 
-  function runOptimize() {
+  function showCenterAlert(message: string) {
+    setCenterAlert(message);
+  }
+
+  function handleFabClick() {
+    if (busy) return;
     if (!leaderMember) {
-      alert(t.alertNeedLeader);
+      showCenterAlert(t.alertNeedLeader);
       return;
     }
+    if (theme === "roster") {
+      runRosterOptimize();
+    } else {
+      runOptimize();
+    }
+  }
+
+  function runOptimize() {
     if (optimizeWantedMembers.length > 5) {
-      alert(t.alertWantedMax);
+      showCenterAlert(t.alertWantedMax);
       return;
     }
 
@@ -807,22 +823,18 @@ export default function App() {
 
   function runRosterOptimize() {
     if (ownedRosterMembers.length < 5) {
-      alert(t.alertRosterMin);
+      showCenterAlert(t.alertRosterMin);
       return;
     }
     for (const member of ownedRosterMembers) {
       if (!rosterOwnedIds(member).length) {
-        alert(t.alertRosterCardMin);
+        showCenterAlert(t.alertRosterCardMin);
         return;
       }
     }
-    if (!leaderMember) {
-      alert(t.alertNeedLeader);
-      return;
-    }
     const rosterWanted = rosterWantedMembers.filter((m) => rosterSet.has(m));
     if (rosterWanted.length > 5) {
-      alert(t.alertWantedMax);
+      showCenterAlert(t.alertWantedMax);
       return;
     }
 
@@ -1016,16 +1028,17 @@ export default function App() {
   }
 
   useEffect(() => {
-    if (!calcRulesOpen && !siteNoticeOpen && !updateNotesOpen) return;
+    if (!calcRulesOpen && !siteNoticeOpen && !updateNotesOpen && centerAlert == null) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
+      if (centerAlert != null) setCenterAlert(null);
       if (updateNotesOpen) setUpdateNotesOpen(false);
       if (siteNoticeOpen) closeSiteNotice(false);
       if (calcRulesOpen) setCalcRulesOpen(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [calcRulesOpen, siteNoticeOpen, updateNotesOpen]);
+  }, [calcRulesOpen, siteNoticeOpen, updateNotesOpen, centerAlert]);
 
   const activeWantedMembers =
     theme === "roster" ? rosterWantedMembers.filter((m) => rosterSet.has(m)) : optimizeWantedMembers;
@@ -1077,6 +1090,23 @@ export default function App() {
     if (idx === 2) return "rank-bronze";
     return "rank-plain";
   }
+
+  const fabVisible = theme === "optimize" || theme === "roster";
+  const fabSubLabel = leaderMember
+    ? displayName(leaderMember, unitsOf(leaderMember), locale)
+    : theme === "roster" && ownedRosterMembers.length < 5
+      ? t.rosterNeedFive
+      : t.fabPickLeader;
+  const fabTitle =
+    theme === "roster"
+      ? ownedRosterMembers.length < 5
+        ? t.rosterNeedFive
+        : !leaderMember
+          ? t.fabTitleNeedLeader
+          : t.fabTitleReady
+      : !leaderMember
+        ? t.fabTitleNeedLeader
+        : t.fabTitleReady;
 
   return (
     <div className="app">
@@ -1180,6 +1210,28 @@ export default function App() {
       <SiteNoticeDialog open={siteNoticeOpen} onClose={closeSiteNotice} />
 
       <UpdateNotesDialog open={updateNotesOpen} onClose={() => setUpdateNotesOpen(false)} />
+
+      <AppAlertDialog
+        open={centerAlert != null}
+        message={centerAlert ?? ""}
+        onClose={() => setCenterAlert(null)}
+      />
+
+      <OptimizeFab
+        visible={fabVisible}
+        busy={busy}
+        label={theme === "roster" ? t.fabRosterRun : t.fabRun}
+        subLabel={fabSubLabel}
+        busyLabel={t.fabBusy}
+        busyProgress={
+          optimizeProgress
+            ? t.fabBusyProgress(optimizeProgress.searched, optimizeProgress.phase)
+            : null
+        }
+        busyEstimate={busyEstimateMin != null ? t.fabBusyEstimate(busyEstimateMin) : null}
+        title={fabTitle}
+        onClick={handleFabClick}
+      />
 
       {calcRulesOpen &&
         createPortal(
@@ -1640,11 +1692,21 @@ export default function App() {
           </div>
           {!result ? (
             <div className="empty">
-              {leaderMember
-                ? t.resultsEmptyWithLeader(
-                    displayName(leaderMember, unitsOf(leaderMember), locale),
-                  )
-                : t.resultsEmpty}
+              {leaderMember ? (
+                <p>{t.resultsEmptyWithLeader(displayName(leaderMember, unitsOf(leaderMember), locale))}</p>
+              ) : (
+                <>
+                  <p>{t.resultsEmpty}</p>
+                  <button
+                    type="button"
+                    className="btn btn-primary empty-run-btn"
+                    onClick={handleFabClick}
+                    disabled={busy}
+                  >
+                    {theme === "roster" ? t.fabRosterRun : t.fabRun}
+                  </button>
+                </>
+              )}
             </div>
           ) : (
             <>
@@ -2242,63 +2304,6 @@ export default function App() {
           )}
         </section>
       </div>
-
-      <button
-        type="button"
-        className={`fab-optimize ${busy ? "is-busy" : ""}`}
-        onClick={theme === "roster" ? runRosterOptimize : runOptimize}
-        disabled={
-          busy ||
-          !leaderMember ||
-          (theme === "roster" && ownedRosterMembers.length < 5)
-        }
-        title={
-          theme === "roster"
-            ? ownedRosterMembers.length < 5
-              ? t.rosterNeedFive
-              : !leaderMember
-                ? t.fabTitleNeedLeader
-                : t.fabTitleReady
-            : !leaderMember
-              ? t.fabTitleNeedLeader
-              : t.fabTitleReady
-        }
-      >
-        <span className="fab-optimize-label">
-          {busy ? (
-            <>
-              {t.fabBusy}
-              {optimizeProgress ? (
-                <span className="fab-optimize-progress" aria-live="polite">
-                  {t.fabBusyProgress(optimizeProgress.searched, optimizeProgress.phase)}
-                </span>
-              ) : null}
-              {busyEstimateMin != null && (
-                <span className="fab-optimize-timer" aria-live="polite">
-                  {t.fabBusyEstimate(busyEstimateMin)}
-                </span>
-              )}
-            </>
-          ) : theme === "roster" ? (
-            t.fabRosterRun
-          ) : (
-            t.fabRun
-          )}
-        </span>
-        <span className="fab-optimize-sub">
-          {busy
-            ? optimizeProgress
-              ? t.fabBusyProgress(optimizeProgress.searched, optimizeProgress.phase)
-              : leaderMember
-                ? displayName(leaderMember, unitsOf(leaderMember), locale)
-                : t.fabBusy
-            : leaderMember
-              ? displayName(leaderMember, unitsOf(leaderMember), locale)
-              : theme === "roster" && ownedRosterMembers.length < 5
-                ? t.rosterNeedFive
-                : t.fabPickLeader}
-        </span>
-      </button>
         </>
       )}
 
