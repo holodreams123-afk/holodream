@@ -1,0 +1,17 @@
+---
+description: After user-facing fixes or release notes, commit and push to GitHub Pages without waiting for「上」
+alwaysApply: true
+---
+
+# Auto-deploy updates
+
+When the user asks for a **bug fix**, **feature**, or **release-note / 更新說明** change that should reach the live site:
+
+1. Finish the code + `updateNotesItems` / `releaseAnnouncementItems` (bump `RELEASE_ANNOUNCEMENT_ID` when the popup should re-show).
+2. Run `npm run build` if logic or data changed.
+3. **Commit and `git push origin main` automatically** — do not wait for the user to say「上」「发布」「deploy」.
+4. Briefly report commit hash and Pages URL: `https://holodreams123-afk.github.io/holodream/`
+
+Still follow `pre-publish-feedback.mdc` (Supabase feedback SQL + secrets reminder once per deploy batch).
+
+Do **not** auto-push: untracked dev scripts, OCR assets, `角色名片/` image folders, or WIP the user did not ask to ship.
