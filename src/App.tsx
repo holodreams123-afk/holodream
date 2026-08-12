@@ -43,7 +43,7 @@ import {
   unitsForMemberGrouping,
 } from "./lib/groups";
 import { displayName, listName, matchesQuery } from "./lib/names";
-import { buildCostumeLookup, captainCostumesForMember } from "./lib/costumes";
+import { buildCostumeLookup, captainCostumesForMember, cardForCostume } from "./lib/costumes";
 import { formatBuffedStatDisplay } from "./lib/stats";
 import { optimizeTeamFastAsync, buildOptimizeResultFromCache, hydratePrCostumeTop8, loadPrBaselineFromCache, type OptimizeProgress } from "./lib/optimizer";
 import {
@@ -1586,9 +1586,7 @@ export default function App() {
                 <p className="empty-inline">{t.noCostumeData}</p>
               ) : (
                 leaderCostumes.map((cos) => {
-                  const card = data.cards.find(
-                    (c) => c.member === cos.member && c.costumeName === cos.costumeName,
-                  );
+                  const card = cardForCostume(data.cards, cos);
                   return (
                     <button
                       key={cos.id}
@@ -2059,8 +2057,8 @@ export default function App() {
                       <div className="value">—</div>
                     </>
                   )}
+
                 </div>
-                <p className="stat-hint sub">{t.activeCoverageHint}</p>
               </div>
 
               {detailEv.combatPower != null && (

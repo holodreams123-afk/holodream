@@ -148,7 +148,6 @@ export type Messages = {
   baseStats: (n: string) => string;
   activeSkillCoverage: string;
   activeSkillGap: string;
-  activeCoverageHint: string;
   timelineCoverageHint: string;
   activeIntervalMeta: (interval: number, duration: number) => string;
   activeCoverageGapTotal: (sec: string) => string;
@@ -310,6 +309,7 @@ const zh: Messages = {
     "PR 算法 v3：戰力公式、文案與快取一致性修正",
     "修正分數加乘計算：被動分數加成改為三圍加權等效 %，不再錯誤加總五人百分比（PR 算法 v4）",
     "結果榜「分數加乘」標籤改顯示主動＋被動＋SP 總和",
+    "修正部分 ★4 隊長衣裝未顯示或卡面圖缺失",
   ],
   releaseAnnouncementTitle: "8/12 更新",
   releaseAnnouncementItems: [
@@ -317,6 +317,7 @@ const zh: Messages = {
     "修正回報錯誤附圖後無法按送出的問題",
     "未選隊長就按計算編隊時，會在畫面正中間彈出提示",
     "修正分數加乘／戰力計算（被動分數加成加總錯誤；PR 算法 v4，PR 9999 需重算）",
+    "修正部分 ★4 隊長衣裝未顯示或卡面圖缺失",
   ],
   releaseAnnouncementDontShow: "不再顯示此公告",
   releaseAnnouncementConfirm: "知道了",
@@ -484,7 +485,6 @@ const zh: Messages = {
   baseStats: (n) => `基礎 ${n}`,
   activeSkillCoverage: "主動技能覆蓋率",
   activeSkillGap: "技能空窗期",
-  activeCoverageHint: "越高越好 · 不含短縮率 · 與 PR 一致 · 主動 A 必發",
   timelineCoverageHint: "含短縮率 · 不影響 PR",
   activeIntervalMeta: (interval, duration) => `每${interval}秒 · ${duration}秒`,
   activeCoverageGapTotal: (sec) => `${sec} 秒`,
@@ -651,6 +651,7 @@ const en: Messages = {
     "PR algo v3: combat power formula, copy & cache consistency fixes",
     "Fixed score bonus calc: passive score support uses stat-weighted team %, not summed per member (PR algo v4)",
     "Score bonus track tab shows active + passive + SP total",
+    "Fixed some ★4 captain costumes missing or without card art",
   ],
   releaseAnnouncementTitle: "Aug 12 update",
   releaseAnnouncementItems: [
@@ -658,6 +659,7 @@ const en: Messages = {
     "Fixed feedback form submit button hidden after attaching screenshots",
     "Centered prompt when running optimize without choosing a captain",
     "Fixed score bonus / combat power calc (passive % summing bug; PR algo v4 — rebaseline PR 9999)",
+    "Fixed some ★4 captain costumes missing or without card art",
   ],
   releaseAnnouncementDontShow: "Don't show again",
   releaseAnnouncementConfirm: "Got it",
@@ -829,7 +831,6 @@ const en: Messages = {
   baseStats: (n) => `Base ${n}`,
   activeSkillCoverage: "Active skill coverage",
   activeSkillGap: "Skill gaps",
-  activeCoverageHint: "Higher is better · no CDR · matches PR · active always on",
   timelineCoverageHint: "Includes CDR · does not affect PR",
   activeIntervalMeta: (interval, duration) => `${interval}s / ${duration}s`,
   activeCoverageGapTotal: (sec) => `${sec}s`,
@@ -996,6 +997,7 @@ const ja: Messages = {
     "PR算法v3：戦力・文言・キャッシュ整合",
     "分数加乘計算を修正：パッ分数はステ加重のチーム等效%に（5人分の%合算を廃止・PR算法v4）",
     "結果タブ「分数加乘」にアク＋パッ＋SP合計を表示",
+    "一部★4キャプ衣装の未表示・カード画像欠落を修正",
   ],
   releaseAnnouncementTitle: "8/12 更新",
   releaseAnnouncementItems: [
@@ -1003,6 +1005,7 @@ const ja: Messages = {
     "報告フォームで画像添付後に送信ボタンが隠れる問題を修正",
     "キャプテン未選択で計算すると中央に案内を表示",
     "分数加乘／戦力計算を修正（パッ分数の合算ミス・PR算法v4・PR9999要再計算）",
+    "一部★4キャプ衣装の未表示・カード画像欠落を修正",
   ],
   releaseAnnouncementDontShow: "今後表示しない",
   releaseAnnouncementConfirm: "了解",
@@ -1174,7 +1177,6 @@ const ja: Messages = {
   baseStats: (n) => `基礎 ${n}`,
   activeSkillCoverage: "アクティブカバー率",
   activeSkillGap: "スキル空白期",
-  activeCoverageHint: "高いほど良 · 短縮なし · PRと一致 · アク必発",
   timelineCoverageHint: "短縮込 · PRに影響しない",
   activeIntervalMeta: (interval, duration) => `${interval}秒 / ${duration}秒`,
   activeCoverageGapTotal: (sec) => `${sec} 秒`,

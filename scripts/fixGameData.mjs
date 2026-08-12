@@ -4,6 +4,12 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import {
+  buildGameDataCostumeFromWf,
+  canonicalTitle,
+  findWfCard,
+  loadWfAllCards,
+} from "./wfcalcImport.mjs";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const dataPath = path.join(root, "src/data/gameData.json");
@@ -152,6 +158,57 @@ function parseCostumeFromJp(raw) {
   return { condition, effects, raw: text, score, unconditional: !condition };
 }
 
+function costumeId(member, costumeName) {
+  return `${member}_${costumeName}`.replace(/[\\|/]/g, "_");
+}
+
+function findCostumeForCard(costumes, card) {
+  return costumes.find(
+    (c) =>
+      c.member === card.member &&
+      (c.costumeName === card.costumeName ||
+        canonicalTitle(c.costumeName) === canonicalTitle(card.costumeName)),
+  );
+}
+
+/** Ensure every ★4+ card has a matching captain costume entry (name aligned with card). */
+function ensureCostumesFromCards(game, wfCards) {
+  let renamed = 0;
+  let added = 0;
+
+  for (const card of game.cards) {
+    if (card.rarity < 4) continue;
+
+    const existing = findCostumeForCard(game.costumes, card);
+    if (existing) {
+      if (existing.costumeName !== card.costumeName) {
+        log.push(`Align costume name ${card.member}: ${existing.costumeName} → ${card.costumeName}`);
+        existing.costumeName = card.costumeName;
+        existing.id = costumeId(card.member, card.costumeName);
+        renamed += 1;
+      }
+      continue;
+    }
+
+    const wf = findWfCard(wfCards, { member: card.member, costumeName: card.costumeName });
+    if (!wf) {
+      log.push(`WARN: no wf-calc costume for ${card.id}`);
+      continue;
+    }
+
+    const cos = buildGameDataCostumeFromWf(wf);
+    cos.costumeName = card.costumeName;
+    cos.id = costumeId(card.member, card.costumeName);
+    game.costumes.push(cos);
+    log.push(`Added costume from wf-calc: ${cos.id}`);
+    added += 1;
+  }
+
+  if (renamed || added) {
+    log.push(`Costume sync: ${renamed} renamed, ${added} added`);
+  }
+}
+
 const log = [];
 
 // Repair active bonus scoreUp (parseActive regex used wrong capture group).
@@ -247,6 +304,8 @@ for (const c of data.costumes) {
     }
   }
 }
+
+ensureCostumesFromCards(data, loadWfAllCards());
 
 fs.writeFileSync(dataPath, JSON.stringify(data));
 console.log(log.join("\n"));
