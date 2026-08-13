@@ -6,9 +6,16 @@
 
 **網站編隊計算用的 ★5 三圍、SP/A/P 技能、隊長衣裝，一律以 OneDrive Excel 總表為準**（本機檔名 `hololive_Dreams_.xlsx`，工作表 `5星角色總表`）。
 
-- 更新 Excel 後在本機執行：`npm run sync-star5`（會寫入 `gameData.json` 與 `src/data/star5-excel.snapshot.json`）
-- GitHub Pages 建置沒有 xlsx 時，使用已提交的 snapshot，與你最後一次 sync 的 Excel 內容一致
-- 本資料夾的 OCR／`card-catalog.json` **僅供卡面圖與人工對照**，build 時**不會**再覆寫 ★5 計算資料
+| 步驟 | 說明 |
+|------|------|
+| 新卡 OCR | `npm run process-new-cards` 或雙擊 `同步新卡.bat` |
+| 自動補 Excel | 同上流程會把 catalog 有、Excel 缺的列 **追加進 xlsx** |
+| 手動補 Excel | `npm run merge-catalog-into-excel` |
+| 同步計算資料 | `npm run sync-star5` → `gameData.json` + snapshot |
+
+- GitHub Pages 建置沒有 xlsx 時，使用 `src/data/star5-excel.snapshot.json`
+- Excel 尚未收錄的新卡，build 會暫用 **角色名片 catalog** 結構化解析補上（直到你 sync 進 Excel）
+- 本資料夾 OCR 的 `card-catalog.json` 是 **Excel 的輸入來源**，不是第二套計算來源
 
 ## 資料夾命名
 
@@ -103,7 +110,8 @@ npm run process-new-cards
 1. OCR `1.名片.png` 三圍，比對 `gameData` 卡 id
 2. OCR `2.技能.png`、`3.衣裝.png` 寫入 `card-catalog.json`
 3. 若 wf-calc 已有此卡但 `gameData` 還沒有 → 自動建立卡面與衣裝資料
-4. 同步到網站用 `cardCatalog.json`、更新三圍、跑 `fixGameData`
+4. **追加新列至 `hololive_Dreams_.xlsx`**（若本機有 Excel）
+5. 同步 ★5 至 `gameData`（`sync-star5`）、網站 `cardCatalog.json`、跑 `fixGameData`
 
 **你只需要做：** 在對的成員資料夾下建 `{卡名}/`，放入 `1.名片.png`、`2.技能.png`、`3.衣裝.png`。
 

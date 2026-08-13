@@ -1,8 +1,8 @@
 {
   "source": "hololive_Dreams_.xlsx",
   "sheet": "5星角色總表",
-  "syncedAt": "2026-08-13T09:33:45.038Z",
-  "rowCount": 59,
+  "syncedAt": "2026-08-13T09:42:53.633Z",
+  "rowCount": 61,
   "records": [
     {
       "member": "ときのそら",
@@ -3875,6 +3875,138 @@
         ],
         "raw": "Happy 2人以上：全員 Perf +130%",
         "score": 156,
+        "unconditional": false
+      }
+    },
+    {
+      "member": "さくらみこ",
+      "costumeName": "ビーチで弾ける、光彩ショット！",
+      "type": "pure",
+      "unit": "0期生",
+      "stats": {
+        "performance": 11145,
+        "technique": 7828,
+        "sense": 6947,
+        "total": 25920
+      },
+      "special": {
+        "duration": 11,
+        "scoreSupport": 145,
+        "skillRate": 0,
+        "skillRateCondition": null,
+        "raw": "11秒 Support +145%"
+      },
+      "active": {
+        "interval": 27,
+        "probability": 0.5,
+        "probabilityLabel": "中確率",
+        "duration": 10,
+        "scoreUp": 115,
+        "bonus": null,
+        "raw": "每27秒（中）：10秒 Score +115%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "pure",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "パフォーマンス",
+            "value": 43,
+            "targetGroup": "pure",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Pure 2人以上：Pure 2人 Perf +43%",
+        "score": 43
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "pure",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "パフォーマンス",
+            "value": 80,
+            "target": "all"
+          },
+          {
+            "kind": "scoreSupportPassive",
+            "value": 25,
+            "target": "all"
+          }
+        ],
+        "raw": "Pure 2人以上：全員 Perf +80% + Support +25%",
+        "score": 151,
+        "unconditional": false
+      }
+    },
+    {
+      "member": "星街すいせい",
+      "costumeName": "夏に一閃！水鉄砲のアルペジオ",
+      "type": "cute",
+      "unit": "0期生",
+      "stats": {
+        "performance": 7828,
+        "technique": 6947,
+        "sense": 11145,
+        "total": 25920
+      },
+      "special": {
+        "duration": 12,
+        "scoreSupport": 120,
+        "skillRate": 45,
+        "skillRateCondition": null,
+        "raw": "12秒 Support +120% + Skill Rate +45%"
+      },
+      "active": {
+        "interval": 23,
+        "probability": 0.5,
+        "probabilityLabel": "中確率",
+        "duration": 8,
+        "scoreUp": 120,
+        "bonus": null,
+        "raw": "每23秒（中）：8秒 Score +120%"
+      },
+      "passive": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "0期生",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "scoreSupportPassive",
+            "value": 12,
+            "targetGroup": "0期生",
+            "targetCount": 2
+          }
+        ],
+        "raw": "0期生2人以上：0期生2人 Support +12%",
+        "score": 30
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "0期生",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "センス",
+            "value": 135,
+            "target": "all"
+          }
+        ],
+        "raw": "0期生2人以上：全員 Sense +135%",
+        "score": 162,
         "unconditional": false
       }
     }

@@ -12,6 +12,7 @@
     "add-summer2026": "node scripts/addSummer2026.mjs",
     "import-excel": "node scripts/syncStar5FromExcel.mjs",
     "sync-star5": "node scripts/syncStar5FromExcel.mjs",
+    "merge-catalog-into-excel": "node scripts/mergeCatalogIntoStar5Excel.mjs",
     "tag-events": "node scripts/tagEvents.mjs",
     "download-portraits": "node scripts/downloadPortraits.mjs",
     "download-cards": "node scripts/downloadCardArts.mjs",

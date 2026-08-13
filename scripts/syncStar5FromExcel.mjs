@@ -12,11 +12,13 @@ import {
   EN_TO_JP,
   parseStar5Rows,
 } from "./excelStar5Parse.mjs";
+import { catalogEntryToStar5Record } from "./catalogToStar5Record.mjs";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const xlsxPath = path.join(root, "hololive_Dreams_.xlsx");
 const dataPath = path.join(root, "src/data/gameData.json");
 const snapshotPath = path.join(root, "src/data/star5-excel.snapshot.json");
+const catalogPath = path.join(root, "角色名片", "card-catalog.json");
 
 function cardKey(member, costumeName) {
   return `${member}\0${costumeName}`;
@@ -66,6 +68,35 @@ function loadSourceRecords(data) {
   throw new Error(
     "No hololive_Dreams_.xlsx and no star5-excel.snapshot.json — cannot sync ★5 data.",
   );
+}
+
+/** Fill gaps from 角色名片 when Excel row not yet added (e.g. new summer cards). */
+function supplementFromCatalog(data, records) {
+  if (!fs.existsSync(catalogPath)) return { records, added: 0 };
+
+  const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+  const covered = new Set(records.map((r) => cardKey(r.member, r.costumeName)));
+  const cardById = new Map(data.cards.map((c) => [c.id, c]));
+  const extra = [];
+
+  for (const entry of catalog) {
+    if (!entry.cardId) continue;
+    const card = cardById.get(entry.cardId);
+    if (!card || card.rarity !== 5) continue;
+    const key = cardKey(card.member, card.costumeName);
+    if (covered.has(key)) continue;
+
+    const rec = catalogEntryToStar5Record(entry, card);
+    extra.push(rec);
+    covered.add(key);
+  }
+
+  if (extra.length) {
+    console.log(`★5 catalog supplement: ${extra.length} card(s) not yet in Excel`);
+    for (const r of extra) console.log(`  + ${r.member} / ${r.costumeName}`);
+  }
+
+  return { records: [...records, ...extra], added: extra.length };
 }
 
 function applyRecords(data, records) {
@@ -131,6 +162,8 @@ function verifyRecords(records) {
 
 const data = JSON.parse(fs.readFileSync(dataPath, "utf8"));
 const bundle = loadSourceRecords(data);
+const supplemented = supplementFromCatalog(data, bundle.records);
+bundle.records = supplemented.records;
 
 if (bundle.warnings.length) {
   console.warn(`Excel parse warnings (${bundle.warnings.length}):`);
