@@ -210,11 +210,11 @@ function ensureCostumesFromCards(game, wfCards) {
   }
 }
 
-/** Re-parse active skills when import missed 「秒ごとに」 or other wf-calc variants. */
-function repairActiveFromWfcalc(game, wfCards, catalogCardIds) {
+/** Re-parse active skills when import missed wf-calc variants. ★5 excluded — Excel is canonical. */
+function repairActiveFromWfcalc(game, wfCards) {
   let fixed = 0;
   for (const card of game.cards) {
-    if (catalogCardIds.has(card.id)) continue;
+    if (card.rarity === 5) continue;
     if (!card.active || card.active.interval > 0) continue;
     const wf = findWfCard(wfCards, { member: card.member, costumeName: card.costumeName });
     if (!wf?.skills?.active) continue;
@@ -298,14 +298,10 @@ for (const c of data.cards) {
 }
 
 const wfCards = loadWfAllCards();
-const catalogCardIds = new Set(
-  JSON.parse(fs.readFileSync(path.join(root, "角色名片/card-catalog.json"), "utf8"))
-    .map((e) => e.cardId)
-    .filter(Boolean),
-);
-repairActiveFromWfcalc(data, wfCards, catalogCardIds);
+repairActiveFromWfcalc(data, wfCards);
 
 for (const card of data.cards) {
+  if (card.rarity === 5) continue;
   const before = JSON.stringify(card.passive);
   card.passive = normalizePassiveInGameData(card.passive);
   if (JSON.stringify(card.passive) !== before) {

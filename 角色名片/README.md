@@ -1,7 +1,14 @@
 # 角色名片
 
 遊戲內截圖參考資料，依 **期生順序** 分類（資料夾名前綴 01–54）。
-之後網站資料可從這裡整理匯入。
+
+## ★5 計算資料來源（重要）
+
+**網站編隊計算用的 ★5 三圍、SP/A/P 技能、隊長衣裝，一律以 OneDrive Excel 總表為準**（本機檔名 `hololive_Dreams_.xlsx`，工作表 `5星角色總表`）。
+
+- 更新 Excel 後在本機執行：`npm run sync-star5`（會寫入 `gameData.json` 與 `src/data/star5-excel.snapshot.json`）
+- GitHub Pages 建置沒有 xlsx 時，使用已提交的 snapshot，與你最後一次 sync 的 Excel 內容一致
+- 本資料夾的 OCR／`card-catalog.json` **僅供卡面圖與人工對照**，build 時**不會**再覆寫 ★5 計算資料
 
 ## 資料夾命名
 
@@ -82,6 +89,38 @@
 ```
 
 範例：`01_時乃空/一心描繪的彩虹之歌/`（同上三檔）。
+
+## 一鍵同步新卡（推薦）
+
+放好三張截圖後，**雙擊 `同步新卡.bat`**，或專案根目錄執行：
+
+```bash
+npm run process-new-cards
+```
+
+腳本會自動：
+
+1. OCR `1.名片.png` 三圍，比對 `gameData` 卡 id
+2. OCR `2.技能.png`、`3.衣裝.png` 寫入 `card-catalog.json`
+3. 若 wf-calc 已有此卡但 `gameData` 還沒有 → 自動建立卡面與衣裝資料
+4. 同步到網站用 `cardCatalog.json`、更新三圍、跑 `fixGameData`
+
+**你只需要做：** 在對的成員資料夾下建 `{卡名}/`，放入 `1.名片.png`、`2.技能.png`、`3.衣裝.png`。
+
+### PR 9999 基準（加卡後必做）
+
+編隊**計算方式不變**（全池窮舉），但每加一張 ★5，各隊長衣裝的 **PR 9999 參考隊會改變**，需重算重存：
+
+```bash
+npm run process-new-cards    # 同步後若卡池變大，會自動清空 prBaselines.json
+npm run precompute-pr        # 窮舉重算 top 8（很慢，可中斷後 --from=N 續跑）
+```
+
+Supabase SQL 編輯器執行 `scripts/supabase-pr-baselines-purge.sql`，再 commit 並發布。
+
+若 wf-calc 尚未收錄新卡，腳本會提示需手動加入 `gameData.json`；收錄後再跑一次即可。
+
+---
 
 ## 一鍵整理（本機）
 

@@ -10,7 +10,8 @@
     "generate-data": "node scripts/generateData.mjs",
     "add-swimsuits": "node scripts/addSwimsuits.mjs",
     "add-summer2026": "node scripts/addSummer2026.mjs",
-    "import-excel": "node scripts/importExcel.mjs",
+    "import-excel": "node scripts/syncStar5FromExcel.mjs",
+    "sync-star5": "node scripts/syncStar5FromExcel.mjs",
     "tag-events": "node scripts/tagEvents.mjs",
     "download-portraits": "node scripts/downloadPortraits.mjs",
     "download-cards": "node scripts/downloadCardArts.mjs",
@@ -30,7 +31,7 @@
     "sync-wfcalc-add": "node scripts/syncWfcalcAddMissing.mjs",
     "extract-costume-skills": "node scripts/extractCostumeSkillsFromCards.mjs",
     "export-card-catalog": "node scripts/exportCardCatalogExcel.mjs",
-    "predev": "node scripts/syncCardCatalog.mjs && node scripts/syncCatalogToGameData.mjs && node scripts/fixGameData.mjs",
+    "predev": "node scripts/syncStar5FromExcel.mjs && node scripts/fixGameData.mjs",
     "sync-catalog-to-game-data": "node scripts/syncCatalogToGameData.mjs"
   },
   "dependencies": {

@@ -1,0 +1,3882 @@
+{
+  "source": "hololive_Dreams_.xlsx",
+  "sheet": "5星角色總表",
+  "syncedAt": "2026-08-13T09:33:45.038Z",
+  "rowCount": 59,
+  "records": [
+    {
+      "member": "ときのそら",
+      "costumeName": "ひたむきに描く虹のうた",
+      "type": "cute",
+      "unit": "0期生",
+      "stats": {
+        "performance": 10909,
+        "technique": 7221,
+        "sense": 7844,
+        "total": 25974
+      },
+      "special": {
+        "duration": 10,
+        "scoreSupport": 160,
+        "skillRate": 0,
+        "skillRateCondition": null,
+        "raw": "10秒 Support +160%"
+      },
+      "active": {
+        "interval": 24,
+        "probability": 0.5,
+        "probabilityLabel": "中確率",
+        "duration": 10,
+        "scoreUp": 100,
+        "bonus": null,
+        "raw": "每24秒（中）：10秒 Score +100%"
+      },
+      "passive": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "0期生",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 33,
+            "target": "self"
+          }
+        ],
+        "raw": "0期生2人以上：自身全參數 +33%",
+        "score": 39.6
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "0期生",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 50,
+            "target": "all"
+          }
+        ],
+        "raw": "0期生2人以上：全員全參數 +50%",
+        "score": 150,
+        "unconditional": false
+      }
+    },
+    {
+      "member": "ロボ子さん",
+      "costumeName": "高性能なVサイン",
+      "type": "happy",
+      "unit": "0期生",
+      "stats": {
+        "performance": 11145,
+        "technique": 7828,
+        "sense": 6947,
+        "total": 25920
+      },
+      "special": {
+        "duration": 10,
+        "scoreSupport": 145,
+        "skillRate": 55,
+        "skillRateCondition": "Life1000+",
+        "raw": "10秒 Support +145%；Life 1000+ 時 Skill Rate +55%"
+      },
+      "active": {
+        "interval": 18,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 8,
+        "scoreUp": 90,
+        "bonus": null,
+        "raw": "每18秒（高）：8秒 Score +90%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "happy",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "scoreSupportPassive",
+            "value": 11,
+            "targetGroup": "happy",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Happy 2人 Support +11%",
+        "score": 27.5
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "happy",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "パフォーマンス",
+            "value": 130,
+            "target": "all"
+          }
+        ],
+        "raw": "Happy 2人以上：全員 Perf +130%",
+        "score": 156,
+        "unconditional": false
+      }
+    },
+    {
+      "member": "AZKi",
+      "costumeName": "咲き誇る一途な花",
+      "type": "pure",
+      "unit": "0期生",
+      "stats": {
+        "performance": 6803,
+        "technique": 7682,
+        "sense": 11380,
+        "total": 25865
+      },
+      "special": {
+        "duration": 10,
+        "scoreSupport": 145,
+        "skillRate": 50,
+        "skillRateCondition": null,
+        "raw": "10秒 Support +145% + Skill Rate +50%"
+      },
+      "active": {
+        "interval": 20,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 7,
+        "scoreUp": 60,
+        "bonus": {
+          "conditionText": "ライフ600以上",
+          "condition": {
+            "type": "misc",
+            "text": "ライフ600以上"
+          },
+          "scoreUp": 120
+        },
+        "raw": "每20秒（高）：7秒 Score +60%；Life 600+ 時 +120%"
+      },
+      "passive": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "0期生",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "センス",
+            "value": 43,
+            "targetGroup": "0期生",
+            "targetCount": 2
+          }
+        ],
+        "raw": "0期生2人 Sense +43%",
+        "score": 43
+      },
+      "costumeSkill": {
+        "condition": null,
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "センス",
+            "value": 120,
+            "target": "all"
+          }
+        ],
+        "raw": "全員 Sense +120%",
+        "score": 144,
+        "unconditional": true
+      }
+    },
+    {
+      "member": "さくらみこ",
+      "costumeName": "サクラBloom",
+      "type": "happy",
+      "unit": "0期生",
+      "stats": {
+        "performance": 7682,
+        "technique": 6803,
+        "sense": 11380,
+        "total": 25865
+      },
+      "special": {
+        "duration": 10,
+        "scoreSupport": 145,
+        "skillRate": 50,
+        "skillRateCondition": null,
+        "raw": "10秒 Support +145% + Skill Rate +50%"
+      },
+      "active": {
+        "interval": 15,
+        "probability": 0.5,
+        "probabilityLabel": "中確率",
+        "duration": 6,
+        "scoreUp": 55,
+        "bonus": {
+          "conditionText": "40コンボ以上",
+          "condition": {
+            "type": "misc",
+            "text": "40コンボ以上"
+          },
+          "scoreUp": 110
+        },
+        "raw": "每15秒（中）：6秒 Score +55%；Combo 40+ 時 +110%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "happy",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "scoreSupportPassive",
+            "value": 11,
+            "targetGroup": "happy",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Happy 2人 Support +11%",
+        "score": 27.5
+      },
+      "costumeSkill": {
+        "condition": null,
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "センス",
+            "value": 120,
+            "target": "all"
+          }
+        ],
+        "raw": "全員 Sense +120%",
+        "score": 144,
+        "unconditional": true
+      }
+    },
+    {
+      "member": "星街すいせい",
+      "costumeName": "心奪うComet Tune",
+      "type": "pure",
+      "unit": "0期生",
+      "stats": {
+        "performance": 6803,
+        "technique": 11380,
+        "sense": 7682,
+        "total": 25865
+      },
+      "special": {
+        "duration": 10,
+        "scoreSupport": 145,
+        "skillRate": 50,
+        "skillRateCondition": null,
+        "raw": "10秒 Support +145% + Skill Rate +50%"
+      },
+      "active": {
+        "interval": 29,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 10,
+        "scoreUp": 60,
+        "bonus": {
+          "conditionText": "ライフ600以上",
+          "condition": {
+            "type": "misc",
+            "text": "ライフ600以上"
+          },
+          "scoreUp": 120
+        },
+        "raw": "每29秒（高）：10秒 Score +60%；Life 600+ 時 +120%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "pure",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "テクニック",
+            "value": 41,
+            "targetGroup": "pure",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Pure 2人 Tech +41%",
+        "score": 41
+      },
+      "costumeSkill": {
+        "condition": null,
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "テクニック",
+            "value": 120,
+            "target": "all"
+          }
+        ],
+        "raw": "全員 Tech +120%",
+        "score": 144,
+        "unconditional": true
+      }
+    },
+    {
+      "member": "アキ・ローゼンタール",
+      "costumeName": "艶帯びたハーフエルフ",
+      "type": "cute",
+      "unit": "1期生",
+      "stats": {
+        "performance": 6803,
+        "technique": 7682,
+        "sense": 11380,
+        "total": 25865
+      },
+      "special": {
+        "duration": 10,
+        "scoreSupport": 145,
+        "skillRate": 50,
+        "skillRateCondition": null,
+        "raw": "10秒 Support +145% + Skill Rate +50%"
+      },
+      "active": {
+        "interval": 21,
+        "probability": 0.5,
+        "probabilityLabel": "中確率",
+        "duration": 8,
+        "scoreUp": 55,
+        "bonus": {
+          "conditionText": "ライフ600以上",
+          "condition": {
+            "type": "misc",
+            "text": "ライフ600以上"
+          },
+          "scoreUp": 115
+        },
+        "raw": "每21秒（中）：8秒 Score +55%/100%；Life 600+ 時 +115%"
+      },
+      "passive": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "1期生",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "センス",
+            "value": 43,
+            "targetGroup": "1期生",
+            "targetCount": 2
+          }
+        ],
+        "raw": "1期生2人 Sense +43%",
+        "score": 43
+      },
+      "costumeSkill": {
+        "condition": null,
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "センス",
+            "value": 120,
+            "target": "all"
+          }
+        ],
+        "raw": "全員 Sense +120%",
+        "score": 144,
+        "unconditional": true
+      }
+    },
+    {
+      "member": "赤井はあと",
+      "costumeName": "let's freestyle おやつタイム",
+      "type": "pure",
+      "unit": "1期生",
+      "stats": {
+        "performance": 7682,
+        "technique": 11380,
+        "sense": 6803,
+        "total": 25865
+      },
+      "special": {
+        "duration": 12,
+        "scoreSupport": 135,
+        "skillRate": 0,
+        "skillRateCondition": null,
+        "raw": "12秒 Support +135%"
+      },
+      "active": {
+        "interval": 19,
+        "probability": 0.5,
+        "probabilityLabel": "中確率",
+        "duration": 7,
+        "scoreUp": 60,
+        "bonus": {
+          "conditionText": "40コンボ以上",
+          "condition": {
+            "type": "misc",
+            "text": "40コンボ以上"
+          },
+          "scoreUp": 120
+        },
+        "raw": "每19秒（中）：7秒 Score +60%；Combo 40+ 時 +120%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "pure",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "scoreSupportPassive",
+            "value": 11,
+            "targetGroup": "pure",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Pure 2人 Support +11%",
+        "score": 27.5
+      },
+      "costumeSkill": {
+        "condition": null,
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "テクニック",
+            "value": 120,
+            "target": "all"
+          }
+        ],
+        "raw": "全員 Tech +120%",
+        "score": 144,
+        "unconditional": true
+      }
+    },
+    {
+      "member": "白上フブキ",
+      "costumeName": "狐のお宮でこんこんこん",
+      "type": "pure",
+      "unit": "1期生",
+      "stats": {
+        "performance": 10909,
+        "technique": 7221,
+        "sense": 7844,
+        "total": 25974
+      },
+      "special": {
+        "duration": 14,
+        "scoreSupport": 115,
+        "skillRate": 0,
+        "skillRateCondition": null,
+        "raw": "14秒 Support +115%"
+      },
+      "active": {
+        "interval": 30,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 11,
+        "scoreUp": 110,
+        "bonus": null,
+        "raw": "每30秒（高）：11秒 Score +110%"
+      },
+      "passive": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "1期生",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "パフォーマンス",
+            "value": 45,
+            "targetGroup": "1期生",
+            "targetCount": 2
+          }
+        ],
+        "raw": "1期生2人以上：1期生2人 Perf +45%",
+        "score": 45
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "1期生",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 50,
+            "target": "all"
+          }
+        ],
+        "raw": "1期生2人以上：全員全參數 +50%",
+        "score": 150,
+        "unconditional": false
+      }
+    },
+    {
+      "member": "夏色まつり",
+      "costumeName": "ハジける快活チアリーダー",
+      "type": "happy",
+      "unit": "1期生",
+      "stats": {
+        "performance": 11380,
+        "technique": 7682,
+        "sense": 6803,
+        "total": 25865
+      },
+      "special": {
+        "duration": 11,
+        "scoreSupport": 145,
+        "skillRate": 0,
+        "skillRateCondition": null,
+        "raw": "11秒 Support +145%"
+      },
+      "active": {
+        "interval": 23,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 8,
+        "scoreUp": 60,
+        "bonus": {
+          "conditionText": "ライフ600以上",
+          "condition": {
+            "type": "misc",
+            "text": "ライフ600以上"
+          },
+          "scoreUp": 120
+        },
+        "raw": "每23秒（高）：8秒 Score +60%；Life 600+ 時 +120%"
+      },
+      "passive": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "1期生",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "パフォーマンス",
+            "value": 43,
+            "targetGroup": "1期生",
+            "targetCount": 2
+          }
+        ],
+        "raw": "1期生2人 Perf +43%",
+        "score": 43
+      },
+      "costumeSkill": {
+        "condition": null,
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "パフォーマンス",
+            "value": 120,
+            "target": "all"
+          }
+        ],
+        "raw": "全員 Perf +120%",
+        "score": 144,
+        "unconditional": true
+      }
+    },
+    {
+      "member": "百鬼あやめ",
+      "costumeName": "隠世でのほほん、気ままな提灯",
+      "type": "pure",
+      "unit": "2期生",
+      "stats": {
+        "performance": 10433,
+        "technique": 7668,
+        "sense": 7981,
+        "total": 26082
+      },
+      "special": {
+        "duration": 10,
+        "scoreSupport": 160,
+        "skillRate": 0,
+        "skillRateCondition": null,
+        "raw": "10秒 Support +160%"
+      },
+      "active": {
+        "interval": 29,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 10,
+        "scoreUp": 60,
+        "bonus": {
+          "conditionText": "ピュアタイプ2人以上",
+          "condition": {
+            "type": "typeCount",
+            "attr": "pure",
+            "min": 2
+          },
+          "scoreUp": 120
+        },
+        "raw": "每29秒（高）：10秒 Score +60%；Pure 2人以上 +120%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "pure",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "パフォーマンス",
+            "value": 41,
+            "targetGroup": "pure",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Pure 2人 Perf +41%",
+        "score": 41
+      },
+      "costumeSkill": {
+        "condition": null,
+        "effects": [
+          {
+            "kind": "scoreSupportPassive",
+            "value": 60,
+            "target": "all"
+          }
+        ],
+        "raw": "全員 Support +60%",
+        "score": 132,
+        "unconditional": true
+      }
+    },
+    {
+      "member": "癒月ちょこ",
+      "costumeName": "悪魔な魅惑に手玉にとられて",
+      "type": "happy",
+      "unit": "2期生",
+      "stats": {
+        "performance": 7366,
+        "technique": 7991,
+        "sense": 10672,
+        "total": 26029
+      },
+      "special": {
+        "duration": 10,
+        "scoreSupport": 160,
+        "skillRate": 0,
+        "skillRateCondition": null,
+        "raw": "10秒 Support +160%"
+      },
+      "active": {
+        "interval": 20,
+        "probability": 0.5,
+        "probabilityLabel": "中確率",
+        "duration": 7,
+        "scoreUp": 120,
+        "bonus": null,
+        "raw": "每20秒（中）：7秒 Score +120%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "happy",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "scoreSupportPassive",
+            "value": 11,
+            "targetGroup": "happy",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Happy 2人 Support +11%",
+        "score": 27.5
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "happy",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 30,
+            "target": "all"
+          },
+          {
+            "kind": "scoreSupportPassive",
+            "value": 25,
+            "target": "all"
+          }
+        ],
+        "raw": "Happy 2人以上：全員全參數 +30% + Support +25%",
+        "score": 145,
+        "unconditional": false
+      }
+    },
+    {
+      "member": "大空スバル",
+      "costumeName": "クワッとじゃれ合うアヒルの午後",
+      "type": "cute",
+      "unit": "2期生",
+      "stats": {
+        "performance": 10909,
+        "technique": 7221,
+        "sense": 7844,
+        "total": 25974
+      },
+      "special": {
+        "duration": 12,
+        "scoreSupport": 120,
+        "skillRate": 40,
+        "skillRateCondition": null,
+        "raw": "12秒 Support +120% + Skill Rate +40%"
+      },
+      "active": {
+        "interval": 34,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 12,
+        "scoreUp": 115,
+        "bonus": null,
+        "raw": "每34秒（高）：12秒 Score +115%"
+      },
+      "passive": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "2期生",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "パフォーマンス",
+            "value": 45,
+            "targetGroup": "2期生",
+            "targetCount": 2
+          }
+        ],
+        "raw": "2期生2人以上：2期生2人 Perf +45%",
+        "score": 45
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "2期生",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 50,
+            "target": "all"
+          }
+        ],
+        "raw": "2期生2人以上：全員全參數 +50%",
+        "score": 150,
+        "unconditional": false
+      }
+    },
+    {
+      "member": "大神ミオ",
+      "costumeName": "ホッととろけるnightscape",
+      "type": "cute",
+      "unit": "ゲーマーズ",
+      "stats": {
+        "performance": 7844,
+        "technique": 7221,
+        "sense": 10909,
+        "total": 25974
+      },
+      "special": {
+        "duration": 14,
+        "scoreSupport": 115,
+        "skillRate": 0,
+        "skillRateCondition": null,
+        "raw": "14秒 Support +115%"
+      },
+      "active": {
+        "interval": 27,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 9,
+        "scoreUp": 120,
+        "bonus": null,
+        "raw": "每27秒（高）：9秒 Score +120%"
+      },
+      "passive": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "ゲーマーズ",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "scoreSupportPassive",
+            "value": 12,
+            "targetGroup": "ゲーマーズ",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Gamers 2人以上：Gamers 2人 Support +12%",
+        "score": 30
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "ゲーマーズ",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 50,
+            "target": "all"
+          }
+        ],
+        "raw": "Gamers 2人以上：全員全參數 +50%",
+        "score": 150,
+        "unconditional": false
+      }
+    },
+    {
+      "member": "猫又おかゆ",
+      "costumeName": "宴の果てに、ナイショの戯れ",
+      "type": "cute",
+      "unit": "ゲーマーズ",
+      "stats": {
+        "performance": 7682,
+        "technique": 11380,
+        "sense": 6803,
+        "total": 25865
+      },
+      "special": {
+        "duration": 10,
+        "scoreSupport": 160,
+        "skillRate": 0,
+        "skillRateCondition": null,
+        "raw": "10秒 Support +160%"
+      },
+      "active": {
+        "interval": 25,
+        "probability": 0.5,
+        "probabilityLabel": "中確率",
+        "duration": 10,
+        "scoreUp": 55,
+        "bonus": {
+          "conditionText": "ライフ600以上",
+          "condition": {
+            "type": "misc",
+            "text": "ライフ600以上"
+          },
+          "scoreUp": 110
+        },
+        "raw": "每25秒（中）：10秒 Score +55%；Life 600+ 時 +110%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "cute",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "テクニック",
+            "value": 41,
+            "targetGroup": "cute",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Cute 2人 Tech +41%",
+        "score": 41
+      },
+      "costumeSkill": {
+        "condition": null,
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "テクニック",
+            "value": 120,
+            "target": "all"
+          }
+        ],
+        "raw": "全員 Tech +120%",
+        "score": 144,
+        "unconditional": true
+      }
+    },
+    {
+      "member": "戌神ころね",
+      "costumeName": "Go! Go! Laughing Skater",
+      "type": "happy",
+      "unit": "ゲーマーズ",
+      "stats": {
+        "performance": 7828,
+        "technique": 6947,
+        "sense": 11145,
+        "total": 25920
+      },
+      "special": {
+        "duration": 10,
+        "scoreSupport": 145,
+        "skillRate": 55,
+        "skillRateCondition": "Combo100+",
+        "raw": "10秒 Support +145%；Combo 100+ 時 Skill Rate +55%"
+      },
+      "active": {
+        "interval": 17,
+        "probability": 0.5,
+        "probabilityLabel": "中確率",
+        "duration": 6,
+        "scoreUp": 120,
+        "bonus": null,
+        "raw": "每17秒（中）：6秒 Score +120%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "happy",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "scoreSupportPassive",
+            "value": 11,
+            "targetGroup": "happy",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Happy 2人 Support +11%",
+        "score": 27.5
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "happy",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "センス",
+            "value": 130,
+            "target": "all"
+          }
+        ],
+        "raw": "Happy 2人以上：全員 Sense +130%",
+        "score": 156,
+        "unconditional": false
+      }
+    },
+    {
+      "member": "兎田ぺこら",
+      "costumeName": "愛嬌たっぷりラビットフィールド",
+      "type": "cute",
+      "unit": "3期生",
+      "stats": {
+        "performance": 7366,
+        "technique": 10672,
+        "sense": 7991,
+        "total": 26029
+      },
+      "special": {
+        "duration": 14,
+        "scoreSupport": 115,
+        "skillRate": 0,
+        "skillRateCondition": null,
+        "raw": "14秒 Support +115%"
+      },
+      "active": {
+        "interval": 30,
+        "probability": 0.5,
+        "probabilityLabel": "中確率",
+        "duration": 12,
+        "scoreUp": 105,
+        "bonus": null,
+        "raw": "每30秒（中）：12秒 Score +105%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "cute",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 32,
+            "target": "self"
+          }
+        ],
+        "raw": "Cute 2人以上：自身全參數 +32%",
+        "score": 38.400000000000006
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "cute",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 30,
+            "target": "all"
+          },
+          {
+            "kind": "scoreSupportPassive",
+            "value": 25,
+            "target": "all"
+          }
+        ],
+        "raw": "Cute 2人以上：全員全參數 +30% + Support +25%",
+        "score": 145,
+        "unconditional": false
+      }
+    },
+    {
+      "member": "不知火フレア",
+      "costumeName": "ハーフエルフの風渡るゴンドラ",
+      "type": "pure",
+      "unit": "3期生",
+      "stats": {
+        "performance": 11380,
+        "technique": 6803,
+        "sense": 7682,
+        "total": 25865
+      },
+      "special": {
+        "duration": 10,
+        "scoreSupport": 145,
+        "skillRate": 50,
+        "skillRateCondition": null,
+        "raw": "10秒 Support +145% + Skill Rate +50%"
+      },
+      "active": {
+        "interval": 26,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 9,
+        "scoreUp": 60,
+        "bonus": {
+          "conditionText": "40コンボ以上",
+          "condition": {
+            "type": "misc",
+            "text": "40コンボ以上"
+          },
+          "scoreUp": 120
+        },
+        "raw": "每26秒（高）：9秒 Score +60%；Combo 40+ 時 +120%"
+      },
+      "passive": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "3期生",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "パフォーマンス",
+            "value": 43,
+            "targetGroup": "3期生",
+            "targetCount": 2
+          }
+        ],
+        "raw": "3期生2人 Perf +43%",
+        "score": 43
+      },
+      "costumeSkill": {
+        "condition": null,
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "パフォーマンス",
+            "value": 120,
+            "target": "all"
+          }
+        ],
+        "raw": "全員 Perf +120%",
+        "score": 144,
+        "unconditional": true
+      }
+    },
+    {
+      "member": "白銀ノエル",
+      "costumeName": "風薫るおっとり騎士",
+      "type": "happy",
+      "unit": "3期生",
+      "stats": {
+        "performance": 7668,
+        "technique": 7981,
+        "sense": 10433,
+        "total": 26082
+      },
+      "special": {
+        "duration": 10,
+        "scoreSupport": 160,
+        "skillRate": 0,
+        "skillRateCondition": null,
+        "raw": "10秒 Support +160%"
+      },
+      "active": {
+        "interval": 19,
+        "probability": 0.5,
+        "probabilityLabel": "中確率",
+        "duration": 7,
+        "scoreUp": 60,
+        "bonus": {
+          "conditionText": "ハッピータイプ2人以上",
+          "condition": {
+            "type": "typeCount",
+            "attr": "happy",
+            "min": 2
+          },
+          "scoreUp": 120
+        },
+        "raw": "每19秒（中）：7秒 Score +60%；Happy 2人以上 +120%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "happy",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 32,
+            "target": "self"
+          }
+        ],
+        "raw": "Happy 2人以上：自身全參數 +32%",
+        "score": 38.400000000000006
+      },
+      "costumeSkill": {
+        "condition": null,
+        "effects": [
+          {
+            "kind": "scoreSupportPassive",
+            "value": 60,
+            "target": "all"
+          }
+        ],
+        "raw": "全員 Support +60%",
+        "score": 132,
+        "unconditional": true
+      }
+    },
+    {
+      "member": "宝鐘マリン",
+      "costumeName": "妖艶あふれるマリンブルー",
+      "type": "happy",
+      "unit": "3期生",
+      "stats": {
+        "performance": 7221,
+        "technique": 10909,
+        "sense": 7844,
+        "total": 25974
+      },
+      "special": {
+        "duration": 12,
+        "scoreSupport": 120,
+        "skillRate": 40,
+        "skillRateCondition": null,
+        "raw": "12秒 Support +120% + Skill Rate +40%"
+      },
+      "active": {
+        "interval": 23,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 8,
+        "scoreUp": 115,
+        "bonus": null,
+        "raw": "每23秒（高）：8/10秒 Score +115%"
+      },
+      "passive": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "3期生",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "scoreSupportPassive",
+            "value": 12,
+            "targetGroup": "3期生",
+            "targetCount": 2
+          }
+        ],
+        "raw": "3期生2人以上：3期生2人 Support +12%",
+        "score": 30
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "3期生",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 50,
+            "target": "all"
+          }
+        ],
+        "raw": "3期生2人以上：全員全參數 +50%",
+        "score": 150,
+        "unconditional": false
+      }
+    },
+    {
+      "member": "角巻わため",
+      "costumeName": "Woolly Smile Festival",
+      "type": "cute",
+      "unit": "4期生",
+      "stats": {
+        "performance": 10672,
+        "technique": 7991,
+        "sense": 7366,
+        "total": 26029
+      },
+      "special": {
+        "duration": 11,
+        "scoreSupport": 145,
+        "skillRate": 0,
+        "skillRateCondition": null,
+        "raw": "11秒 Support +145%"
+      },
+      "active": {
+        "interval": 15,
+        "probability": 0.5,
+        "probabilityLabel": "中確率",
+        "duration": 6,
+        "scoreUp": 55,
+        "bonus": {
+          "conditionText": "キュートタイプ2人以上",
+          "condition": {
+            "type": "typeCount",
+            "attr": "cute",
+            "min": 2
+          },
+          "scoreUp": 110
+        },
+        "raw": "每15秒（中）：6秒 Score +55%；Cute 2人以上 +110%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "cute",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "scoreSupportPassive",
+            "value": 11,
+            "targetGroup": "cute",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Cute 2人 Support +11%",
+        "score": 27.5
+      },
+      "costumeSkill": {
+        "condition": null,
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 45,
+            "target": "all"
+          }
+        ],
+        "raw": "全員全參數 +45%",
+        "score": 135,
+        "unconditional": true
+      }
+    },
+    {
+      "member": "常闇トワ",
+      "costumeName": "ガチで終わらんチルい夜遊び",
+      "type": "pure",
+      "unit": "4期生",
+      "stats": {
+        "performance": 7844,
+        "technique": 7221,
+        "sense": 10909,
+        "total": 25974
+      },
+      "special": {
+        "duration": 10,
+        "scoreSupport": 145,
+        "skillRate": 50,
+        "skillRateCondition": null,
+        "raw": "10秒 Support +145% + Skill Rate +50%"
+      },
+      "active": {
+        "interval": 19,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 8,
+        "scoreUp": 95,
+        "bonus": null,
+        "raw": "每19秒（高）：8秒 Score +95%"
+      },
+      "passive": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "4期生",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "センス",
+            "value": 45,
+            "targetGroup": "4期生",
+            "targetCount": 2
+          }
+        ],
+        "raw": "4期生2人以上：4期生2人 Sense +45%",
+        "score": 45
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "4期生",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 50,
+            "target": "all"
+          }
+        ],
+        "raw": "4期生2人以上：全員全參數 +50%",
+        "score": 150,
+        "unconditional": false
+      }
+    },
+    {
+      "member": "姫森ルーナ",
+      "costumeName": "姫に忠誠アフタヌーン",
+      "type": "happy",
+      "unit": "4期生",
+      "stats": {
+        "performance": 7682,
+        "technique": 11380,
+        "sense": 6803,
+        "total": 25865
+      },
+      "special": {
+        "duration": 14,
+        "scoreSupport": 115,
+        "skillRate": 0,
+        "skillRateCondition": null,
+        "raw": "14秒 Support +115%"
+      },
+      "active": {
+        "interval": 29,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 10,
+        "scoreUp": 60,
+        "bonus": {
+          "conditionText": "40コンボ以上",
+          "condition": {
+            "type": "misc",
+            "text": "40コンボ以上"
+          },
+          "scoreUp": 120
+        },
+        "raw": "每29秒（高）：10秒 Score +60%；Combo 40+ 時 +120%"
+      },
+      "passive": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "4期生",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "テクニック",
+            "value": 43,
+            "targetGroup": "4期生",
+            "targetCount": 2
+          }
+        ],
+        "raw": "4期生2人 Tech +43%",
+        "score": 43
+      },
+      "costumeSkill": {
+        "condition": null,
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "テクニック",
+            "value": 120,
+            "target": "all"
+          }
+        ],
+        "raw": "全員 Tech +120%",
+        "score": 144,
+        "unconditional": true
+      }
+    },
+    {
+      "member": "雪花ラミィ",
+      "costumeName": "さびしがり屋な雪夜の令嬢",
+      "type": "pure",
+      "unit": "5期生",
+      "stats": {
+        "performance": 7221,
+        "technique": 7844,
+        "sense": 10909,
+        "total": 25974
+      },
+      "special": {
+        "duration": 12,
+        "scoreSupport": 120,
+        "skillRate": 40,
+        "skillRateCondition": null,
+        "raw": "12秒 Support +120% + Skill Rate +40%"
+      },
+      "active": {
+        "interval": 23,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 8,
+        "scoreUp": 115,
+        "bonus": null,
+        "raw": "每23秒（高）：8秒 Score +115%"
+      },
+      "passive": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "5期生",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 33,
+            "target": "self"
+          }
+        ],
+        "raw": "5期生2人以上：自身全參數 +33%",
+        "score": 39.6
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "5期生",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 50,
+            "target": "all"
+          }
+        ],
+        "raw": "5期生2人以上：全員全參數 +50%",
+        "score": 150,
+        "unconditional": false
+      }
+    },
+    {
+      "member": "桃鈴ねね",
+      "costumeName": "一緒に歌お！イノセントリズム",
+      "type": "cute",
+      "unit": "5期生",
+      "stats": {
+        "performance": 11380,
+        "technique": 6803,
+        "sense": 7682,
+        "total": 25865
+      },
+      "special": {
+        "duration": 11,
+        "scoreSupport": 145,
+        "skillRate": 0,
+        "skillRateCondition": null,
+        "raw": "11秒 Support +145%"
+      },
+      "active": {
+        "interval": 26,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 9,
+        "scoreUp": 60,
+        "bonus": {
+          "conditionText": "ライフ600以上",
+          "condition": {
+            "type": "misc",
+            "text": "ライフ600以上"
+          },
+          "scoreUp": 120
+        },
+        "raw": "每26秒（高）：9秒 Score +60%；Life 600+ 時 +120%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "cute",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "scoreSupportPassive",
+            "value": 11,
+            "targetGroup": "cute",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Cute 2人 Support +11%",
+        "score": 27.5
+      },
+      "costumeSkill": {
+        "condition": null,
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "パフォーマンス",
+            "value": 120,
+            "target": "all"
+          }
+        ],
+        "raw": "全員 Perf +120%",
+        "score": 144,
+        "unconditional": true
+      }
+    },
+    {
+      "member": "獅白ぼたん",
+      "costumeName": "目を奪う神エイム！lion's hunt",
+      "type": "happy",
+      "unit": "5期生",
+      "stats": {
+        "performance": 10672,
+        "technique": 7991,
+        "sense": 7366,
+        "total": 26029
+      },
+      "special": {
+        "duration": 10,
+        "scoreSupport": 160,
+        "skillRate": 0,
+        "skillRateCondition": null,
+        "raw": "10秒 Support +160%"
+      },
+      "active": {
+        "interval": 27,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 9,
+        "scoreUp": 60,
+        "bonus": {
+          "conditionText": "ハッピータイプ2人以上",
+          "condition": {
+            "type": "typeCount",
+            "attr": "happy",
+            "min": 2
+          },
+          "scoreUp": 125
+        },
+        "raw": "每27秒（高）：9秒 Score +60%；Happy 2人以上 +125%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "happy",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "パフォーマンス",
+            "value": 43,
+            "targetGroup": "happy",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Happy 2人以上：Happy 2人 Perf +43%",
+        "score": 43
+      },
+      "costumeSkill": {
+        "condition": null,
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 45,
+            "target": "all"
+          }
+        ],
+        "raw": "全員全參數 +45%",
+        "score": 135,
+        "unconditional": true
+      }
+    },
+    {
+      "member": "尾丸ポルカ",
+      "costumeName": "変幻自在！ポルカサーカス開演！",
+      "type": "happy",
+      "unit": "5期生",
+      "stats": {
+        "performance": 7366,
+        "technique": 7991,
+        "sense": 10672,
+        "total": 26029
+      },
+      "special": {
+        "duration": 10,
+        "scoreSupport": 145,
+        "skillRate": 50,
+        "skillRateCondition": null,
+        "raw": "10秒 Support +145% + Skill Rate +50%"
+      },
+      "active": {
+        "interval": 21,
+        "probability": 0.5,
+        "probabilityLabel": "中確率",
+        "duration": 8,
+        "scoreUp": 55,
+        "bonus": {
+          "conditionText": "ハッピータイプ2人以上",
+          "condition": {
+            "type": "typeCount",
+            "attr": "happy",
+            "min": 2
+          },
+          "scoreUp": 115
+        },
+        "raw": "每21秒（中）：8秒 Score +55%；Happy 2人以上 +115%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "happy",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "scoreSupportPassive",
+            "value": 11,
+            "targetGroup": "happy",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Happy 2人 Support +11%",
+        "score": 27.5
+      },
+      "costumeSkill": {
+        "condition": null,
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 45,
+            "target": "all"
+          }
+        ],
+        "raw": "全員全參數 +45%",
+        "score": 135,
+        "unconditional": true
+      }
+    },
+    {
+      "member": "ラプラス・ダークネス",
+      "costumeName": "作戦開始！見せろ総帥の手腕",
+      "type": "happy",
+      "unit": "holoX",
+      "stats": {
+        "performance": 7221,
+        "technique": 10909,
+        "sense": 7844,
+        "total": 25974
+      },
+      "special": {
+        "duration": 12,
+        "scoreSupport": 135,
+        "skillRate": 0,
+        "skillRateCondition": null,
+        "raw": "12秒 Support +135%"
+      },
+      "active": {
+        "interval": 18,
+        "probability": 0.5,
+        "probabilityLabel": "中確率",
+        "duration": 6,
+        "scoreUp": 125,
+        "bonus": null,
+        "raw": "每18秒（中）：6秒 Score +125%"
+      },
+      "passive": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "holoX",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 33,
+            "target": "self"
+          }
+        ],
+        "raw": "holoX 2人以上：自身全參數 +33%",
+        "score": 39.6
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "holoX",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 50,
+            "target": "all"
+          }
+        ],
+        "raw": "holoX 2人以上：全員全參數 +50%",
+        "score": 150,
+        "unconditional": false
+      }
+    },
+    {
+      "member": "鷹嶺ルイ",
+      "costumeName": "組織支える超敏腕幹部",
+      "type": "cute",
+      "unit": "holoX",
+      "stats": {
+        "performance": 7991,
+        "technique": 10672,
+        "sense": 7366,
+        "total": 26029
+      },
+      "special": {
+        "duration": 14,
+        "scoreSupport": 115,
+        "skillRate": 0,
+        "skillRateCondition": null,
+        "raw": "14秒 Support +115%"
+      },
+      "active": {
+        "interval": 21,
+        "probability": 0.5,
+        "probabilityLabel": "中確率",
+        "duration": 8,
+        "scoreUp": 55,
+        "bonus": {
+          "conditionText": "キュートタイプ2人以上",
+          "condition": {
+            "type": "typeCount",
+            "attr": "cute",
+            "min": 2
+          },
+          "scoreUp": 115
+        },
+        "raw": "每21秒（中）：8秒 Score +55%；Cute 2人以上 +115%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "cute",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 32,
+            "target": "self"
+          }
+        ],
+        "raw": "Cute 2人以上：自身全參數 +32%",
+        "score": 38.400000000000006
+      },
+      "costumeSkill": {
+        "condition": null,
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 45,
+            "target": "all"
+          }
+        ],
+        "raw": "全員全參數 +45%",
+        "score": 135,
+        "unconditional": true
+      }
+    },
+    {
+      "member": "博衣こより",
+      "costumeName": "助手くんの心を鷲掴みライブ！",
+      "type": "pure",
+      "unit": "holoX",
+      "stats": {
+        "performance": 7991,
+        "technique": 7366,
+        "sense": 10672,
+        "total": 26029
+      },
+      "special": {
+        "duration": 10,
+        "scoreSupport": 145,
+        "skillRate": 55,
+        "skillRateCondition": "Life1000+",
+        "raw": "10秒 Support +145%；Life 1000+ 時 Skill Rate +55%"
+      },
+      "active": {
+        "interval": 23,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 8,
+        "scoreUp": 115,
+        "bonus": null,
+        "raw": "每23秒（高）：8秒 Score +115%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "pure",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "センス",
+            "value": 43,
+            "targetGroup": "pure",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Pure 2人以上：Pure 2人 Sense +43%",
+        "score": 43
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "pure",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 30,
+            "target": "all"
+          },
+          {
+            "kind": "scoreSupportPassive",
+            "value": 25,
+            "target": "all"
+          }
+        ],
+        "raw": "Pure 2人以上：全員全參數 +30% + Support +25%",
+        "score": 145,
+        "unconditional": false
+      }
+    },
+    {
+      "member": "風真いろは",
+      "costumeName": "ちくりんジャキン！と一刀両断",
+      "type": "cute",
+      "unit": "holoX",
+      "stats": {
+        "performance": 6947,
+        "technique": 11145,
+        "sense": 7828,
+        "total": 25920
+      },
+      "special": {
+        "duration": 10,
+        "scoreSupport": 145,
+        "skillRate": 55,
+        "skillRateCondition": "Life1000+",
+        "raw": "10秒 Support +145%；Life 1000+ 時 Skill Rate +55%"
+      },
+      "active": {
+        "interval": 30,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 11,
+        "scoreUp": 110,
+        "bonus": null,
+        "raw": "每30秒（高）：11秒 Score +110%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "cute",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "scoreSupportPassive",
+            "value": 11,
+            "targetGroup": "cute",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Cute 2人 Support +11%",
+        "score": 27.5
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "cute",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "テクニック",
+            "value": 130,
+            "target": "all"
+          }
+        ],
+        "raw": "Cute 2人以上：全員 Tech +130%",
+        "score": 156,
+        "unconditional": false
+      }
+    },
+    {
+      "member": "アユンダ・リス",
+      "costumeName": "いたずらたくらむ木漏れ日の森",
+      "type": "happy",
+      "unit": "ID1期生",
+      "stats": {
+        "performance": 6947,
+        "technique": 11145,
+        "sense": 7828,
+        "total": 25920
+      },
+      "special": {
+        "duration": 12,
+        "scoreSupport": 120,
+        "skillRate": 45,
+        "skillRateCondition": "Life1000+",
+        "raw": "12秒 Support +120%；Life 1000+ 時 Skill Rate +45%"
+      },
+      "active": {
+        "interval": 34,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 15,
+        "scoreUp": 90,
+        "bonus": null,
+        "raw": "每34秒（高）：15秒 Score +90%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "happy",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "scoreSupportPassive",
+            "value": 11,
+            "targetGroup": "happy",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Happy 2人 Support +11%",
+        "score": 27.5
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "happy",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "テクニック",
+            "value": 130,
+            "target": "all"
+          }
+        ],
+        "raw": "Happy 2人以上：全員 Tech +130%",
+        "score": 156,
+        "unconditional": false
+      }
+    },
+    {
+      "member": "ムーナ・ホシノヴァ",
+      "costumeName": "Lunar Songstress",
+      "type": "cute",
+      "unit": "ID1期生",
+      "stats": {
+        "performance": 7221,
+        "technique": 7844,
+        "sense": 10909,
+        "total": 25974
+      },
+      "special": {
+        "duration": 12,
+        "scoreSupport": 120,
+        "skillRate": 40,
+        "skillRateCondition": null,
+        "raw": "12秒 Support +120% + Skill Rate +40%"
+      },
+      "active": {
+        "interval": 30,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 11,
+        "scoreUp": 110,
+        "bonus": null,
+        "raw": "每30秒（高）：11秒 Score +110%"
+      },
+      "passive": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "ID1期生",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "センス",
+            "value": 45,
+            "targetGroup": "ID1期生",
+            "targetCount": 2
+          }
+        ],
+        "raw": "ID1期生2人以上：ID1期生2人 Sense +45%",
+        "score": 45
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "ID1期生",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 50,
+            "target": "all"
+          }
+        ],
+        "raw": "ID1期生2人以上：全員全參數 +50%",
+        "score": 150,
+        "unconditional": false
+      }
+    },
+    {
+      "member": "アイラニ・イオフィフティーン",
+      "costumeName": "陽光射すCosmos Palette",
+      "type": "pure",
+      "unit": "ID1期生",
+      "stats": {
+        "performance": 7828,
+        "technique": 11145,
+        "sense": 6947,
+        "total": 25920
+      },
+      "special": {
+        "duration": 10,
+        "scoreSupport": 145,
+        "skillRate": 55,
+        "skillRateCondition": "Combo100+",
+        "raw": "10秒 Support +145%；Combo 100+ 時 Skill Rate +55%"
+      },
+      "active": {
+        "interval": 17,
+        "probability": 0.5,
+        "probabilityLabel": "中確率",
+        "duration": 6,
+        "scoreUp": 120,
+        "bonus": null,
+        "raw": "每17秒（中）：6秒 Score +120%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "pure",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "テクニック",
+            "value": 41,
+            "targetGroup": "pure",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Pure 2人 Tech +41%",
+        "score": 41
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "pure",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "テクニック",
+            "value": 130,
+            "target": "all"
+          }
+        ],
+        "raw": "Pure 2人以上：全員 Tech +130%",
+        "score": 156,
+        "unconditional": false
+      }
+    },
+    {
+      "member": "クレイジー・オリー",
+      "costumeName": "Z nonstop talker",
+      "type": "pure",
+      "unit": "ID2期生",
+      "stats": {
+        "performance": 7991,
+        "technique": 10672,
+        "sense": 7366,
+        "total": 26029
+      },
+      "special": {
+        "duration": 12,
+        "scoreSupport": 135,
+        "skillRate": 0,
+        "skillRateCondition": null,
+        "raw": "12秒 Support +135%"
+      },
+      "active": {
+        "interval": 25,
+        "probability": 0.5,
+        "probabilityLabel": "中確率",
+        "duration": 10,
+        "scoreUp": 55,
+        "bonus": {
+          "conditionText": "ピュアタイプ2人以上",
+          "condition": {
+            "type": "typeCount",
+            "attr": "pure",
+            "min": 2
+          },
+          "scoreUp": 110
+        },
+        "raw": "每25秒（中）：10秒 Score +55%；Pure 2人以上 +110%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "pure",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "scoreSupportPassive",
+            "value": 11,
+            "targetGroup": "pure",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Pure 2人 Support +11%",
+        "score": 27.5
+      },
+      "costumeSkill": {
+        "condition": null,
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 45,
+            "target": "all"
+          }
+        ],
+        "raw": "全員全參數 +45%",
+        "score": 135,
+        "unconditional": true
+      }
+    },
+    {
+      "member": "アーニャ・メルフィッサ",
+      "costumeName": "ソファに沈んでまったりゲーム",
+      "type": "cute",
+      "unit": "ID2期生",
+      "stats": {
+        "performance": 7221,
+        "technique": 7844,
+        "sense": 10909,
+        "total": 25974
+      },
+      "special": {
+        "duration": 14,
+        "scoreSupport": 115,
+        "skillRate": 0,
+        "skillRateCondition": null,
+        "raw": "14秒 Support +115%"
+      },
+      "active": {
+        "interval": 24,
+        "probability": 0.5,
+        "probabilityLabel": "中確率",
+        "duration": 10,
+        "scoreUp": 100,
+        "bonus": null,
+        "raw": "每24秒（中）：10秒 Score +100%"
+      },
+      "passive": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "ID2期生",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 33,
+            "target": "self"
+          }
+        ],
+        "raw": "ID2期生2人以上：自身全參數 +33%",
+        "score": 39.6
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "ID2期生",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 50,
+            "target": "all"
+          }
+        ],
+        "raw": "ID2期生2人以上：全員全參數 +50%",
+        "score": 150,
+        "unconditional": false
+      }
+    },
+    {
+      "member": "パヴォリア・レイネ",
+      "costumeName": "おすまし孔雀と嗜む一杯",
+      "type": "happy",
+      "unit": "ID2期生",
+      "stats": {
+        "performance": 7668,
+        "technique": 10433,
+        "sense": 7981,
+        "total": 26082
+      },
+      "special": {
+        "duration": 10,
+        "scoreSupport": 160,
+        "skillRate": 0,
+        "skillRateCondition": null,
+        "raw": "10秒 Support +160%"
+      },
+      "active": {
+        "interval": 29,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 10,
+        "scoreUp": 60,
+        "bonus": {
+          "conditionText": "ハッピータイプ2人以上",
+          "condition": {
+            "type": "typeCount",
+            "attr": "happy",
+            "min": 2
+          },
+          "scoreUp": 120
+        },
+        "raw": "每29秒（高）：10秒 Score +60%；Happy 2人以上 +120%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "happy",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "テクニック",
+            "value": 41,
+            "targetGroup": "happy",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Happy 2人 Tech +41%",
+        "score": 41
+      },
+      "costumeSkill": {
+        "condition": null,
+        "effects": [
+          {
+            "kind": "scoreSupportPassive",
+            "value": 60,
+            "target": "all"
+          }
+        ],
+        "raw": "全員 Support +60%",
+        "score": 132,
+        "unconditional": true
+      }
+    },
+    {
+      "member": "ベスティア・ゼータ",
+      "costumeName": "陽だまりとネコと構成員",
+      "type": "happy",
+      "unit": "ID3期生",
+      "stats": {
+        "performance": 10909,
+        "technique": 7844,
+        "sense": 7221,
+        "total": 25974
+      },
+      "special": {
+        "duration": 14,
+        "scoreSupport": 115,
+        "skillRate": 0,
+        "skillRateCondition": null,
+        "raw": "14秒 Support +115%"
+      },
+      "active": {
+        "interval": 25,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 11,
+        "scoreUp": 90,
+        "bonus": null,
+        "raw": "每25秒（高）：11秒 Score +90%"
+      },
+      "passive": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "ID3期生",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 33,
+            "target": "self"
+          }
+        ],
+        "raw": "ID3期生2人以上：自身全參數 +33%",
+        "score": 39.6
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "ID3期生",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 50,
+            "target": "all"
+          }
+        ],
+        "raw": "ID3期生2人以上：全員全參數 +50%",
+        "score": 150,
+        "unconditional": false
+      }
+    },
+    {
+      "member": "カエラ・コヴァルスキア",
+      "costumeName": "こころ強さは鍛冶場で研ぐ",
+      "type": "cute",
+      "unit": "ID3期生",
+      "stats": {
+        "performance": 7981,
+        "technique": 10433,
+        "sense": 7668,
+        "total": 26082
+      },
+      "special": {
+        "duration": 12,
+        "scoreSupport": 135,
+        "skillRate": 0,
+        "skillRateCondition": null,
+        "raw": "12秒 Support +135%"
+      },
+      "active": {
+        "interval": 19,
+        "probability": 0.5,
+        "probabilityLabel": "中確率",
+        "duration": 7,
+        "scoreUp": 60,
+        "bonus": {
+          "conditionText": "キュートタイプ2人以上",
+          "condition": {
+            "type": "typeCount",
+            "attr": "cute",
+            "min": 2
+          },
+          "scoreUp": 120
+        },
+        "raw": "每19秒（中）：7秒 Score +60%；Cute 2人以上 +120%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "cute",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "テクニック",
+            "value": 41,
+            "targetGroup": "cute",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Cute 2人 Tech +41%",
+        "score": 41
+      },
+      "costumeSkill": {
+        "condition": null,
+        "effects": [
+          {
+            "kind": "scoreSupportPassive",
+            "value": 60,
+            "target": "all"
+          }
+        ],
+        "raw": "全員 Support +60%",
+        "score": 132,
+        "unconditional": true
+      }
+    },
+    {
+      "member": "こぼ・かなえる",
+      "costumeName": "あめ上がりの雨喜雨喜シャーマン",
+      "type": "pure",
+      "unit": "ID3期生",
+      "stats": {
+        "performance": 10672,
+        "technique": 7366,
+        "sense": 7991,
+        "total": 26029
+      },
+      "special": {
+        "duration": 12,
+        "scoreSupport": 135,
+        "skillRate": 0,
+        "skillRateCondition": null,
+        "raw": "12秒 Support +135%"
+      },
+      "active": {
+        "interval": 15,
+        "probability": 0.5,
+        "probabilityLabel": "中確率",
+        "duration": 6,
+        "scoreUp": 55,
+        "bonus": {
+          "conditionText": "ピュアタイプ2人以上",
+          "condition": {
+            "type": "typeCount",
+            "attr": "pure",
+            "min": 2
+          },
+          "scoreUp": 110
+        },
+        "raw": "每15秒（中）：6秒 Score +55%；Pure 2人以上 +110%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "pure",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 32,
+            "target": "self"
+          }
+        ],
+        "raw": "Pure 2人以上：自身全參數 +32%",
+        "score": 38.400000000000006
+      },
+      "costumeSkill": {
+        "condition": null,
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 45,
+            "target": "all"
+          }
+        ],
+        "raw": "全員全參數 +45%",
+        "score": 135,
+        "unconditional": true
+      }
+    },
+    {
+      "member": "森カリオペ",
+      "costumeName": "Reaper's death flow",
+      "type": "happy",
+      "unit": "Myth",
+      "stats": {
+        "performance": 10909,
+        "technique": 7221,
+        "sense": 7844,
+        "total": 25974
+      },
+      "special": {
+        "duration": 12,
+        "scoreSupport": 120,
+        "skillRate": 40,
+        "skillRateCondition": null,
+        "raw": "12秒 Support +120% + Skill Rate +40%"
+      },
+      "active": {
+        "interval": 33,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 11,
+        "scoreUp": 120,
+        "bonus": null,
+        "raw": "每33秒（高）：11秒 Score +120%"
+      },
+      "passive": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "Myth",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "scoreSupportPassive",
+            "value": 12,
+            "targetGroup": "Myth",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Myth 2人以上：Myth 2人 Support +12%",
+        "score": 30
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "Myth",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 50,
+            "target": "all"
+          }
+        ],
+        "raw": "Myth 2人以上：全員全參數 +50%",
+        "score": 150,
+        "unconditional": false
+      }
+    },
+    {
+      "member": "小鳥遊キアラ",
+      "costumeName": "Lovely Phoenixダイナー",
+      "type": "cute",
+      "unit": "Myth",
+      "stats": {
+        "performance": 11145,
+        "technique": 6947,
+        "sense": 7828,
+        "total": 25920
+      },
+      "special": {
+        "duration": 10,
+        "scoreSupport": 145,
+        "skillRate": 55,
+        "skillRateCondition": "Combo100+",
+        "raw": "10秒 Support +145%；Combo 100+ 時 Skill Rate +55%"
+      },
+      "active": {
+        "interval": 23,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 8,
+        "scoreUp": 115,
+        "bonus": null,
+        "raw": "每23秒（高）：8秒 Score +115%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "cute",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "scoreSupportPassive",
+            "value": 11,
+            "targetGroup": "cute",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Cute 2人 Support +11%",
+        "score": 27.5
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "cute",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "パフォーマンス",
+            "value": 130,
+            "target": "all"
+          }
+        ],
+        "raw": "Cute 2人以上：全員 Perf +130%",
+        "score": 156,
+        "unconditional": false
+      }
+    },
+    {
+      "member": "一伊那尓栖",
+      "costumeName": "ぽかぽかチャージなひととき",
+      "type": "pure",
+      "unit": "Myth",
+      "stats": {
+        "performance": 7668,
+        "technique": 10433,
+        "sense": 7981,
+        "total": 26082
+      },
+      "special": {
+        "duration": 14,
+        "scoreSupport": 115,
+        "skillRate": 0,
+        "skillRateCondition": null,
+        "raw": "14秒 Support +115%"
+      },
+      "active": {
+        "interval": 32,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 14,
+        "scoreUp": 45,
+        "bonus": {
+          "conditionText": "ピュアタイプ2人以上",
+          "condition": {
+            "type": "typeCount",
+            "attr": "pure",
+            "min": 2
+          },
+          "scoreUp": 95
+        },
+        "raw": "每32秒（高）：14秒 Score +45%；Pure 2人以上 +95%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "pure",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 32,
+            "target": "self"
+          }
+        ],
+        "raw": "Pure 2人以上：自身全參數 +32%",
+        "score": 38.400000000000006
+      },
+      "costumeSkill": {
+        "condition": null,
+        "effects": [
+          {
+            "kind": "scoreSupportPassive",
+            "value": 60,
+            "target": "all"
+          }
+        ],
+        "raw": "全員 Support +60%",
+        "score": 132,
+        "unconditional": true
+      }
+    },
+    {
+      "member": "IRyS",
+      "costumeName": "nephilim sonority",
+      "type": "happy",
+      "unit": "Promise",
+      "stats": {
+        "performance": 7221,
+        "technique": 10909,
+        "sense": 7844,
+        "total": 25974
+      },
+      "special": {
+        "duration": 10,
+        "scoreSupport": 145,
+        "skillRate": 55,
+        "skillRateCondition": "Life1000+",
+        "raw": "10秒 Support +145%；Life 1000+ 時 Skill Rate +55%"
+      },
+      "active": {
+        "interval": 25,
+        "probability": 0.5,
+        "probabilityLabel": "中確率",
+        "duration": 11,
+        "scoreUp": 95,
+        "bonus": null,
+        "raw": "每25秒（中）：11秒 Score +95%"
+      },
+      "passive": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "Promise",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "テクニック",
+            "value": 43,
+            "targetGroup": "Promise",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Promise 2人 Tech +43%",
+        "score": 43
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "Promise",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 50,
+            "target": "all"
+          }
+        ],
+        "raw": "Promise 2人以上：全員全參數 +50%",
+        "score": 150,
+        "unconditional": false
+      }
+    },
+    {
+      "member": "オーロ・クロニー",
+      "costumeName": "典獄ささやくClock Tower",
+      "type": "cute",
+      "unit": "Promise",
+      "stats": {
+        "performance": 7668,
+        "technique": 7981,
+        "sense": 10433,
+        "total": 26082
+      },
+      "special": {
+        "duration": 14,
+        "scoreSupport": 115,
+        "skillRate": 0,
+        "skillRateCondition": null,
+        "raw": "14秒 Support +115%"
+      },
+      "active": {
+        "interval": 33,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 12,
+        "scoreUp": 55,
+        "bonus": {
+          "conditionText": "キュートタイプ2人以上",
+          "condition": {
+            "type": "typeCount",
+            "attr": "cute",
+            "min": 2
+          },
+          "scoreUp": 115
+        },
+        "raw": "每33秒（高）：12秒 Score +55%；Cute 2人以上 +115%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "cute",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "センス",
+            "value": 41,
+            "targetGroup": "cute",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Cute 2人 Sense +41%",
+        "score": 41
+      },
+      "costumeSkill": {
+        "condition": null,
+        "effects": [
+          {
+            "kind": "scoreSupportPassive",
+            "value": 60,
+            "target": "all"
+          }
+        ],
+        "raw": "全員 Support +60%",
+        "score": 132,
+        "unconditional": true
+      }
+    },
+    {
+      "member": "ハコス・ベールズ",
+      "costumeName": "Chaotic Powerful Rat",
+      "type": "pure",
+      "unit": "Promise",
+      "stats": {
+        "performance": 11145,
+        "technique": 7828,
+        "sense": 6947,
+        "total": 25920
+      },
+      "special": {
+        "duration": 12,
+        "scoreSupport": 135,
+        "skillRate": 0,
+        "skillRateCondition": null,
+        "raw": "12秒 Support +135%"
+      },
+      "active": {
+        "interval": 25,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 11,
+        "scoreUp": 90,
+        "bonus": null,
+        "raw": "每25秒（高）：11秒 Score +90%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "pure",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "scoreSupportPassive",
+            "value": 11,
+            "targetGroup": "pure",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Pure 2人 Support +11%",
+        "score": 27.5
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "pure",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "パフォーマンス",
+            "value": 130,
+            "target": "all"
+          }
+        ],
+        "raw": "Pure 2人以上：全員 Perf +130%",
+        "score": 156,
+        "unconditional": false
+      }
+    },
+    {
+      "member": "シオリ・ノヴェラ",
+      "costumeName": "書庫ではぐくむ探究心",
+      "type": "happy",
+      "unit": "Advent",
+      "stats": {
+        "performance": 11380,
+        "technique": 6803,
+        "sense": 7682,
+        "total": 25865
+      },
+      "special": {
+        "duration": 10,
+        "scoreSupport": 145,
+        "skillRate": 50,
+        "skillRateCondition": null,
+        "raw": "10秒 Support +145% + Skill Rate +50%"
+      },
+      "active": {
+        "interval": 32,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 11,
+        "scoreUp": 60,
+        "bonus": {
+          "conditionText": "40コンボ以上",
+          "condition": {
+            "type": "misc",
+            "text": "40コンボ以上"
+          },
+          "scoreUp": 120
+        },
+        "raw": "每32秒（高）：11秒 Score +60%；Combo 40+ 時 +120%"
+      },
+      "passive": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "Advent",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "パフォーマンス",
+            "value": 43,
+            "targetGroup": "Advent",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Advent 2人 Perf +43%",
+        "score": 43
+      },
+      "costumeSkill": {
+        "condition": null,
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "パフォーマンス",
+            "value": 120,
+            "target": "all"
+          }
+        ],
+        "raw": "全員 Perf +120%",
+        "score": 144,
+        "unconditional": true
+      }
+    },
+    {
+      "member": "古石ビジュー",
+      "costumeName": "キラッキラCrystal place",
+      "type": "pure",
+      "unit": "Advent",
+      "stats": {
+        "performance": 6803,
+        "technique": 7682,
+        "sense": 11380,
+        "total": 25865
+      },
+      "special": {
+        "duration": 10,
+        "scoreSupport": 145,
+        "skillRate": 50,
+        "skillRateCondition": null,
+        "raw": "10秒 Support +145% + Skill Rate +50%"
+      },
+      "active": {
+        "interval": 27,
+        "probability": 0.5,
+        "probabilityLabel": "中確率",
+        "duration": 9,
+        "scoreUp": 65,
+        "bonus": {
+          "conditionText": "40コンボ以上",
+          "condition": {
+            "type": "misc",
+            "text": "40コンボ以上"
+          },
+          "scoreUp": 130
+        },
+        "raw": "每27秒（中）：9秒 Score +65%；Combo 40+ 時 +130%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "pure",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "scoreSupportPassive",
+            "value": 11,
+            "targetGroup": "pure",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Pure 2人 Support +11%",
+        "score": 27.5
+      },
+      "costumeSkill": {
+        "condition": null,
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "センス",
+            "value": 120,
+            "target": "all"
+          }
+        ],
+        "raw": "全員 Sense +120%",
+        "score": 144,
+        "unconditional": true
+      }
+    },
+    {
+      "member": "ネリッサ・レイヴンクロフト",
+      "costumeName": "歌に揺らめくノクターン",
+      "type": "pure",
+      "unit": "Advent",
+      "stats": {
+        "performance": 7844,
+        "technique": 10909,
+        "sense": 7221,
+        "total": 25974
+      },
+      "special": {
+        "duration": 12,
+        "scoreSupport": 135,
+        "skillRate": 0,
+        "skillRateCondition": null,
+        "raw": "12秒 Support +135%"
+      },
+      "active": {
+        "interval": 15,
+        "probability": 0.5,
+        "probabilityLabel": "中確率",
+        "duration": 7,
+        "scoreUp": 90,
+        "bonus": null,
+        "raw": "每15秒（中）：7秒 Score +90%"
+      },
+      "passive": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "Advent",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 33,
+            "target": "self"
+          }
+        ],
+        "raw": "Advent 2人以上：自身全參數 +33%",
+        "score": 39.6
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "Advent",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 50,
+            "target": "all"
+          }
+        ],
+        "raw": "Advent 2人以上：全員全參數 +50%",
+        "score": 150,
+        "unconditional": false
+      }
+    },
+    {
+      "member": "フワワ・アビスガード",
+      "costumeName": "ぽわぽわドーナツパーティー♪",
+      "type": "cute",
+      "unit": "Advent",
+      "stats": {
+        "performance": 7682,
+        "technique": 11380,
+        "sense": 6803,
+        "total": 25865
+      },
+      "special": {
+        "duration": 10,
+        "scoreSupport": 145,
+        "skillRate": 50,
+        "skillRateCondition": null,
+        "raw": "10秒 Support +145% + Skill Rate +50%"
+      },
+      "active": {
+        "interval": 20,
+        "probability": 0.5,
+        "probabilityLabel": "中確率",
+        "duration": 8,
+        "scoreUp": 55,
+        "bonus": {
+          "conditionText": "40コンボ以上",
+          "condition": {
+            "type": "misc",
+            "text": "40コンボ以上"
+          },
+          "scoreUp": 110
+        },
+        "raw": "每20秒（中）：8秒 Score +55%；Combo 40+ 時 +110%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "cute",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "テクニック",
+            "value": 41,
+            "targetGroup": "cute",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Cute 2人 Tech +41%",
+        "score": 41
+      },
+      "costumeSkill": {
+        "condition": null,
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "テクニック",
+            "value": 120,
+            "target": "all"
+          }
+        ],
+        "raw": "全員 Tech +120%",
+        "score": 144,
+        "unconditional": true
+      }
+    },
+    {
+      "member": "モココ・アビスガード",
+      "costumeName": "のほほんドーナツパーティー♪",
+      "type": "cute",
+      "unit": "Advent",
+      "stats": {
+        "performance": 7828,
+        "technique": 6947,
+        "sense": 11145,
+        "total": 25920
+      },
+      "special": {
+        "duration": 11,
+        "scoreSupport": 130,
+        "skillRate": 50,
+        "skillRateCondition": "Combo100+",
+        "raw": "11秒 Support +130%；Combo 100+ 時 Skill Rate +50%"
+      },
+      "active": {
+        "interval": 25,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 8,
+        "scoreUp": 125,
+        "bonus": null,
+        "raw": "每25秒（高）：8秒 Score +125%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "cute",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "scoreSupportPassive",
+            "value": 11,
+            "targetGroup": "cute",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Cute 2人 Support +11%",
+        "score": 27.5
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "cute",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "センス",
+            "value": 130,
+            "target": "all"
+          }
+        ],
+        "raw": "Cute 2人以上：全員 Sense +130%",
+        "score": 156,
+        "unconditional": false
+      }
+    },
+    {
+      "member": "音乃瀬奏",
+      "costumeName": "パレードで笑顔をお届け",
+      "type": "pure",
+      "unit": "ReGLOSS",
+      "stats": {
+        "performance": 7828,
+        "technique": 6947,
+        "sense": 11145,
+        "total": 25920
+      },
+      "special": {
+        "duration": 10,
+        "scoreSupport": 145,
+        "skillRate": 55,
+        "skillRateCondition": "Combo100+",
+        "raw": "10秒 Support +145%；Combo 100+ 時 Skill Rate +55%"
+      },
+      "active": {
+        "interval": 27,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 12,
+        "scoreUp": 90,
+        "bonus": null,
+        "raw": "每27秒（高）：12秒 Score +90%"
+      },
+      "passive": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "ReGLOSS",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "センス",
+            "value": 43,
+            "targetGroup": "ReGLOSS",
+            "targetCount": 2
+          }
+        ],
+        "raw": "ReGLOSS 2人 Sense +43%",
+        "score": 43
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "pure",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "センス",
+            "value": 130,
+            "target": "all"
+          }
+        ],
+        "raw": "Pure 2人以上：全員 Sense +130%",
+        "score": 156,
+        "unconditional": false
+      }
+    },
+    {
+      "member": "一条莉々華",
+      "costumeName": "深夜にひと息、CEOの限界飯",
+      "type": "happy",
+      "unit": "ReGLOSS",
+      "stats": {
+        "performance": 10909,
+        "technique": 7844,
+        "sense": 7221,
+        "total": 25974
+      },
+      "special": {
+        "duration": 12,
+        "scoreSupport": 135,
+        "skillRate": 0,
+        "skillRateCondition": null,
+        "raw": "12秒 Support +135%"
+      },
+      "active": {
+        "interval": 30,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 11,
+        "scoreUp": 110,
+        "bonus": null,
+        "raw": "每30秒（高）：11秒 Score +110%"
+      },
+      "passive": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "ReGLOSS",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "パフォーマンス",
+            "value": 45,
+            "targetGroup": "ReGLOSS",
+            "targetCount": 2
+          }
+        ],
+        "raw": "ReGLOSS 2人以上：ReGLOSS 2人 Perf +45%",
+        "score": 45
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "ReGLOSS",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 50,
+            "target": "all"
+          }
+        ],
+        "raw": "ReGLOSS 2人以上：全員全參數 +50%",
+        "score": 150,
+        "unconditional": false
+      }
+    },
+    {
+      "member": "儒烏風亭らでん",
+      "costumeName": "叡智を灯し、アートに導く",
+      "type": "happy",
+      "unit": "ReGLOSS",
+      "stats": {
+        "performance": 7682,
+        "technique": 6803,
+        "sense": 11380,
+        "total": 25865
+      },
+      "special": {
+        "duration": 10,
+        "scoreSupport": 145,
+        "skillRate": 50,
+        "skillRateCondition": null,
+        "raw": "10秒 Support +145% + Skill Rate +50%"
+      },
+      "active": {
+        "interval": 22,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 8,
+        "scoreUp": 55,
+        "bonus": {
+          "conditionText": "ライフ600以上",
+          "condition": {
+            "type": "misc",
+            "text": "ライフ600以上"
+          },
+          "scoreUp": 115
+        },
+        "raw": "每22秒（高）：8秒 Score +55%；Life 600+ 時 +115%"
+      },
+      "passive": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "ReGLOSS",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "センス",
+            "value": 43,
+            "targetGroup": "ReGLOSS",
+            "targetCount": 2
+          }
+        ],
+        "raw": "ReGLOSS 2人 Sense +43%",
+        "score": 43
+      },
+      "costumeSkill": {
+        "condition": null,
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "センス",
+            "value": 120,
+            "target": "all"
+          }
+        ],
+        "raw": "全員 Sense +120%",
+        "score": 144,
+        "unconditional": true
+      }
+    },
+    {
+      "member": "轟はじめ",
+      "costumeName": "ガーリー番長のお裾分け",
+      "type": "cute",
+      "unit": "ReGLOSS",
+      "stats": {
+        "performance": 11380,
+        "technique": 7682,
+        "sense": 6803,
+        "total": 25865
+      },
+      "special": {
+        "duration": 10,
+        "scoreSupport": 145,
+        "skillRate": 50,
+        "skillRateCondition": null,
+        "raw": "10秒 Support +145% + Skill Rate +50%"
+      },
+      "active": {
+        "interval": 26,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 9,
+        "scoreUp": 60,
+        "bonus": {
+          "conditionText": "40コンボ以上",
+          "condition": {
+            "type": "misc",
+            "text": "40コンボ以上"
+          },
+          "scoreUp": 120
+        },
+        "raw": "每26秒（高）：9秒 Score +60%；Combo 40+ 時 +120%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "cute",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "パフォーマンス",
+            "value": 41,
+            "targetGroup": "cute",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Cute 2人 Perf +41%",
+        "score": 41
+      },
+      "costumeSkill": {
+        "condition": null,
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "パフォーマンス",
+            "value": 120,
+            "target": "all"
+          }
+        ],
+        "raw": "全員 Perf +120%",
+        "score": 144,
+        "unconditional": true
+      }
+    },
+    {
+      "member": "大空スバル",
+      "costumeName": "Energeticスプラッシュ！",
+      "type": "pure",
+      "unit": "2期生",
+      "stats": {
+        "performance": 7981,
+        "technique": 7668,
+        "sense": 10433,
+        "total": 26082
+      },
+      "special": {
+        "duration": 10,
+        "scoreSupport": 160,
+        "skillRate": 0,
+        "skillRateCondition": null,
+        "raw": "10秒 Support +160%"
+      },
+      "active": {
+        "interval": 17,
+        "probability": 0.5,
+        "probabilityLabel": "中確率",
+        "duration": 7,
+        "scoreUp": 55,
+        "bonus": {
+          "conditionText": "40コンボ以上",
+          "condition": {
+            "type": "misc",
+            "text": "40コンボ以上"
+          },
+          "scoreUp": 105
+        },
+        "raw": "每17秒（中）：7秒 Score +55%；Combo 40+ 時 +105%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "pure",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "全パラメータ",
+            "value": 15,
+            "targetGroup": "pure",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Pure 2人 全參數 +15%",
+        "score": 45
+      },
+      "costumeSkill": {
+        "condition": null,
+        "effects": [
+          {
+            "kind": "scoreSupportPassive",
+            "value": 60,
+            "target": "all"
+          }
+        ],
+        "raw": "全員 Support +60%",
+        "score": 132,
+        "unconditional": true
+      }
+    },
+    {
+      "member": "不知火フレア",
+      "costumeName": "sparks sunset",
+      "type": "happy",
+      "unit": "3期生",
+      "stats": {
+        "performance": 7828,
+        "technique": 11145,
+        "sense": 6947,
+        "total": 25920
+      },
+      "special": {
+        "duration": 12,
+        "scoreSupport": 120,
+        "skillRate": 40,
+        "skillRateCondition": null,
+        "raw": "12秒 Support +120% + Skill Rate +40%"
+      },
+      "active": {
+        "interval": 33,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 11,
+        "scoreUp": 60,
+        "bonus": {
+          "conditionText": "ハッピータイプ2人以上",
+          "condition": {
+            "type": "typeCount",
+            "attr": "happy",
+            "min": 2
+          },
+          "scoreUp": 125
+        },
+        "raw": "每33秒（高）：11秒 Score +60%；Happy 2人以上 +125%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "happy",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "scoreSupportPassive",
+            "value": 11,
+            "targetGroup": "happy",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Happy 2人 Support +11%",
+        "score": 27.5
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "happy",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "テクニック",
+            "value": 80,
+            "target": "all"
+          },
+          {
+            "kind": "scoreSupportPassive",
+            "value": 25,
+            "target": "all"
+          }
+        ],
+        "raw": "Happy 2人以上：全員 Tech +80% + Support +25%",
+        "score": 151,
+        "unconditional": false
+      }
+    },
+    {
+      "member": "白銀ノエル",
+      "costumeName": "波まとうゆるふわKnight",
+      "type": "cute",
+      "unit": "3期生",
+      "stats": {
+        "performance": 11145,
+        "technique": 6947,
+        "sense": 7828,
+        "total": 25920
+      },
+      "special": {
+        "duration": 12,
+        "scoreSupport": 120,
+        "skillRate": 0,
+        "skillRateCondition": null,
+        "raw": "12秒 Support +120%；3期生2人以上再給3期生2人 Support +12%"
+      },
+      "active": {
+        "interval": 21,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 7,
+        "scoreUp": 120,
+        "bonus": null,
+        "raw": "每21秒（高）：7秒 Score +120%"
+      },
+      "passive": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "3期生",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "scoreSupportPassive",
+            "value": 12,
+            "targetGroup": "3期生",
+            "targetCount": 2
+          }
+        ],
+        "raw": "3期生2人以上：3期生2人 Support +12%",
+        "score": 30
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "unitCount",
+          "unit": "3期生",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "パフォーマンス",
+            "value": 135,
+            "target": "all"
+          }
+        ],
+        "raw": "3期生2人以上：全員 Perf +135%",
+        "score": 162,
+        "unconditional": false
+      }
+    },
+    {
+      "member": "角巻わため",
+      "costumeName": "真夏のもふもふフロートタイム",
+      "type": "happy",
+      "unit": "4期生",
+      "stats": {
+        "performance": 6947,
+        "technique": 7828,
+        "sense": 11145,
+        "total": 25920
+      },
+      "special": {
+        "duration": 14,
+        "scoreSupport": 0,
+        "skillRate": 0,
+        "skillRateCondition": null,
+        "raw": "約11~14秒 Support 高倍率"
+      },
+      "active": {
+        "interval": 35,
+        "probability": 0.8,
+        "probabilityLabel": "高確率",
+        "duration": 12,
+        "scoreUp": 60,
+        "bonus": {
+          "conditionText": "ハッピータイプ2人以上",
+          "condition": {
+            "type": "typeCount",
+            "attr": "happy",
+            "min": 2
+          },
+          "scoreUp": 120
+        },
+        "raw": "每35秒（高）：12秒 Score +60%；Happy 2人以上 +120%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "happy",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "scoreSupportPassive",
+            "value": 11,
+            "targetGroup": "happy",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Happy 2人 Support +11%",
+        "score": 27.5
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "happy",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "センス",
+            "value": 80,
+            "target": "all"
+          },
+          {
+            "kind": "scoreSupportPassive",
+            "value": 25,
+            "target": "all"
+          }
+        ],
+        "raw": "Happy 2人以上：全員 Sense +80% + Support +25%",
+        "score": 151,
+        "unconditional": false
+      }
+    },
+    {
+      "member": "音乃瀬奏",
+      "costumeName": "潮風にのせる、笑顔のハーモニー",
+      "type": "happy",
+      "unit": "ReGLOSS",
+      "stats": {
+        "performance": 11380,
+        "technique": 7682,
+        "sense": 6803,
+        "total": 25865
+      },
+      "special": {
+        "duration": 14,
+        "scoreSupport": 115,
+        "skillRate": 0,
+        "skillRateCondition": null,
+        "raw": "14秒 Support +115%"
+      },
+      "active": {
+        "interval": 23,
+        "probability": 0.5,
+        "probabilityLabel": "中確率",
+        "duration": 8,
+        "scoreUp": 120,
+        "bonus": null,
+        "raw": "每23秒（中）：8秒 Score +120%"
+      },
+      "passive": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "happy",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "パフォーマンス",
+            "value": 43,
+            "targetGroup": "happy",
+            "targetCount": 2
+          }
+        ],
+        "raw": "Happy 2人以上：Happy 2人 Perf +43%",
+        "score": 43
+      },
+      "costumeSkill": {
+        "condition": {
+          "type": "typeCount",
+          "attr": "happy",
+          "min": 2
+        },
+        "effects": [
+          {
+            "kind": "paramUp",
+            "param": "パフォーマンス",
+            "value": 130,
+            "target": "all"
+          }
+        ],
+        "raw": "Happy 2人以上：全員 Perf +130%",
+        "score": 156,
+        "unconditional": false
+      }
+    }
+  ]
+}

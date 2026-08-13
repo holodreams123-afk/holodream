@@ -1,6 +1,6 @@
 /**
- * Push verified 角色名片 data into gameData.json for computation.
- * Catalog is source of truth for ★5 stats, card skills, and captain costume skills.
+ * Push verified 角色名片 data into gameData.json (reference / gallery only).
+ * ★5 computation uses hololive_Dreams_.xlsx via syncStar5FromExcel.mjs — not this script.
  */
 import fs from "fs";
 import path from "path";
