@@ -20,7 +20,7 @@ export function ReleaseAnnouncementDialog({ open, onClose }: ReleaseAnnouncement
       onClick={() => onClose(dontShowAgain)}
     >
       <div
-        className="calc-rules-dialog update-notes-dialog"
+        className="calc-rules-dialog site-notice-dialog release-announcement-dialog"
         role="dialog"
         aria-modal="true"
         aria-labelledby="release-announcement-title"
@@ -31,11 +31,11 @@ export function ReleaseAnnouncementDialog({ open, onClose }: ReleaseAnnouncement
             {t.releaseAnnouncementTitle}
           </h3>
         </div>
-        <ul className="update-notes-list theme-scrollbar">
-          {t.releaseAnnouncementItems.map((item) => (
-            <li key={item}>{item}</li>
+        <div className="release-announcement-body theme-scrollbar">
+          {t.releaseAnnouncementParagraphs.map((paragraph) => (
+            <p key={paragraph}>{paragraph}</p>
           ))}
-        </ul>
+        </div>
         <label className="site-notice-dismiss">
           <input
             type="checkbox"

@@ -19,7 +19,7 @@ export type Messages = {
   updateNotesClose: string;
   updateNotesItems: string[];
   releaseAnnouncementTitle: string;
-  releaseAnnouncementItems: string[];
+  releaseAnnouncementParagraphs: string[];
   releaseAnnouncementDontShow: string;
   releaseAnnouncementConfirm: string;
   footer: string;
@@ -325,10 +325,9 @@ const zh: Messages = {
     "修正轟はじめ等主動技能未出現在時間軸的問題（秒ごとに解析）",
   ],
   releaseAnnouncementTitle: "8/14 更新",
-  releaseAnnouncementItems: [
-    "「現有隊員編隊」新增 ★5 綻放設定。",
-    "選好隊員與持有卡面後，在下方「★5 綻放」為每張卡選 0–5（預設 0，未設定即綻 0）。",
-    "調整後按「從現有隊員配對」重新計算，結果會依你設的綻放顯示技能與三圍。",
+  releaseAnnouncementParagraphs: [
+    "「現有隊員編隊」新增 ★5 綻放設定，可依照你實際持有的開花程度調整每張 ★5 卡。",
+    "選好隊員與持有卡面後，在下方「★5 綻放」逐張選 0–5（預設 0）。改完按「從現有隊員配對」重新計算，結果會依你設的綻放顯示技能與三圍。",
   ],
   releaseAnnouncementDontShow: "不再顯示此公告",
   releaseAnnouncementConfirm: "知道了",
@@ -679,10 +678,9 @@ const en: Messages = {
     "Fixed active skills missing from timeline for some characters (e.g. Hajime — 秒ごとに parse)",
   ],
   releaseAnnouncementTitle: "Aug 14 update",
-  releaseAnnouncementItems: [
-    "Owned roster now supports ★5 bloom settings.",
-    "After picking members and owned cards, use the \"★5 Bloom\" section to set 0–5 per card (default 0).",
-    "Tap \"Build from owned roster\" to recalculate; results reflect your bloom choices.",
+  releaseAnnouncementParagraphs: [
+    "Owned roster now supports ★5 bloom — set each ★5 card to match how far you've bloomed it.",
+    "After picking members and owned cards, use the \"★5 Bloom\" section (0–5 per card, default 0). Tap \"Build from owned roster\" to recalculate with your bloom settings.",
   ],
   releaseAnnouncementDontShow: "Don't show again",
   releaseAnnouncementConfirm: "Got it",
@@ -1037,10 +1035,9 @@ const ja: Messages = {
     "轟はじめ等のアクティブが時間軸に出ない問題を修正（秒ごとに解析）",
   ],
   releaseAnnouncementTitle: "8/14 更新",
-  releaseAnnouncementItems: [
-    "「所持メン編成」に★5開花設定を追加しました。",
-    "メンバーと所持カードを選んだあと、「★5 開花」で各カードを0–5に設定（初期0）。",
-    "「所持メンから編成」で再計算すると、設定した開花で表示・計算されます。",
+  releaseAnnouncementParagraphs: [
+    "「所持メン編成」に★5開花設定を追加。各★5カードの開花段階に合わせて調整できます。",
+    "メンバーと所持カードを選んだあと、下の「★5 開花」で0–5を設定（初期0）。「所持メンから編成」で再計算してください。",
   ],
   releaseAnnouncementDontShow: "今後表示しない",
   releaseAnnouncementConfirm: "了解",
