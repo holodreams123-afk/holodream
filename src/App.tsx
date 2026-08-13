@@ -83,6 +83,10 @@ const allCostumeIds = new Set(data.costumes.map((c) => c.id));
 /** Fixed song length for Score UP / coverage (sec). */
 const SONG_LENGTH = data.songLengthDefault;
 
+type LeaderPick = { unit: string; member: string; costumeId: string };
+
+const emptyLeaderPick = (): LeaderPick => ({ unit: "", member: "", costumeId: "" });
+
 type AppTheme = "gallery" | "optimize" | "roster";
 type ResultTrack = "overall" | "stats" | "coverage" | "score";
 
@@ -273,9 +277,21 @@ export default function App() {
   const [rarityFilters, setRarityFilters] = useState<number[]>([]);
   const [unitFilters, setUnitFilters] = useState<string[]>([]);
   const [query, setQuery] = useState("");
-  const [leaderUnit, setLeaderUnit] = useState("");
-  const [leaderMember, setLeaderMember] = useState("");
-  const [leaderCostumeId, setLeaderCostumeId] = useState("");
+  const [optimizeLeader, setOptimizeLeader] = useState<LeaderPick>(emptyLeaderPick);
+  const [rosterLeader, setRosterLeader] = useState<LeaderPick>(emptyLeaderPick);
+  const leaderPick = theme === "roster" ? rosterLeader : optimizeLeader;
+  const leaderUnit = leaderPick.unit;
+  const leaderMember = leaderPick.member;
+  const leaderCostumeId = leaderPick.costumeId;
+
+  function patchLeader(mode: "optimize" | "roster", patch: Partial<LeaderPick>) {
+    const setter = mode === "roster" ? setRosterLeader : setOptimizeLeader;
+    setter((prev) => ({ ...prev, ...patch }));
+  }
+
+  function patchActiveLeader(patch: Partial<LeaderPick>) {
+    patchLeader(theme === "roster" ? "roster" : "optimize", patch);
+  }
   const [result, setResult] = useState<OptimizeUiResult | null>(null);
   const [resultTrack, setResultTrack] = useState<ResultTrack>("overall");
   const [selectedIdx, setSelectedIdx] = useState(0);
@@ -661,19 +677,19 @@ export default function App() {
   }
 
   function pickLeader(member: string) {
-    setLeaderMember(member);
     const unit = primaryUnit(unitsOf(member));
-    setLeaderUnit(unit);
     const costumes = captainCostumesForMember(data.costumes, member);
-    setLeaderCostumeId(costumes[0]?.id ?? "");
+    patchActiveLeader({
+      member,
+      unit,
+      costumeId: costumes[0]?.id ?? "",
+    });
     setResult(null);
     setSelectedIdx(0);
   }
 
   function onLeaderUnitChange(unit: string) {
-    setLeaderUnit(unit);
-    setLeaderMember("");
-    setLeaderCostumeId("");
+    patchActiveLeader({ unit, member: "", costumeId: "" });
     setResult(null);
     setSelectedIdx(0);
   }
@@ -1544,8 +1560,7 @@ export default function App() {
                 const m = e.target.value;
                 if (m) pickLeader(m);
                 else {
-                  setLeaderMember("");
-                  setLeaderCostumeId("");
+                  patchActiveLeader({ member: "", costumeId: "" });
                   setResult(null);
                 }
               }}
@@ -1558,18 +1573,6 @@ export default function App() {
               ))}
             </select>
           </div>
-          {leaderMember && (
-            <div className="field leader-preview-field">
-              <label>{t.currentCaptain}</label>
-              <div className="leader-summary static">
-                <Portrait member={leaderMember} size="md" />
-                <span>
-                  <MemberName member={leaderMember} units={unitsOf(leaderMember)} />
-                  <small>{leaderUnit}</small>
-                </span>
-              </div>
-            </div>
-          )}
           <div className="field">
             <label>{t.songLength}</label>
             <input type="number" value={SONG_LENGTH} readOnly aria-readonly tabIndex={-1} />
@@ -1593,7 +1596,7 @@ export default function App() {
                       type="button"
                       className={`costume-card ${leaderCostumeId === cos.id ? "active" : ""}`}
                       onClick={() => {
-                        setLeaderCostumeId(cos.id);
+                        patchActiveLeader({ costumeId: cos.id });
                         setResult(null);
                       }}
                     >
