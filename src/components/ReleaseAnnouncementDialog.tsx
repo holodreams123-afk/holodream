@@ -26,28 +26,35 @@ export function ReleaseAnnouncementDialog({ open, onClose }: ReleaseAnnouncement
         aria-labelledby="release-announcement-title"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="calc-rules-dialog-head">
-          <h3 id="release-announcement-title" className="calc-rules-dialog-title">
-            {t.releaseAnnouncementTitle}
-          </h3>
+        <div className="calc-rules-dialog-head release-announcement-head">
+          <div className="release-announcement-head-main">
+            <span className="release-announcement-tag">{t.rosterBloomTitle}</span>
+            <h3 id="release-announcement-title" className="calc-rules-dialog-title">
+              {t.releaseAnnouncementTitle}
+            </h3>
+          </div>
         </div>
-        <div className="release-announcement-body theme-scrollbar">
-          {t.releaseAnnouncementParagraphs.map((paragraph) => (
-            <p key={paragraph}>{paragraph}</p>
+        <p className="site-notice-lead">{t.releaseAnnouncementLead}</p>
+        <ul className="calc-rules-list site-notice-list release-announcement-list">
+          {t.releaseAnnouncementSections.map((section) => (
+            <li key={section.title}>
+              <strong>{section.title}</strong>
+              <p>{section.body}</p>
+            </li>
           ))}
-        </div>
-        <label className="site-notice-dismiss">
-          <input
-            type="checkbox"
-            checked={dontShowAgain}
-            onChange={(e) => setDontShowAgain(e.target.checked)}
-          />
-          <span>{t.releaseAnnouncementDontShow}</span>
-        </label>
-        <div className="calc-rules-footer">
+        </ul>
+        <div className="release-announcement-foot">
+          <label className="site-notice-dismiss">
+            <input
+              type="checkbox"
+              checked={dontShowAgain}
+              onChange={(e) => setDontShowAgain(e.target.checked)}
+            />
+            <span>{t.releaseAnnouncementDontShow}</span>
+          </label>
           <button
             type="button"
-            className="calc-rules-close"
+            className="calc-rules-close release-announcement-confirm"
             onClick={() => onClose(dontShowAgain)}
           >
             {t.releaseAnnouncementConfirm}
