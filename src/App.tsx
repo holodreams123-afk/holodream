@@ -44,7 +44,8 @@ import {
 } from "./lib/groups";
 import { displayName, listName, matchesQuery } from "./lib/names";
 import { buildCostumeLookup, captainCostumesForMember, cardForCostume } from "./lib/costumes";
-import { formatBuffedStatDisplay } from "./lib/stats";
+import { calcEffectiveStats, formatBuffedStatDisplay } from "./lib/stats";
+import { applyBloomToCard, DEFAULT_BLOOM, MAX_BLOOM, normalizeBloomStage } from "./lib/bloom";
 import { optimizeTeamFastAsync, buildOptimizeResultFromCache, hydratePrCostumeTop8, loadPrBaselineFromCache, type OptimizeProgress } from "./lib/optimizer";
 import {
   countOptimizerPoolCards,
@@ -69,6 +70,7 @@ import {
 import type { Attr, Card, Costume, GameData, TeamEvaluation } from "./types";
 
 const data = gameData as GameData;
+const baseCardById = new Map(data.cards.map((c) => [c.id, c]));
 const costumeLookup = buildCostumeLookup(data.costumes);
 const STORAGE_LOCKED = "holodream-wanted-members";
 const STORAGE_PREF_CARDS = "holodream-preferred-cards";
@@ -76,6 +78,7 @@ const STORAGE_ROSTER_LOCKED = "holodream-roster-wanted-members";
 const STORAGE_ROSTER_PREF = "holodream-roster-preferred-cards";
 const STORAGE_ROSTER = "holodream-owned-roster";
 const STORAGE_ROSTER_CARDS = "holodream-roster-owned-cards";
+const STORAGE_ROSTER_BLOOM = "holodream-roster-card-bloom";
 const STORAGE_ROSTER_MIGRATED = "holodream-roster-storage-v2";
 
 const allCardIds = new Set(data.cards.map((c) => c.id));
@@ -248,6 +251,22 @@ function loadRosterPreferredCards(): Record<string, string> {
   }
 }
 
+function loadRosterCardBloom(): Record<string, number> {
+  try {
+    const raw = localStorage.getItem(STORAGE_ROSTER_BLOOM);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    if (!parsed || typeof parsed !== "object") return {};
+    const out: Record<string, number> = {};
+    for (const [id, stage] of Object.entries(parsed)) {
+      out[id] = normalizeBloomStage(stage);
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
 function loadJson<T>(key: string, fallback: T): T {
   try {
     const raw = localStorage.getItem(key);
@@ -326,6 +345,9 @@ export default function App() {
   );
   const [rosterOwnedCards, setRosterOwnedCards] = useState<Record<string, string[]>>(() =>
     loadRosterOwnedCards(),
+  );
+  const [rosterCardBloom, setRosterCardBloom] = useState<Record<string, number>>(() =>
+    loadRosterCardBloom(),
   );
 
   const wantedMembers = theme === "roster" ? rosterWantedMembers : optimizeWantedMembers;
@@ -596,6 +618,41 @@ export default function App() {
     localStorage.setItem(STORAGE_ROSTER, "[]");
     persistRosterCards({});
     setResult(null);
+  }
+
+  const rosterBloomCards = useMemo(() => {
+    const out: Card[] = [];
+    for (const member of ownedRosterMembers) {
+      for (const id of rosterOwnedIds(member)) {
+        const card = data.cards.find((c) => c.id === id);
+        if (card?.rarity === 5) out.push(card);
+      }
+    }
+    return out.sort(
+      (a, b) =>
+        memberSortKey(a.member) - memberSortKey(b.member) ||
+        a.costumeName.localeCompare(b.costumeName, "ja"),
+    );
+  }, [ownedRosterMembers, rosterOwnedCards]);
+
+  function setRosterCardBloomStage(cardId: string, stage: number) {
+    const bloom = normalizeBloomStage(stage);
+    setRosterCardBloom((prev) => {
+      const next = { ...prev };
+      if (bloom === DEFAULT_BLOOM) delete next[cardId];
+      else next[cardId] = bloom;
+      localStorage.setItem(STORAGE_ROSTER_BLOOM, JSON.stringify(next));
+      return next;
+    });
+    setResult(null);
+  }
+
+  function rosterBloomForOptimize(): Record<string, number> {
+    const out: Record<string, number> = {};
+    for (const card of rosterBloomCards) {
+      out[card.id] = rosterCardBloom[card.id] ?? DEFAULT_BLOOM;
+    }
+    return out;
   }
 
   function persistWanted(
@@ -928,6 +985,7 @@ export default function App() {
         fixedMembers: rosterWanted,
         preferredCardByMember: rosterPreferredCards,
         memberPool: ownedRosterMembers,
+        cardBloomById: rosterBloomCards.length ? rosterBloomForOptimize() : undefined,
         maxResults: 8,
         allowDuplicateSkills,
       },
@@ -1002,6 +1060,41 @@ export default function App() {
   const detailEv = viewingPrBaseline
     ? (displaySelected ?? prBaselineTeam)
     : selected;
+
+  /** Roster detail: always derive cards/stats from current bloom slider (gameData max → ÷1.1 at 0–1). */
+  const rosterDetailCards = useMemo(() => {
+    if (!detailEv || theme !== "roster" || viewingPrBaseline) return null;
+    return detailEv.cards.map((card) => {
+      const bloomStage = rosterCardBloom[card.id] ?? DEFAULT_BLOOM;
+      const baseCard = baseCardById.get(card.id) ?? card;
+      return bloomStage < MAX_BLOOM ? applyBloomToCard(baseCard, bloomStage) : baseCard;
+    });
+  }, [detailEv, theme, viewingPrBaseline, rosterCardBloom]);
+
+  const rosterDetailMemberStats = useMemo(() => {
+    if (!detailEv || !rosterDetailCards) return null;
+    return calcEffectiveStats(
+      rosterDetailCards,
+      detailEv.costume,
+      detailEv.costumeSatisfied,
+      detailEv.passiveDetails.map((p) => p.satisfied),
+      data,
+    ).members.map((m) => ({
+      member: m.member,
+      base: {
+        performance: m.base.performance,
+        technique: m.base.technique,
+        sense: m.base.sense,
+      },
+      performance: m.effective.performance,
+      technique: m.effective.technique,
+      sense: m.effective.sense,
+      total: m.effective.total,
+      bonusPct: m.bonusPct,
+      scoreSupportPct: m.scoreSupportPct,
+    }));
+  }, [detailEv, rosterDetailCards]);
+
   const detailProgress = detailEv
     ? conditionProgress(
         detailEv.costume.skill.condition,
@@ -1025,22 +1118,24 @@ export default function App() {
 
   const liveCoverage = useMemo(() => {
     if (!detailEv) return null;
+    const cards = rosterDetailCards ?? detailEv.cards;
     const actives = buildActiveWindows(
-      detailEv.cards,
+      cards,
       detailEv.typeCounts,
       detailEv.unitCounts,
     );
     return calcScoreUpCoverage(actives, SONG_LENGTH, 0.25, timelineSettings.reductions);
-  }, [detailEv, timelineSettings.reductions]);
+  }, [detailEv, rosterDetailCards, timelineSettings.reductions]);
 
   const timelineMemberRows = useMemo(() => {
     if (!detailEv) return [];
+    const cards = rosterDetailCards ?? detailEv.cards;
     const actives = buildActiveWindows(
-      detailEv.cards,
+      cards,
       detailEv.typeCounts,
       detailEv.unitCounts,
     );
-    return detailEv.cards.map((card, i) => ({
+    return cards.map((card, i) => ({
       id: card.id,
       label: `${i + 1}. ${listName(card.member, unitsOf(card.member), locale)}（★${card.rarity}）`,
       freqLabel:
@@ -1054,7 +1149,7 @@ export default function App() {
       ),
       scoreUp: actives[i].scoreUp,
     }));
-  }, [detailEv, timelineSettings.reductions, locale, t]);
+  }, [detailEv, rosterDetailCards, timelineSettings.reductions, locale, t]);
 
   /** Team eval from optimizer (no CDR). Timeline + stat row use liveCoverage when CDR is set. */
   const timelineCoverage = liveCoverage ?? detailEv;
@@ -1529,6 +1624,43 @@ export default function App() {
                   </div>
                 );
               })}
+            </div>
+          )}
+          {rosterBloomCards.length > 0 && (
+            <div className="roster-bloom">
+              <h3>{t.rosterBloomTitle}</h3>
+              <p className="panel-note">{t.rosterBloomNote}</p>
+              <div className="roster-bloom-list">
+                {rosterBloomCards.map((card) => {
+                  const stage = rosterCardBloom[card.id] ?? DEFAULT_BLOOM;
+                  return (
+                    <div key={card.id} className="roster-bloom-row">
+                      <div className="roster-bloom-card">
+                        <Portrait member={card.member} size="sm" />
+                        <div className="roster-bloom-card-text">
+                          <MemberName member={card.member} units={unitsOf(card.member)} />
+                          <span className="roster-bloom-card-name">{card.costumeName}</span>
+                        </div>
+                      </div>
+                      <label className="roster-bloom-field">
+                        <span className="sr-only">{t.rosterBloomTitle}</span>
+                        <select
+                          value={stage}
+                          onChange={(e) =>
+                            setRosterCardBloomStage(card.id, Number(e.target.value))
+                          }
+                        >
+                          {Array.from({ length: MAX_BLOOM + 1 }, (_, n) => (
+                            <option key={n} value={n}>
+                              {t.bloomStage(n)}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </section>
@@ -2121,17 +2253,29 @@ export default function App() {
                   const isLeader = detailEv.leaderIndex >= 0 && i === detailEv.leaderIndex;
                   const units = data.members[card.member]?.units ?? [card.unit];
                   const forced = wantedSet.has(card.member);
+                  const bloomStage =
+                    theme === "roster" && !viewingPrBaseline
+                      ? (rosterCardBloom[card.id] ?? DEFAULT_BLOOM)
+                      : MAX_BLOOM;
+                  const baseCard = baseCardById.get(card.id) ?? card;
+                  const displayCard =
+                    rosterDetailCards?.[i] ??
+                    (bloomStage < MAX_BLOOM
+                      ? applyBloomToCard(baseCard, bloomStage)
+                      : baseCard);
+                  const bloomSkillDisplay = bloomStage < MAX_BLOOM;
                   const passiveOk = detailEv.passiveDetails[i]?.satisfied;
-                  const stats = detailEv.memberEffectiveStats[i];
+                  const stats =
+                    rosterDetailMemberStats?.[i] ?? detailEv.memberEffectiveStats[i];
                   const timelineRow = timelineMemberRows[i];
-                  const usedScoreUp = timelineRow?.scoreUp ?? card.active.scoreUp ?? 0;
+                  const usedScoreUp = timelineRow?.scoreUp ?? displayCard.active.scoreUp ?? 0;
                   const activeBonusOk = isActiveBonusMet(
-                    card.active,
+                    displayCard.active,
                     detailEv.typeCounts,
                     detailEv.unitCounts,
                   );
                   const activeBonusRuntime = isActiveBonusRuntimeCondition(
-                    card.active.bonus?.condition,
+                    displayCard.active.bonus?.condition,
                   );
                   const artUrl = cardArtUrl(card.id);
                   return (
@@ -2164,6 +2308,11 @@ export default function App() {
                                   : formatUnitBadge(unitsOf(card.member), card.unit)}
                               </span>
                               {forced ? <span className="badge">{t.forced}</span> : null}
+                              {theme === "roster" &&
+                              card.rarity === 5 &&
+                              bloomStage !== DEFAULT_BLOOM ? (
+                                <span className="badge bloom">{t.bloomBadge(bloomStage)}</span>
+                              ) : null}
                             </div>
                           </div>
                         </div>
@@ -2209,14 +2358,14 @@ export default function App() {
                             <span className="skill-chip sp" aria-hidden>
                               SP
                             </span>
-                            <p className="skill-text">{displaySpecialSkill(card, locale)}</p>
+                            <p className="skill-text">{displaySpecialSkill(displayCard, locale, { skipCatalog: bloomSkillDisplay })}</p>
                           </div>
-                          <div className={`skill-row ${card.active.bonus ? (activeBonusOk ? "is-ok" : "is-bad") : ""}`}>
+                          <div className={`skill-row ${displayCard.active.bonus ? (activeBonusOk ? "is-ok" : "is-bad") : ""}`}>
                             <span className="skill-chip active" aria-hidden>
                               A
                             </span>
                             <p className="skill-text">
-                              {card.active.bonus ? (
+                              {displayCard.active.bonus ? (
                                 <>
                                   <span
                                     className={`skill-inline-status ${activeBonusOk ? "is-ok" : "is-bad"}`}
@@ -2232,13 +2381,13 @@ export default function App() {
                               ) : null}
                               <span className="skill-inline-meta">
                                 {t.activeLine(
-                                  card.active.interval,
-                                  card.active.duration,
+                                  displayCard.active.interval,
+                                  displayCard.active.duration,
                                   usedScoreUp,
                                 )}
                               </span>
                               {" · "}
-                              {displayActiveSkill(card, locale)}
+                              {displayActiveSkill(displayCard, locale, { skipCatalog: bloomSkillDisplay })}
                             </p>
                           </div>
                           <div className={`skill-row ${passiveOk ? "is-ok" : "is-bad"}`}>
@@ -2252,7 +2401,7 @@ export default function App() {
                                 {passiveOk ? t.activated : t.notActivated}
                               </span>
                               {" · "}
-                              {displayPassiveSkill(card, locale)}
+                              {displayPassiveSkill(displayCard, locale, { skipCatalog: bloomSkillDisplay })}
                             </p>
                           </div>
                         </div>

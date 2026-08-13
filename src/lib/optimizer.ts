@@ -9,6 +9,7 @@ import {
   preferredParamFromEffects,
   type ParamKey,
 } from "./stats";
+import { applyBloomMap } from "./bloom";
 import type { Card, Costume, GameData, TeamEvaluation } from "../types";
 import {
   countOptimizerPoolCards,
@@ -30,6 +31,8 @@ export interface OptimizeOptions {
   preferredCardByMember?: Record<string, string>;
   /** Members allowed in the 5-slot lineup (captain may be off-team). Omit = all ★5/event cards. */
   memberPool?: string[];
+  /** ★5 bloom stage per card id (0–5). Omit or 5 = max (default gameData). Roster only. */
+  cardBloomById?: Record<string, number>;
   maxResults?: number;
   /**
    * When false, teams with duplicate active Score UP signatures are excluded.
@@ -216,10 +219,11 @@ function insertByMetric(
 
 /** Strongest unconstrained team under selected costume = this PR; all others scale relative to it. */
 const PR_MAX = 9999;
-function cardsForOptimizer(data: GameData, ownedCardIds: Set<string>): Card[] {
-  return data.cards.filter(
+function cardsForOptimizer(data: GameData, ownedCardIds: Set<string>, options: OptimizeOptions): Card[] {
+  const cards = data.cards.filter(
     (c) => ownedCardIds.has(c.id) && (c.rarity === 5 || !!c.event),
   );
+  return applyBloomMap(cards, options.cardBloomById);
 }
 
 /** PR baseline search: no wanted members, ★5 + event card pool. */
@@ -813,7 +817,7 @@ async function runOptimizeTeam(
     }
   }
 
-  const ownedCards = cardsForOptimizer(data, options.ownedCardIds);
+  const ownedCards = cardsForOptimizer(data, options.ownedCardIds, options);
   const byMember = new Map<string, Card[]>();
   for (const c of ownedCards) {
     const list = byMember.get(c.member) ?? [];
@@ -1014,7 +1018,7 @@ export async function optimizeTeamFastAsync(
   const prPoolSize = 96;
   const preferred = options.preferredCardByMember ?? {};
   const allowDup = options.allowDuplicateSkills !== false;
-  const ownedCards = cardsForOptimizer(data, options.ownedCardIds);
+  const ownedCards = cardsForOptimizer(data, options.ownedCardIds, options);
   const byMember = new Map<string, Card[]>();
   for (const c of ownedCards) {
     const list = byMember.get(c.member) ?? [];

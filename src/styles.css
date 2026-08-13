@@ -1266,6 +1266,68 @@ button {
   width: 100%;
 }
 
+.roster-bloom {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.roster-bloom h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+}
+
+.roster-bloom-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.roster-bloom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--line);
+  background: var(--bg1);
+}
+
+.roster-bloom-card {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.roster-bloom-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.roster-bloom-card-name {
+  font-size: 0.72rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.roster-bloom-field select {
+  min-width: 6.5rem;
+  padding: 0.3rem 0.45rem;
+  border: 1px solid var(--line);
+  background: var(--bg0);
+  color: inherit;
+}
+
+.badge.bloom {
+  border-color: #c9a227;
+  color: #f0d878;
+}
+
 .roster-card-option-name {
   font-size: 0.62rem;
   line-height: 1.2;

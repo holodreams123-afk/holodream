@@ -32,6 +32,7 @@
     "sync-wfcalc-add": "node scripts/syncWfcalcAddMissing.mjs",
     "extract-costume-skills": "node scripts/extractCostumeSkillsFromCards.mjs",
     "export-card-catalog": "node scripts/exportCardCatalogExcel.mjs",
+    "export-star5-bloom": "node scripts/exportStar5BloomExcel.mjs && node scripts/exportStar5BloomJson.mjs",
     "predev": "node scripts/syncStar5FromExcel.mjs && node scripts/fixGameData.mjs",
     "sync-catalog-to-game-data": "node scripts/syncCatalogToGameData.mjs"
   },

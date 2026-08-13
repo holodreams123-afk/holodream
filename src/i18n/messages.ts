@@ -35,6 +35,10 @@ export type Messages = {
   rosterNote: string;
   rosterCardPickTitle: string;
   rosterCardPickNote: string;
+  rosterBloomTitle: string;
+  rosterBloomNote: string;
+  bloomStage: (n: number) => string;
+  bloomBadge: (n: number) => string;
   rosterNeedFive: string;
   rosterClear: string;
   alertRosterMin: string;
@@ -294,9 +298,13 @@ const zh: Messages = {
   heroMascotSub: "小惡魔",
   lastUpdated: (date) => `最近更新 ${date}`,
   updateNotesBtn: "更新說明",
-  updateNotesTitle: "2026年8月12日 更新內容",
+  updateNotesTitle: "2026年8月14日 更新內容",
   updateNotesClose: "知道了",
   updateNotesItems: [
+    "現有編隊新增 ★5 綻放設定（預設 0，可逐卡調 0–5）；優化與詳情依 wf-calc 開花表",
+    "修正低綻放仍顯示滿綻角色名片技能文案（SP／A／P）的問題",
+    "修正 A 技條件加碼、SP 技能發動率在低綻放未降級的問題",
+    "綻 0–1 三圍比滿綻少 10%；綻 2 起三圍不扣（與遊戲一致）",
     "修正現有隊員編隊重新整理後無法計算的問題（持有卡面資料儲存衝突）",
     "修正回報錯誤附圖後無法按送出的問題",
     "未選隊長就按計算編隊時，會在畫面正中間彈出提示",
@@ -316,11 +324,11 @@ const zh: Messages = {
     "修正被動分數加成有時顯示 0% 但全員被動顯示滿足的計算錯誤",
     "修正轟はじめ等主動技能未出現在時間軸的問題（秒ごとに解析）",
   ],
-  releaseAnnouncementTitle: "8/13 更新",
+  releaseAnnouncementTitle: "8/14 更新",
   releaseAnnouncementItems: [
-    "修正被動條件判定：人數不足時不再誤顯示「發動」",
-    "修正被動分數加成有時 0% 但全員被動顯示滿足的計算錯誤",
-    "修正轟はじめ等主動技能未出現在時間軸的問題",
+    "現有編隊：★5 綻放（0–5）可逐卡設定，預設 0",
+    "低綻放依 wf-calc 顯示正確 A／SP／P、三圍與 SP 發動率",
+    "綻 0–1 三圍少 10%；綻 2 起為滿綻三圍",
   ],
   releaseAnnouncementDontShow: "不再顯示此公告",
   releaseAnnouncementConfirm: "知道了",
@@ -338,6 +346,11 @@ const zh: Messages = {
     "點選你持有的★5角色（含活動卡）。至少 5 人後選隊長；有多張★5者可在下方勾選持有卡面。PR 仍與最強編隊同基準（9999）。",
   rosterCardPickTitle: "★5 持有卡面",
   rosterCardPickNote: "勾選你持有的★5卡面（可多選）；編隊時會從中自動挑最適合的組合。",
+  rosterBloomTitle: "★5 綻放",
+  rosterBloomNote:
+    "預設綻放 0（未滿綻放基準）。可逐卡調至 5；A／SP／P 與三圍依 wf-calc 開花表換算。",
+  bloomStage: (n) => `綻放 ${n}`,
+  bloomBadge: (n) => `綻${n}`,
   rosterNeedFive: "至少選 5 人",
   rosterClear: "清空已選",
   alertRosterMin: "請至少選擇 5 位已擁有隊員。",
@@ -639,9 +652,13 @@ const en: Messages = {
   heroMascotSub: "Devil Princess",
   lastUpdated: (date) => `Last updated ${date}`,
   updateNotesBtn: "What's new",
-  updateNotesTitle: "Aug 12, 2026 update",
+  updateNotesTitle: "Aug 14, 2026 update",
   updateNotesClose: "Got it",
   updateNotesItems: [
+    "Owned roster: ★5 bloom (0–5) per card, default 0; optimize & detail use wf-calc bloom table",
+    "Fixed low-bloom teams still showing max-bloom catalog skill text (SP / A / P)",
+    "Fixed A conditional bonus & SP skill rate not downgrading at low bloom",
+    "Bloom 0–1 stats −10% vs max; bloom 2+ uses full stats (matches game)",
     "Fixed owned-roster mode failing after page reload (localStorage key collision)",
     "Fixed feedback form submit button hidden after attaching screenshots",
     "Centered prompt when running optimize without choosing a captain",
@@ -661,11 +678,11 @@ const en: Messages = {
     "Fixed passive score bonus sometimes 0% while all passives showed satisfied",
     "Fixed active skills missing from timeline for some characters (e.g. Hajime — 秒ごとに parse)",
   ],
-  releaseAnnouncementTitle: "Aug 13 update",
+  releaseAnnouncementTitle: "Aug 14 update",
   releaseAnnouncementItems: [
-    "Fixed passive condition checks: no false \"activated\" when count requirements aren't met",
-    "Fixed passive score bonus sometimes 0% while all passives showed satisfied",
-    "Fixed active skills missing from timeline (e.g. Hajime)",
+    "Owned roster: ★5 bloom 0–5 per card (default 0)",
+    "Low bloom shows correct A / SP / P, stats & SP activation rate via wf-calc",
+    "Bloom 0–1 stats −10%; bloom 2+ full stats",
   ],
   releaseAnnouncementDontShow: "Don't show again",
   releaseAnnouncementConfirm: "Got it",
@@ -683,6 +700,11 @@ const en: Messages = {
     "Select owned ★5 members (incl. event). Need 5+, then captain; check owned cards below if they have multiple ★5s. PR uses Best Team 9999 baseline.",
   rosterCardPickTitle: "★5 owned cards",
   rosterCardPickNote: "Check every ★5 you own (multi-select). The optimizer picks the best mix for each team.",
+  rosterBloomTitle: "★5 Bloom",
+  rosterBloomNote:
+    "Default bloom 0 (pre-max baseline). Set per card up to 5; stats/skills follow wf-calc bloom table.",
+  bloomStage: (n) => `Bloom ${n}`,
+  bloomBadge: (n) => `B${n}`,
   rosterNeedFive: "Need at least 5",
   rosterClear: "Clear selection",
   alertRosterMin: "Select at least 5 owned members.",
@@ -988,9 +1010,13 @@ const ja: Messages = {
   heroMascotSub: "小悪魔",
   lastUpdated: (date) => `最終更新 ${date}`,
   updateNotesBtn: "更新内容",
-  updateNotesTitle: "2026年8月12日 更新",
+  updateNotesTitle: "2026年8月14日 更新",
   updateNotesClose: "閉じる",
   updateNotesItems: [
+    "所持編成：★5開花0–5をカードごとに設定（初期0）、wf-calc開花表で最適化・詳細表示",
+    "低開花でも満開名片テキスト（SP／A／P）が出る問題を修正",
+    "A条件ボーナス・SP発動率が低開花で下がらない問題を修正",
+    "開花0–1はステ−10%、開花2以降は満開ステ（ゲーム準拠）",
     "所持メン編成が再読み込み後に計算できない問題を修正（保存データの衝突）",
     "報告フォームで画像添付後に送信ボタンが隠れる問題を修正",
     "キャプテン未選択で計算すると中央に案内を表示",
@@ -1010,11 +1036,11 @@ const ja: Messages = {
     "パッ分数が0%なのに全員発動表示になる計算ミスを修正",
     "轟はじめ等のアクティブが時間軸に出ない問題を修正（秒ごとに解析）",
   ],
-  releaseAnnouncementTitle: "8/13 更新",
+  releaseAnnouncementTitle: "8/14 更新",
   releaseAnnouncementItems: [
-    "パッ条件判定を修正：人数不足で誤って「発動」表示しない",
-    "パッ分数0%なのに全員発動表示になる計算ミスを修正",
-    "轟はじめ等のアクティブが時間軸に出ない問題を修正",
+    "所持編成：★5開花0–5をカードごとに設定（初期0）",
+    "低開花で正しいA／SP／P・ステ・SP発動率（wf-calc準拠）",
+    "開花0–1はステ−10%、開花2以降は満開ステ",
   ],
   releaseAnnouncementDontShow: "今後表示しない",
   releaseAnnouncementConfirm: "了解",
@@ -1032,6 +1058,11 @@ const ja: Messages = {
     "所持の★5メンバー（イベント含む）を選択。5人以上＋キャプテン。★5が複数いる場合は下で所持分をチェック。PRは最強編成と同じ9999基準。",
   rosterCardPickTitle: "★5所持カード",
   rosterCardPickNote: "所持している★5をすべてチェック（複数可）。編成時に最適な組み合わせを自動選択します。",
+  rosterBloomTitle: "★5 開花",
+  rosterBloomNote:
+    "既定は開花 0（未満開花基準）。カードごとに 5 まで指定。A／SP／P と三围は wf-calc 開花表に準拠。",
+  bloomStage: (n) => `開花 ${n}`,
+  bloomBadge: (n) => `開${n}`,
   rosterNeedFive: "5人以上必要",
   rosterClear: "選択をクリア",
   alertRosterMin: "所持メンバーを5人以上選んでください。",

@@ -33,7 +33,7 @@ export function canonicalTitle(s) {
     .replace(/！/g, "!")
     .replace(/％/g, "%")
     .replace(/\s+/g, "")
-    .replace(/[''‛`´]/g, "")
+    .replace(/[''\u2018\u2019‛`´]/g, "")
     .replace(/パーティー/g, "パーティ")
     .replace(/nepholim/gi, "nephilim")
     .replace(/鍛冶場に匹敵/g, "鍛冶場に響く")
@@ -222,13 +222,13 @@ function downloadFile(url, dest) {
   execSync(`${curl} -sL "${url}" -o "${dest}"`, { stdio: "inherit" });
 }
 
-function ensureCardDataPage() {
+export function ensureCardDataPage() {
   if (!fs.existsSync(pagePath) || fs.statSync(pagePath).size < 100_000) {
     downloadFile(CARD_PAGE_URL, pagePath);
   }
 }
 
-function extractJsonBlock(index) {
+export function extractJsonBlock(index) {
   const page = fs.readFileSync(pagePath, "utf8");
   const blocks = [];
   let search = 0;

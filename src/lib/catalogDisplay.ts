@@ -41,24 +41,36 @@ export function catalogEntryForCard(cardId: string): CardCatalogEntry | undefine
 }
 
 /** Verified 角色名片 text in zh; ja/en fall back to structured gameData formatters. */
-export function displaySpecialSkill(card: Card, locale: Locale): string {
-  if (locale === "zh") {
+export function displaySpecialSkill(
+  card: Card,
+  locale: Locale,
+  opts?: { skipCatalog?: boolean },
+): string {
+  if (locale === "zh" && !opts?.skipCatalog) {
     const t = catalogByCardId.get(card.id)?.skills.sp;
     if (t) return t;
   }
   return formatSpecialSkill(card.special, locale) || "—";
 }
 
-export function displayActiveSkill(card: Card, locale: Locale): string {
-  if (locale === "zh") {
+export function displayActiveSkill(
+  card: Card,
+  locale: Locale,
+  opts?: { skipCatalog?: boolean },
+): string {
+  if (locale === "zh" && !opts?.skipCatalog) {
     const t = catalogByCardId.get(card.id)?.skills.active;
     if (t) return t;
   }
   return formatActiveSkill(card.active, locale) || "—";
 }
 
-export function displayPassiveSkill(card: Card, locale: Locale): string {
-  if (locale === "zh") {
+export function displayPassiveSkill(
+  card: Card,
+  locale: Locale,
+  opts?: { skipCatalog?: boolean },
+): string {
+  if (locale === "zh" && !opts?.skipCatalog) {
     const t = catalogByCardId.get(card.id)?.skills.passive;
     if (t) return t;
   }

@@ -1,7 +1,7 @@
 import type { Locale } from "../i18n/messages";
 
 /** Bump when publishing site content updates (YYYY-MM-DD). */
-export const LAST_UPDATED = "2026-08-12";
+export const LAST_UPDATED = "2026-08-14";
 
 export function formatSiteDate(iso: string, locale: Locale): string {
   const [y, m, d] = iso.split("-").map(Number);
