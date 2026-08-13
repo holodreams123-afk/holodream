@@ -217,9 +217,14 @@ export function parseCostumeSkill(text) {
   return { condition, effects, raw, score, unconditional: !condition };
 }
 
+function downloadFile(url, dest) {
+  const curl = process.platform === "win32" ? "curl.exe" : "curl";
+  execSync(`${curl} -sL "${url}" -o "${dest}"`, { stdio: "inherit" });
+}
+
 function ensureCardDataPage() {
   if (!fs.existsSync(pagePath) || fs.statSync(pagePath).size < 100_000) {
-    execSync(`curl.exe -sL "${CARD_PAGE_URL}" -o "${pagePath}"`, { stdio: "inherit" });
+    downloadFile(CARD_PAGE_URL, pagePath);
   }
 }
 
