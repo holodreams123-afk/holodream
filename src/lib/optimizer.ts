@@ -1,7 +1,7 @@
 import { calcScoreUpCoverage } from "./coverage";
 import { resolveActiveScoreUp, parseActiveBonusScoreUp } from "./activeWindows";
 import { attachCombatMetrics, teamScoreBonusPct } from "./combatPower";
-import { countTypes, countUnits, isConditionMet, memberUnits } from "./conditions";
+import { countTypes, countUnits, isConditionMet, isPassiveConditionMet, memberUnits, normalizePassiveSkill } from "./conditions";
 import {
   calcEffectiveStats,
   cardBaseParam,
@@ -606,13 +606,17 @@ export function evaluateTeam(
   data: GameData,
   songLength: number,
 ): TeamEvaluation {
-  const typeCounts = countTypes(cards);
-  const unitCounts = countUnits(cards, data);
+  const teamCards = cards.map((c) => ({
+    ...c,
+    passive: normalizePassiveSkill(c.passive),
+  }));
+  const typeCounts = countTypes(teamCards);
+  const unitCounts = countUnits(teamCards, data);
   const costumeSatisfied = isConditionMet(costume.skill.condition, typeCounts, unitCounts);
   const costumeScore = costumeSatisfied ? costume.skill.score : 0;
 
-  const passiveDetails = cards.map((c) => {
-    const satisfied = isConditionMet(c.passive.condition, typeCounts, unitCounts);
+  const passiveDetails = teamCards.map((c) => {
+    const satisfied = isPassiveConditionMet(c.passive, typeCounts, unitCounts);
     return {
       member: c.member,
       satisfied,
@@ -623,7 +627,7 @@ export function evaluateTeam(
   const allPassivesSatisfied = passiveDetails.every((p) => p.satisfied);
   const passiveScore = passiveDetails.reduce((s, p) => s + p.score, 0);
 
-  const actives = cards.map((c) => {
+  const actives = teamCards.map((c) => {
     const bonusOk =
       !!c.active.bonus &&
       isConditionMet(c.active.bonus.condition, typeCounts, unitCounts);
@@ -644,18 +648,18 @@ export function evaluateTeam(
   } = calcScoreUpCoverage(actives, songLength);
 
   const stats = calcEffectiveStats(
-    cards,
+    teamCards,
     costume,
     costumeSatisfied,
     passiveDetails.map((p) => p.satisfied),
     data,
   );
 
-  const activeDuplicates = findActiveDuplicates(cards);
+  const activeDuplicates = findActiveDuplicates(teamCards);
 
   return attachCombatMetrics(
     {
-      cards,
+      cards: teamCards,
       leaderIndex,
       costume,
       costumeSatisfied,

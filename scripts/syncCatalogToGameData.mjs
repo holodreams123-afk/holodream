@@ -12,6 +12,30 @@ import {
   parseCatalogSpecial,
 } from "./catalogSkillParse.mjs";
 
+function normalizePassiveEffects(passive) {
+  const effects = (passive.effects ?? []).map((e) => {
+    if (typeof e.targetGroup === "string" && /^\d$/.test(e.targetGroup)) {
+      return { ...e, targetGroup: `${e.targetGroup}期生` };
+    }
+    return e;
+  });
+  let condition = passive.condition;
+  if (!condition) {
+    for (const e of effects) {
+      if (e.target === "self") continue;
+      if (e.targetGroup && ["happy", "pure", "cute"].includes(e.targetGroup)) {
+        condition = { type: "typeCount", attr: e.targetGroup, min: e.targetCount ?? 1 };
+        break;
+      }
+      if (e.targetGroup && e.targetCount) {
+        condition = { type: "unitCount", unit: e.targetGroup, min: e.targetCount };
+        break;
+      }
+    }
+  }
+  return { ...passive, condition, effects };
+}
+
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const catalogPath = path.join(root, "角色名片/card-catalog.json");
 const dataPath = path.join(root, "src/data/gameData.json");
@@ -42,7 +66,10 @@ function sameActive(a, b) {
 }
 
 function samePassive(a, b) {
-  return sameJson(a.condition, b.condition) && sameJson(a.effects, b.effects);
+  return (
+    sameJson(a.condition, b.condition) &&
+    sameJson(a.effects, b.effects)
+  );
 }
 
 function sameSpecial(a, b) {
@@ -79,7 +106,7 @@ for (const entry of catalog) {
   }
 
   const active = parseCatalogActive(entry.skills?.active ?? "");
-  const passive = parseCatalogPassive(entry.skills?.passive ?? "");
+  const passive = normalizePassiveEffects(parseCatalogPassive(entry.skills?.passive ?? ""));
   const special = parseCatalogSpecial(entry.skills?.sp ?? "");
 
   if (!active.interval) {

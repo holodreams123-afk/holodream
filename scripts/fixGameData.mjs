@@ -227,6 +227,30 @@ function repairActiveFromWfcalc(game, wfCards, catalogCardIds) {
   if (fixed) log.push(`Repaired active skills on ${fixed} cards`);
 }
 
+function normalizePassiveInGameData(passive) {
+  const effects = (passive.effects ?? []).map((e) => {
+    if (typeof e.targetGroup === "string" && /^\d$/.test(e.targetGroup)) {
+      return { ...e, targetGroup: `${e.targetGroup}期生` };
+    }
+    return e;
+  });
+  let condition = passive.condition;
+  if (!condition) {
+    for (const e of effects) {
+      if (e.target === "self") continue;
+      if (e.targetGroup && ["happy", "pure", "cute"].includes(e.targetGroup)) {
+        condition = { type: "typeCount", attr: e.targetGroup, min: e.targetCount ?? 1 };
+        break;
+      }
+      if (e.targetGroup && e.targetCount) {
+        condition = { type: "unitCount", unit: e.targetGroup, min: e.targetCount };
+        break;
+      }
+    }
+  }
+  return { ...passive, condition, effects };
+}
+
 const log = [];
 
 // Repair active bonus scoreUp (parseActive regex used wrong capture group).
@@ -280,6 +304,14 @@ const catalogCardIds = new Set(
     .filter(Boolean),
 );
 repairActiveFromWfcalc(data, wfCards, catalogCardIds);
+
+for (const card of data.cards) {
+  const before = JSON.stringify(card.passive);
+  card.passive = normalizePassiveInGameData(card.passive);
+  if (JSON.stringify(card.passive) !== before) {
+    log.push(`Normalized passive ${card.id}`);
+  }
+}
 
 // Normalize all ★5 (and any mixed) skill raw from structured fields
 let rawFixed = 0;

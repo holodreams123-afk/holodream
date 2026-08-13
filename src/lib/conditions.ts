@@ -1,4 +1,4 @@
-import type { Attr, Card, Condition, GameData, MemberMeta } from "../types";
+import type { Attr, Card, Condition, GameData, MemberMeta, PassiveSkill } from "../types";
 
 export function memberUnits(meta: MemberMeta | undefined, card: Card): string[] {
   const units = new Set<string>(meta?.units ?? []);
@@ -20,6 +20,61 @@ export function countUnits(cards: Card[], data: GameData): Record<string, number
     }
   }
   return counts;
+}
+
+const TYPE_ATTRS: Attr[] = ["happy", "pure", "cute"];
+
+/** Fix legacy parse bugs (e.g. targetGroup "0" instead of "0期生"). */
+export function normalizePassiveSkill(passive: PassiveSkill): PassiveSkill {
+  let condition = passive.condition;
+  const effects = passive.effects.map((e) => {
+    if (typeof e.targetGroup === "string" && /^\d$/.test(e.targetGroup)) {
+      return { ...e, targetGroup: `${e.targetGroup}期生` };
+    }
+    return e;
+  });
+
+  if (!condition) {
+    for (const e of effects) {
+      if (e.target === "self") continue;
+      if (e.targetGroup && TYPE_ATTRS.includes(e.targetGroup as Attr)) {
+        condition = {
+          type: "typeCount",
+          attr: e.targetGroup as Attr,
+          min: e.targetCount ?? 1,
+        };
+        break;
+      }
+      if (e.targetGroup && e.targetCount) {
+        condition = { type: "unitCount", unit: e.targetGroup, min: e.targetCount };
+        break;
+      }
+    }
+  }
+
+  if (condition === passive.condition && effects === passive.effects) return passive;
+  return { ...passive, condition, effects };
+}
+
+/** Passive trigger condition after normalizing legacy data quirks. */
+export function passiveCondition(passive: PassiveSkill): Condition | null {
+  return normalizePassiveSkill(passive).condition;
+}
+
+export function isPassiveConditionMet(
+  passive: PassiveSkill,
+  typeCounts: Record<Attr, number>,
+  unitCounts: Record<string, number>,
+): boolean {
+  const normalized = normalizePassiveSkill(passive);
+  if (normalized.condition) {
+    return isConditionMet(normalized.condition, typeCounts, unitCounts);
+  }
+  const needsTeam = normalized.effects.some(
+    (e) => e.targetGroup && e.target !== "self",
+  );
+  if (needsTeam) return false;
+  return true;
 }
 
 /** Life / combo etc. are assumed achievable during a clean play. */

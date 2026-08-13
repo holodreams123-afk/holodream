@@ -223,7 +223,8 @@ function parseGroupPassive(t, raw) {
   ];
   for (const re of unitPatterns) {
     for (const m of t.matchAll(re)) {
-      const unit = normalizeUnit(m[2]);
+      const unit =
+        /^\d$/.test(m[2]) && re.source.includes("期生") ? `${m[2]}期生` : normalizeUnit(m[2]);
       if (re.source.includes("分數加成")) {
         effects.push({
           kind: "scoreSupportPassive",
