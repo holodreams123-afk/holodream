@@ -118,17 +118,39 @@ function parseLooseCondition(text: string): Condition | null {
   return null;
 }
 
+function formatComboLabel(locale: Locale, n: string, trailingWhen = false): string {
+  if (locale === "ja") return `${n}コンボ以上`;
+  if (locale === "zh") return `${n}Combo以上${trailingWhen ? "時" : ""}`;
+  return `Combo ${n}+`;
+}
+
+function effectMirrorsCondition(
+  condition: Condition,
+  effect: {
+    kind: string;
+    target?: string;
+    targetGroup?: string;
+    targetCount?: number;
+  },
+): boolean {
+  if (effect.target === "self") return false;
+  if (!effect.targetGroup || !effect.targetCount) return false;
+  if (condition.type === "typeCount") {
+    return condition.attr === effect.targetGroup && condition.min === effect.targetCount;
+  }
+  if (condition.type === "unitCount") {
+    return condition.unit === effect.targetGroup && condition.min === effect.targetCount;
+  }
+  return false;
+}
+
 function formatSkillRateCondition(locale: Locale, text: string): string {
   const typed = parseLooseCondition(text);
   if (typed) return formatCondition(locale, typed);
 
   const t = text.replace(/\s+/g, "");
   let m = t.match(/Combo(\d+)\+/i);
-  if (m) {
-    if (locale === "ja") return `${m[1]}コンボ以上`;
-    if (locale === "zh") return `${m[1]}連擊以上時`;
-    return `Combo ${m[1]}+`;
-  }
+  if (m) return formatComboLabel(locale, m[1], true);
   m = t.match(/Life(\d+)\+/i);
   if (m) {
     if (locale === "ja") return `ライフ${m[1]}以上`;
@@ -142,11 +164,7 @@ function formatSkillRateCondition(locale: Locale, text: string): string {
     return `Life ${m[1]}+`;
   }
   m = t.match(/(\d+)コンボ以上/);
-  if (m) {
-    if (locale === "ja") return `${m[1]}コンボ以上`;
-    if (locale === "zh") return `${m[1]}連擊以上時`;
-    return `Combo ${m[1]}+`;
-  }
+  if (m) return formatComboLabel(locale, m[1], true);
   return localizeMisc(locale, text);
 }
 
@@ -159,11 +177,7 @@ function localizeMisc(locale: Locale, text: string): string {
     return `Life ${m[1]}+`;
   }
   m = t.match(/(\d+)コンボ以上/);
-  if (m) {
-    if (locale === "ja") return `${m[1]}コンボ以上`;
-    if (locale === "zh") return `${m[1]}連擊以上`;
-    return `Combo ${m[1]}+`;
-  }
+  if (m) return formatComboLabel(locale, m[1]);
   if (t === "Life1000+" || t.startsWith("Life")) {
     const n = t.match(/(\d+)/)?.[1] ?? "1000";
     if (locale === "ja") return `ライフ${n}以上`;
@@ -172,9 +186,7 @@ function localizeMisc(locale: Locale, text: string): string {
   }
   if (t === "Combo100+" || t.startsWith("Combo")) {
     const n = t.match(/(\d+)/)?.[1] ?? "100";
-    if (locale === "ja") return `${n}コンボ以上`;
-    if (locale === "zh") return `${n}連擊以上`;
-    return `Combo ${n}+`;
+    return formatComboLabel(locale, n);
   }
   const typed = formatCondition(locale, parseLooseCondition(text));
   if (typed) return typed;
@@ -338,9 +350,19 @@ export function formatActiveSkill(
     if (locale === "ja") {
       base += ` ${cond}でスコアが${formatSkillNum(skill.bonus.scoreUp)}%UP`;
     } else if (locale === "zh") {
-      const bonusCond = cond.startsWith("若編入")
-        ? cond.replace(/^若編入/, "")
-        : `${cond}時`;
+      let bonusCond: string;
+      if (
+        skill.bonus.condition?.type === "typeCount" ||
+        skill.bonus.condition?.type === "unitCount"
+      ) {
+        bonusCond = `${cond}的人物`;
+      } else if (cond.startsWith("若編入")) {
+        bonusCond = cond.slice(3);
+      } else if (/Combo以上$/.test(cond)) {
+        bonusCond = `${cond}時`;
+      } else {
+        bonusCond = `${cond}時`;
+      }
       base += ` ${bonusCond}分數提升${formatSkillNum(skill.bonus.scoreUp)}%`;
     } else {
       base += `. When ${cond}: Score +${formatSkillNum(skill.bonus.scoreUp)}%`;
@@ -353,13 +375,8 @@ export function formatActiveSkill(
 
 function shouldShowPassiveConditionPrefix(skill: PassiveSkill): boolean {
   if (!skill.condition) return false;
-  if (skill.effects.every((e) => e.kind === "scoreSupportPassive")) return false;
-  if (skill.condition.type === "typeCount") return true;
-  if (skill.condition.type === "unitCount") {
-    const unit = skill.condition.unit;
-    return /^\d期生$/.test(unit) || unit === "ゲーマーズ";
-  }
-  return true;
+  if (skill.effects.some((e) => e.target === "self")) return true;
+  return !skill.effects.every((e) => effectMirrorsCondition(skill.condition!, e));
 }
 
 export function formatPassiveSkill(
@@ -377,7 +394,13 @@ export function formatPassiveSkill(
 
   if (cond) {
     if (locale === "ja") return `${cond}で${effectText}`;
-    if (locale === "zh") return `${cond}${effectText}`;
+    if (locale === "zh") {
+      const subject =
+        skill.effects.some((e) => e.target === "self") && skill.condition?.type === "typeCount"
+          ? "的人物"
+          : "";
+      return `${cond}${subject}${effectText}`;
+    }
     return `When ${cond}: ${effectText}`;
   }
 

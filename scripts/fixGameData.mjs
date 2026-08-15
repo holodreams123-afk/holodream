@@ -10,6 +10,7 @@ import {
   findWfCard,
   loadWfAllCards,
   parseActive,
+  parseSpecial,
 } from "./wfcalcImport.mjs";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -227,6 +228,27 @@ function repairActiveFromWfcalc(game, wfCards) {
   if (fixed) log.push(`Repaired active skills on ${fixed} cards`);
 }
 
+/** Merge wf-calc SP skillRate conditions missing after Excel ★5 sync. */
+function repairSpecialFromWfcalc(game, wfCards) {
+  let fixed = 0;
+  for (const card of game.cards) {
+    const wf = findWfCard(wfCards, { member: card.member, costumeName: card.costumeName });
+    if (!wf?.skills?.special) continue;
+    const parsed = parseSpecial(wf.skills.special);
+    if (!parsed.skillRate || !parsed.skillRateCondition) continue;
+    const cur = card.special ?? {};
+    if (cur.skillRateCondition === parsed.skillRateCondition) continue;
+    card.special = {
+      ...cur,
+      skillRate: parsed.skillRate,
+      skillRateCondition: parsed.skillRateCondition,
+    };
+    log.push(`Repaired special skillRate ${card.id}`);
+    fixed += 1;
+  }
+  if (fixed) log.push(`Repaired special skillRate on ${fixed} cards`);
+}
+
 function normalizePassiveInGameData(passive) {
   const effects = (passive.effects ?? []).map((e) => {
     if (typeof e.targetGroup === "string" && /^\d$/.test(e.targetGroup)) {
@@ -299,6 +321,7 @@ for (const c of data.cards) {
 
 const wfCards = loadWfAllCards();
 repairActiveFromWfcalc(data, wfCards);
+repairSpecialFromWfcalc(data, wfCards);
 
 for (const card of data.cards) {
   if (card.rarity === 5) continue;

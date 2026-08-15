@@ -184,12 +184,14 @@ export function parseSpecial(text) {
   const t = raw.replace(/\s+/g, "");
   const durationMatch = t.match(/(\d+)秒間/);
   const support = t.match(/スコアサポート効果(\d+)%/);
-  const condRate = t.match(/(ライフ\d+以上|\d+コンボ以上)でスキル発動(?:率|確率)が(\d+)%UP/);
+  const condRate = t.match(
+    /(ライフ\d+以上|\d+コンボ以上|(ハッピータイプ|ピュアタイプ|キュートタイプ)が\d+人以上|(0期生|1期生|2期生|3期生|4期生|5期生|ゲーマーズ|holoX|ID1期生|ID2期生|ID3期生|Myth|Promise|Advent|ReGLOSS)が\d+人以上)でスキル発動(?:率|確率)が(\d+)%UP/,
+  );
   const rate = t.match(/スキル発動(?:率|確率)が(\d+)%UP/);
   return {
     duration: durationMatch ? +durationMatch[1] : 0,
     scoreSupport: support ? +support[1] : 0,
-    skillRate: condRate ? +condRate[2] : rate ? +rate[1] : 0,
+    skillRate: condRate ? +condRate[4] : rate ? +rate[1] : 0,
     skillRateCondition: condRate ? condRate[1] : null,
     raw,
   };

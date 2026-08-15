@@ -2263,7 +2263,8 @@ export default function App() {
                     (bloomStage < MAX_BLOOM
                       ? applyBloomToCard(baseCard, bloomStage)
                       : baseCard);
-                  const bloomSkillDisplay = bloomStage < MAX_BLOOM;
+                  const bloomDisplayOpts =
+                    card.rarity === 5 ? { bloomStage } : undefined;
                   const passiveOk = detailEv.passiveDetails[i]?.satisfied;
                   const stats =
                     rosterDetailMemberStats?.[i] ?? detailEv.memberEffectiveStats[i];
@@ -2358,7 +2359,7 @@ export default function App() {
                             <span className="skill-chip sp" aria-hidden>
                               SP
                             </span>
-                            <p className="skill-text">{displaySpecialSkill(displayCard, locale, { skipCatalog: bloomSkillDisplay })}</p>
+                            <p className="skill-text">{displaySpecialSkill(displayCard, locale, bloomDisplayOpts)}</p>
                           </div>
                           <div className={`skill-row ${displayCard.active.bonus ? (activeBonusOk ? "is-ok" : "is-bad") : ""}`}>
                             <span className="skill-chip active" aria-hidden>
@@ -2387,7 +2388,7 @@ export default function App() {
                                 )}
                               </span>
                               {" · "}
-                              {displayActiveSkill(displayCard, locale, { skipCatalog: bloomSkillDisplay })}
+                              {displayActiveSkill(displayCard, locale, bloomDisplayOpts)}
                             </p>
                           </div>
                           <div className={`skill-row ${passiveOk ? "is-ok" : "is-bad"}`}>
@@ -2401,7 +2402,7 @@ export default function App() {
                                 {passiveOk ? t.activated : t.notActivated}
                               </span>
                               {" · "}
-                              {displayPassiveSkill(displayCard, locale, { skipCatalog: bloomSkillDisplay })}
+                              {displayPassiveSkill(displayCard, locale, bloomDisplayOpts)}
                             </p>
                           </div>
                         </div>
